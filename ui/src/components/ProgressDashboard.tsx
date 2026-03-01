@@ -1,7 +1,5 @@
 import { useMemo, useState, useEffect } from 'react'
 import { Wifi, WifiOff, Brain, Sparkles } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import type { AgentStatus } from '../lib/types'
 
 interface ProgressDashboardProps {
@@ -76,78 +74,88 @@ export function ProgressDashboard({
   const isRunning = agentStatus === 'running'
 
   return (
-    <Card>
-      <CardHeader className="flex-row items-center justify-between space-y-0 pb-0">
-        <div className="flex items-center gap-3">
-          <CardTitle className="text-xl uppercase tracking-wide">
-            Progress
-          </CardTitle>
-          <Badge variant={isConnected ? 'default' : 'destructive'} className="gap-1">
-            {isConnected ? (
-              <>
-                <Wifi size={14} />
-                Live
-              </>
-            ) : (
-              <>
-                <WifiOff size={14} />
-                Offline
-              </>
-            )}
-          </Badge>
+    <div style={{
+      background: '#FFFFFF', border: '1px solid #DDEC90', borderRadius: '8px',
+      padding: '16px 20px', fontFamily: 'Arial, sans-serif',
+    }}>
+      {/* Header row */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <span style={{
+            fontSize: '16px', fontWeight: 700, letterSpacing: '2px',
+            textTransform: 'uppercase', color: '#1A1A00',
+          }}>
+            Odyssey Progress
+          </span>
+          <span style={{
+            fontSize: '10px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase',
+            display: 'inline-flex', alignItems: 'center', gap: '4px',
+            padding: '3px 8px', borderRadius: '20px',
+            background: isConnected ? '#F5F8D0' : '#FFE5E5',
+            color: isConnected ? '#7A8A00' : '#CF0F0F',
+            border: `1px solid ${isConnected ? '#DDEC90' : '#CF0F0F'}`,
+          }}>
+            {isConnected ? <Wifi size={12} /> : <WifiOff size={12} />}
+            {isConnected ? 'Live' : 'Offline'}
+          </span>
         </div>
-        <div className="flex items-baseline gap-1">
-          <span className="font-mono text-lg font-bold text-primary">
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+          <span style={{ fontFamily: 'monospace', fontSize: '18px', fontWeight: 700, color: '#7A8A00' }}>
             {passing}
           </span>
-          <span className="text-sm text-muted-foreground">/</span>
-          <span className="font-mono text-lg font-bold">
+          <span style={{ fontSize: '14px', color: '#6A6A20' }}>/</span>
+          <span style={{ fontFamily: 'monospace', fontSize: '18px', fontWeight: 700, color: '#1A1A00' }}>
             {total}
           </span>
         </div>
-      </CardHeader>
+      </div>
 
-      <CardContent className="pt-3 pb-3">
-        <div className="flex items-center gap-4">
-          {/* Progress Bar */}
-          <div className="h-2.5 bg-muted rounded-full overflow-hidden flex-1">
-            <div
-              className="h-full bg-primary rounded-full transition-all duration-500 ease-out"
-              style={{ width: `${percentage}%` }}
-            />
-          </div>
-          {/* Percentage */}
-          <span className="text-sm font-bold tabular-nums text-muted-foreground w-12 text-right">
-            {percentage.toFixed(1)}%
-          </span>
+      {/* Progress Bar */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <div style={{
+          flex: 1, height: '10px', background: '#F5F8D0',
+          borderRadius: '10px', overflow: 'hidden',
+        }}>
+          <div style={{
+            height: '100%', borderRadius: '10px',
+            background: 'linear-gradient(90deg, #BBCB64, #7A8A00)',
+            width: `${percentage}%`,
+            transition: 'width 0.5s ease-out',
+          }} />
         </div>
+        <span style={{
+          fontSize: '14px', fontWeight: 700, color: '#6A6A20',
+          fontVariantNumeric: 'tabular-nums', width: '48px', textAlign: 'right',
+        }}>
+          {percentage.toFixed(1)}%
+        </span>
+      </div>
 
-        {/* Agent Thought */}
-        <div
-          className={`
-            transition-all duration-300 ease-out overflow-hidden
-            ${showThought && displayedThought ? 'opacity-100 max-h-10 mt-3' : 'opacity-0 max-h-0 mt-0'}
-          `}
-        >
-          <div className="flex items-center gap-2">
-            <div className="relative shrink-0">
-              <Brain size={16} className="text-primary" strokeWidth={2.5} />
-              {isRunning && (
-                <Sparkles size={8} className="absolute -top-1 -right-1 text-yellow-500 animate-pulse" />
-              )}
-            </div>
-            <p
-              className="font-mono text-sm truncate text-muted-foreground transition-all duration-150 ease-out"
-              style={{
-                opacity: textVisible ? 1 : 0,
-                transform: textVisible ? 'translateY(0)' : 'translateY(-4px)',
-              }}
-            >
-              {displayedThought?.replace(/:$/, '')}
-            </p>
+      {/* Agent Thought */}
+      {showThought && displayedThought && (
+        <div style={{
+          marginTop: '12px', display: 'flex', alignItems: 'center', gap: '8px',
+          transition: 'opacity 0.3s ease',
+        }}>
+          <div style={{ position: 'relative', flexShrink: 0 }}>
+            <Brain size={16} style={{ color: '#7A8A00' }} strokeWidth={2.5} />
+            {isRunning && (
+              <Sparkles size={8} className="animate-pulse" style={{
+                position: 'absolute', top: '-4px', right: '-4px', color: '#F79A19',
+              }} />
+            )}
           </div>
+          <p style={{
+            fontFamily: 'monospace', fontSize: '13px', color: '#6A6A20',
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0,
+            opacity: textVisible ? 1 : 0,
+            transform: textVisible ? 'translateY(0)' : 'translateY(-4px)',
+            transition: 'all 0.15s ease-out',
+          }}>
+            {displayedThought?.replace(/:$/, '')}
+          </p>
         </div>
-      </CardContent>
-    </Card>
+      )}
+    </div>
   )
 }

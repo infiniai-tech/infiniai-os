@@ -1,7 +1,6 @@
 import { Activity } from 'lucide-react'
 import { AgentAvatar } from './AgentAvatar'
 import type { AgentMascot } from '../lib/types'
-import { Card, CardContent } from '@/components/ui/card'
 
 interface ActivityItem {
   agentName: string
@@ -38,46 +37,47 @@ export function ActivityFeed({ activities, maxItems = 5, showHeader = true }: Ac
   return (
     <div>
       {showHeader && (
-        <div className="flex items-center gap-2 mb-2">
-          <Activity size={14} className="text-muted-foreground" />
-          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+          <Activity size={14} style={{ color: '#6A6A20' }} />
+          <span style={{ fontSize: '11px', fontWeight: 700, color: '#6A6A20', textTransform: 'uppercase', letterSpacing: '1px' }}>
             Recent Activity
           </span>
         </div>
       )}
 
-      <div className="space-y-2">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
         {displayedActivities.map((activity) => (
-          <Card
+          <div
             key={`${activity.featureId}-${activity.timestamp}-${activity.thought.slice(0, 20)}`}
-            className="py-1.5"
+            style={{
+              padding: '8px', borderRadius: '6px',
+              background: '#FFFFFF', border: '1px solid #DDEC90',
+              display: 'flex', alignItems: 'flex-start', gap: '8px',
+              fontFamily: 'Arial, sans-serif',
+            }}
           >
-            <CardContent className="p-2 flex items-start gap-2">
-              <AgentAvatar
-                name={activity.agentName as AgentMascot}
-                state="working"
-                size="sm"
-              />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold" style={{
-                    color: getMascotColor(activity.agentName as AgentMascot)
-                  }}>
-                    {activity.agentName}
-                  </span>
-                  <span className="text-[10px] text-muted-foreground">
-                    #{activity.featureId}
-                  </span>
-                  <span className="text-[10px] text-muted-foreground ml-auto">
-                    {formatTimestamp(activity.timestamp)}
-                  </span>
-                </div>
-                <p className="text-xs text-muted-foreground truncate" title={activity.thought}>
-                  {activity.thought}
-                </p>
+            <AgentAvatar
+              name={activity.agentName as AgentMascot}
+              state="working"
+              size="sm"
+            />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '11px', fontWeight: 700, color: getMascotColor(activity.agentName as AgentMascot) }}>
+                  {activity.agentName}
+                </span>
+                <span style={{ fontSize: '10px', color: '#6A6A20' }}>
+                  #{activity.featureId}
+                </span>
+                <span style={{ fontSize: '10px', color: '#6A6A20', marginLeft: 'auto' }}>
+                  {formatTimestamp(activity.timestamp)}
+                </span>
               </div>
-            </CardContent>
-          </Card>
+              <p style={{ fontSize: '11px', color: '#6A6A20', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={activity.thought}>
+                {activity.thought}
+              </p>
+            </div>
+          </div>
         ))}
       </div>
     </div>
@@ -86,25 +86,21 @@ export function ActivityFeed({ activities, maxItems = 5, showHeader = true }: Ac
 
 function getMascotColor(name: AgentMascot): string {
   const colors: Record<AgentMascot, string> = {
-    // Original 5
     Spark: '#3B82F6',
     Fizz: '#F97316',
     Octo: '#8B5CF6',
     Hoot: '#22C55E',
     Buzz: '#EAB308',
-    // Tech-inspired
     Pixel: '#EC4899',
     Byte: '#06B6D4',
     Nova: '#F43F5E',
     Chip: '#84CC16',
     Bolt: '#FBBF24',
-    // Energetic
     Dash: '#14B8A6',
     Zap: '#A855F7',
     Gizmo: '#64748B',
     Turbo: '#EF4444',
     Blip: '#10B981',
-    // Playful
     Neon: '#D946EF',
     Widget: '#6366F1',
     Zippy: '#F59E0B',

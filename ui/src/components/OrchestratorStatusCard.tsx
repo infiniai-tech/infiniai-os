@@ -2,60 +2,51 @@ import { useState } from 'react'
 import { ChevronDown, ChevronUp, Code, FlaskConical, Clock, Lock, Sparkles } from 'lucide-react'
 import { OrchestratorAvatar } from './OrchestratorAvatar'
 import type { OrchestratorStatus, OrchestratorState } from '../lib/types'
-import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 
 interface OrchestratorStatusCardProps {
   status: OrchestratorStatus
 }
 
-// Get a friendly state description
 function getStateText(state: OrchestratorState): string {
   switch (state) {
     case 'idle':
-      return 'Standing by...'
+      return 'Resting upon Olympus...'
     case 'initializing':
-      return 'Setting up features...'
+      return 'Zeus awakens...'
     case 'scheduling':
-      return 'Planning next moves...'
+      return 'Consulting the Fates...'
     case 'spawning':
-      return 'Deploying agents...'
+      return 'Marshalling divine forces...'
     case 'monitoring':
-      return 'Watching progress...'
+      return 'Watching from the heavens...'
     case 'complete':
-      return 'Mission accomplished!'
+      return 'The quest is complete!'
     case 'draining':
-      return 'Draining agents...'
+      return 'Recalling the forces...'
     case 'paused':
-      return 'Paused'
+      return 'The gods rest...'
     default:
-      return 'Orchestrating...'
+      return 'Commanding the pantheon...'
   }
 }
 
-// Get state color
 function getStateColor(state: OrchestratorState): string {
   switch (state) {
     case 'complete':
-      return 'text-primary'
     case 'spawning':
-      return 'text-primary'
     case 'scheduling':
     case 'monitoring':
-      return 'text-primary'
+      return '#7A8A00'
     case 'initializing':
-      return 'text-yellow-600 dark:text-yellow-400'
+      return '#F79A19'
     case 'draining':
-      return 'text-amber-600 dark:text-amber-400'
+      return '#A05A00'
     case 'paused':
-      return 'text-muted-foreground'
     default:
-      return 'text-muted-foreground'
+      return '#6A6A20'
   }
 }
 
-// Format timestamp to relative time
 function formatRelativeTime(timestamp: string): string {
   const now = new Date()
   const then = new Date(timestamp)
@@ -69,99 +60,98 @@ function formatRelativeTime(timestamp: string): string {
   return `${Math.floor(diffMins / 60)}h ago`
 }
 
+const badgeStyle = (bg: string, color: string, border: string): React.CSSProperties => ({
+  display: 'inline-flex', alignItems: 'center', gap: '4px',
+  fontSize: '11px', fontWeight: 700, padding: '3px 10px', borderRadius: '20px',
+  background: bg, color, border: `1px solid ${border}`,
+})
+
 export function OrchestratorStatusCard({ status }: OrchestratorStatusCardProps) {
   const [showEvents, setShowEvents] = useState(false)
 
   return (
-    <Card className="mb-4 bg-primary/10 border-primary/30 py-4">
-      <CardContent className="p-4">
-        <div className="flex items-start gap-4">
-          {/* Avatar */}
-          <OrchestratorAvatar state={status.state} size="md" />
+    <div style={{
+      marginBottom: '16px', padding: '16px', borderRadius: '8px',
+      background: '#FAFAF2', border: '1px solid #DDEC90',
+      fontFamily: 'Arial, sans-serif',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
+        <OrchestratorAvatar state={status.state} size="md" />
 
-          {/* Main content */}
-          <div className="flex-1 min-w-0">
-            {/* Header row */}
-            <div className="flex items-center gap-2 mb-1">
-              <span className="font-semibold text-lg text-primary">
-                Maestro
-              </span>
-              <span className={`text-sm font-medium ${getStateColor(status.state)}`}>
-                {getStateText(status.state)}
-              </span>
-            </div>
-
-            {/* Current message */}
-            <p className="text-sm text-foreground mb-3 line-clamp-2">
-              {status.message}
-            </p>
-
-            {/* Status badges row */}
-            <div className="flex flex-wrap items-center gap-2">
-              {/* Coding agents badge */}
-              <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700">
-                <Code size={12} />
-                Coding: {status.codingAgents}
-              </Badge>
-
-              {/* Testing agents badge */}
-              <Badge variant="outline" className="bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-700">
-                <FlaskConical size={12} />
-                Testing: {status.testingAgents}
-              </Badge>
-
-              {/* Ready queue badge */}
-              <Badge variant="outline" className="bg-green-100 text-green-700 border-green-300 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700">
-                <Clock size={12} />
-                Ready: {status.readyCount}
-              </Badge>
-
-              {/* Blocked badge (only show if > 0) */}
-              {status.blockedCount > 0 && (
-                <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-700">
-                  <Lock size={12} />
-                  Blocked: {status.blockedCount}
-                </Badge>
-              )}
-            </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+            <span style={{ fontSize: '18px', fontWeight: 700, color: '#7A8A00' }}>
+              Zeus, Commander
+            </span>
+            <span style={{ fontSize: '13px', fontWeight: 600, color: getStateColor(status.state) }}>
+              {getStateText(status.state)}
+            </span>
           </div>
 
-          {/* Recent events toggle */}
-          {status.recentEvents.length > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowEvents(!showEvents)}
-              className="text-primary hover:bg-primary/10"
-            >
-              <Sparkles size={12} />
-              Activity
-              {showEvents ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-            </Button>
-          )}
+          <p style={{ fontSize: '13px', color: '#1A1A00', marginBottom: '12px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+            {status.message}
+          </p>
+
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px' }}>
+            <span style={badgeStyle('#F5F8D0', '#7A8A00', '#DDEC90')}>
+              <Code size={12} />
+              Coding: {status.codingAgents}
+            </span>
+            <span style={badgeStyle('#F5F8D0', '#7A8A00', '#DDEC90')}>
+              <FlaskConical size={12} />
+              Testing: {status.testingAgents}
+            </span>
+            <span style={badgeStyle('#F5F8D0', '#7A8A00', '#DDEC90')}>
+              <Clock size={12} />
+              Ready: {status.readyCount}
+            </span>
+            {status.blockedCount > 0 && (
+              <span style={badgeStyle('#FFF0DC', '#A05A00', '#F0C880')}>
+                <Lock size={12} />
+                Blocked: {status.blockedCount}
+              </span>
+            )}
+          </div>
         </div>
 
-        {/* Collapsible recent events */}
-        {showEvents && status.recentEvents.length > 0 && (
-          <div className="mt-3 pt-3 border-t border-primary/20">
-            <div className="space-y-1.5">
-              {status.recentEvents.map((event, idx) => (
-                <div
-                  key={`${event.timestamp}-${idx}`}
-                  className="flex items-start gap-2 text-xs"
-                >
-                  <span className="text-primary shrink-0 font-mono">
-                    {formatRelativeTime(event.timestamp)}
-                  </span>
-                  <span className="text-foreground">
-                    {event.message}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
+        {status.recentEvents.length > 0 && (
+          <button
+            onClick={() => setShowEvents(!showEvents)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '4px',
+              fontSize: '12px', fontWeight: 700, color: '#7A8A00',
+              background: 'transparent', border: 'none', cursor: 'pointer',
+              padding: '4px 8px', borderRadius: '4px', flexShrink: 0,
+            }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#F5F8D0' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+          >
+            <Sparkles size={12} />
+            Activity
+            {showEvents ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+          </button>
         )}
-      </CardContent>
-    </Card>
+      </div>
+
+      {showEvents && status.recentEvents.length > 0 && (
+        <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #DDEC90' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            {status.recentEvents.map((event, idx) => (
+              <div
+                key={`${event.timestamp}-${idx}`}
+                style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '12px' }}
+              >
+                <span style={{ color: '#7A8A00', flexShrink: 0, fontFamily: 'monospace' }}>
+                  {formatRelativeTime(event.timestamp)}
+                </span>
+                <span style={{ color: '#1A1A00' }}>
+                  {event.message}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
   )
 }

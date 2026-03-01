@@ -90,7 +90,7 @@ export function ProjectSelector({
                 )}
               </>
             ) : (
-              <span className="text-muted-foreground">Select Project</span>
+              <span className="text-muted-foreground">Select Odyssey</span>
             )}
             <ChevronDown size={18} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
           </Button>
@@ -132,7 +132,7 @@ export function ProjectSelector({
             </div>
           ) : (
             <div className="p-4 text-center text-muted-foreground">
-              No projects yet
+              No odysseys yet
             </div>
           )}
 
@@ -146,7 +146,7 @@ export function ProjectSelector({
               className="cursor-pointer font-semibold"
             >
               <Plus size={16} />
-              New Project
+              New Odyssey
             </DropdownMenuItem>
           </div>
         </DropdownMenuContent>
@@ -157,14 +157,14 @@ export function ProjectSelector({
         isOpen={showNewProjectModal}
         onClose={() => setShowNewProjectModal(false)}
         onProjectCreated={handleProjectCreated}
-        onStepChange={(step) => onSpecCreatingChange?.(step === 'chat')}
+        onStepChange={() => onSpecCreatingChange?.(false)}
       />
 
       {/* Delete Confirmation Dialog */}
       <ConfirmDialog
         isOpen={projectToDelete !== null}
-        title="Delete Project"
-        message={`Are you sure you want to remove "${projectToDelete}" from the registry? This will unregister the project but preserve its files on disk.`}
+        title="End Odyssey"
+        message={`Are you sure you wish to end the odyssey "${projectToDelete}"? This will unregister the project and delete AutoForge metadata. Your source code will not be affected.`}
         confirmLabel="Delete"
         cancelLabel="Cancel"
         variant="danger"

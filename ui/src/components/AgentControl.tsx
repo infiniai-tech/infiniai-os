@@ -12,8 +12,37 @@ import { useNextScheduledRun } from '../hooks/useSchedules'
 import { formatNextRun, formatEndTime } from '../lib/timeUtils'
 import { ScheduleModal } from './ScheduleModal'
 import type { AgentStatus } from '../lib/types'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+
+const btnBase: React.CSSProperties = {
+  borderRadius: '6px',
+  padding: '6px 10px',
+  cursor: 'pointer',
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  fontFamily: 'Arial, sans-serif',
+  fontSize: '13px',
+  fontWeight: 500,
+  lineHeight: 1,
+}
+
+const btnStart: React.CSSProperties = { ...btnBase, background: '#BBCB64', color: '#1A1A00', border: 'none' }
+const btnStop: React.CSSProperties = { ...btnBase, background: '#CF0F0F', color: '#FFFFFF', border: 'none' }
+const btnOutline: React.CSSProperties = { ...btnBase, background: 'transparent', color: '#7A8A00', border: '1px solid #DDEC90' }
+
+const badgeStyle: React.CSSProperties = {
+  background: '#F5F8D0',
+  color: '#7A8A00',
+  border: '1px solid #DDEC90',
+  borderRadius: '20px',
+  padding: '3px 10px',
+  fontSize: '11px',
+  fontWeight: 700,
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: '4px',
+  fontFamily: 'Arial, sans-serif',
+}
 
 interface AgentControlProps {
   projectName: string
@@ -25,33 +54,27 @@ export function AgentControl({ projectName, status, defaultConcurrency = 3 }: Ag
   const { data: settings } = useSettings()
   const yoloMode = settings?.yolo_mode ?? false
 
-  // Concurrency: 1 = single agent, 2-5 = parallel
   const [concurrency, setConcurrency] = useState(defaultConcurrency)
 
-  // Sync concurrency when project changes or defaultConcurrency updates
   useEffect(() => {
     setConcurrency(defaultConcurrency)
   }, [defaultConcurrency])
 
-  // Debounced save for concurrency changes
   const updateProjectSettings = useUpdateProjectSettings(projectName)
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const handleConcurrencyChange = useCallback((newConcurrency: number) => {
     setConcurrency(newConcurrency)
 
-    // Clear previous timeout
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current)
     }
 
-    // Debounce save (500ms)
     saveTimeoutRef.current = setTimeout(() => {
       updateProjectSettings.mutate({ default_concurrency: newConcurrency })
     }, 500)
   }, [updateProjectSettings])
 
-  // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
       if (saveTimeoutRef.current) {
@@ -83,13 +106,15 @@ export function AgentControl({ projectName, status, defaultConcurrency = 3 }: Ag
 
   const isStopped = status === 'stopped' || status === 'crashed'
 
+  const disabledOpacity = isLoading ? 0.5 : 1
+
   return (
     <>
-      <div className="flex items-center gap-2 sm:gap-4">
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'Arial, sans-serif' }}>
         {/* Concurrency slider - visible when stopped */}
         {isStopped && (
-          <div className="flex items-center gap-2">
-            <GitBranch size={16} className={isParallel ? 'text-primary' : 'text-muted-foreground'} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <GitBranch size={16} style={{ color: isParallel ? '#7A8A00' : '#6A6A20' }} />
             <input
               type="range"
               min={1}
@@ -97,11 +122,11 @@ export function AgentControl({ projectName, status, defaultConcurrency = 3 }: Ag
               value={concurrency}
               onChange={(e) => handleConcurrencyChange(Number(e.target.value))}
               disabled={isLoading}
-              className="w-16 h-2 accent-primary cursor-pointer"
+              style={{ width: '64px', height: '8px', accentColor: '#BBCB64', cursor: 'pointer' }}
               title={`${concurrency} concurrent agent${concurrency > 1 ? 's' : ''}`}
               aria-label="Set number of concurrent agents"
             />
-            <span className="text-xs font-semibold min-w-[1.5rem] text-center">
+            <span style={{ fontSize: '12px', fontWeight: 600, minWidth: '1.5rem', textAlign: 'center', color: '#1A1A00' }}>
               {concurrency}x
             </span>
           </div>
@@ -109,121 +134,116 @@ export function AgentControl({ projectName, status, defaultConcurrency = 3 }: Ag
 
         {/* Show concurrency indicator when running with multiple agents */}
         {isRunning && isParallel && (
-          <Badge variant="secondary" className="gap-1">
+          <span style={badgeStyle}>
             <GitBranch size={14} />
             {concurrency}x
-          </Badge>
+          </span>
         )}
 
         {/* Schedule status display */}
         {nextRun?.is_currently_running && nextRun.next_end && (
-          <Badge variant="default" className="gap-1">
+          <span style={badgeStyle}>
             <Clock size={14} />
             Running until {formatEndTime(nextRun.next_end)}
-          </Badge>
+          </span>
         )}
 
         {!nextRun?.is_currently_running && nextRun?.next_start && (
-          <Badge variant="secondary" className="gap-1">
+          <span style={badgeStyle}>
             <Clock size={14} />
             Next: {formatNextRun(nextRun.next_start)}
-          </Badge>
+          </span>
         )}
 
         {/* Start/Stop/Pause/Resume buttons */}
         {isLoadingStatus ? (
-          <Button disabled variant="outline" size="sm">
+          <button disabled style={{ ...btnOutline, opacity: 0.5, cursor: 'not-allowed' }}>
             <Loader2 size={18} className="animate-spin" />
-          </Button>
+          </button>
         ) : isStopped ? (
-          <Button
+          <button
             onClick={handleStart}
             disabled={isLoading}
-            variant={yoloMode ? 'secondary' : 'default'}
-            size="sm"
-            title={yoloMode ? 'Start Agent (YOLO Mode)' : 'Start Agent'}
+            style={{ ...btnStart, opacity: disabledOpacity }}
+            title={yoloMode ? 'Summon the Gods (YOLO Mode)' : 'Summon the Gods'}
           >
             {isLoading ? (
               <Loader2 size={18} className="animate-spin" />
             ) : (
               <Play size={18} />
             )}
-          </Button>
+          </button>
         ) : (
-          <div className="flex items-center gap-1.5">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             {/* Pausing indicator */}
             {status === 'pausing' && (
-              <Badge variant="secondary" className="gap-1 animate-pulse">
+              <span style={{ ...badgeStyle, animation: 'pulse 2s infinite' }}>
                 <Loader2 size={12} className="animate-spin" />
                 Pausing...
-              </Badge>
+              </span>
             )}
 
             {/* Paused indicator + Resume button */}
             {status === 'paused_graceful' && (
               <>
-                <Badge variant="outline" className="gap-1">
+                <span style={{ ...badgeStyle, background: 'transparent', color: '#7A8A00' }}>
                   Paused
-                </Badge>
-                <Button
+                </span>
+                <button
                   onClick={() => gracefulResume.mutate()}
                   disabled={isLoading}
-                  variant="default"
-                  size="sm"
-                  title="Resume agent"
+                  style={{ ...btnStart, opacity: disabledOpacity }}
+                  title="Awaken the gods"
                 >
                   {gracefulResume.isPending ? (
                     <Loader2 size={18} className="animate-spin" />
                   ) : (
                     <PlayCircle size={18} />
                   )}
-                </Button>
+                </button>
               </>
             )}
 
             {/* Graceful pause button (only when running normally) */}
             {status === 'running' && (
-              <Button
+              <button
                 onClick={() => gracefulPause.mutate()}
                 disabled={isLoading}
-                variant="outline"
-                size="sm"
-                title="Pause agent (finish current work first)"
+                style={{ ...btnOutline, opacity: disabledOpacity }}
+                title="Rest the gods (finish current work first)"
               >
                 {gracefulPause.isPending ? (
                   <Loader2 size={18} className="animate-spin" />
                 ) : (
                   <Pause size={18} />
                 )}
-              </Button>
+              </button>
             )}
 
             {/* Stop button (always available) */}
-            <Button
+            <button
               onClick={handleStop}
               disabled={isLoading}
-              variant="destructive"
-              size="sm"
-              title="Stop Agent (immediate)"
+              style={{ ...btnStop, opacity: disabledOpacity }}
+              title="Silence the Gods (immediate)"
             >
               {stopAgent.isPending ? (
                 <Loader2 size={18} className="animate-spin" />
               ) : (
                 <Square size={18} />
               )}
-            </Button>
+            </button>
           </div>
         )}
 
         {/* Clock button to open schedule modal */}
-        <Button
-          variant="outline"
-          size="sm"
+        <button
           onClick={() => setShowScheduleModal(true)}
+          style={btnOutline}
           title="Manage schedules"
         >
           <Clock size={18} />
-        </Button>
+        </button>
       </div>
 
       {/* Schedule Modal */}

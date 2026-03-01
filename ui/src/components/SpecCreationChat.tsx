@@ -22,23 +22,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5 MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png']
 
-// Sample prompt for quick testing
-const SAMPLE_PROMPT = `Let's call it Simple Todo. This is a really simple web app that I can use to track my to-do items using a Kanban board. I should be able to add to-dos and then drag and drop them through the Kanban board. The different columns in the Kanban board are:
-
-- To Do
-- In Progress
-- Done
-
-The app should use a neobrutalism design.
-
-There is no need for user authentication either. All the to-dos will be stored in local storage, so each user has access to all of their to-dos when they open their browser. So do not worry about implementing a backend with user authentication or a database. Simply store everything in local storage. As for the design, please try to avoid AI slop, so use your front-end design skills to design something beautiful and practical. As for the content of the to-dos, we should store:
-
-- The name or the title at the very least
-- Optionally, we can also set tags, due dates, and priorities which should be represented as beautiful little badges on the to-do card
-
-Users should have the ability to easily clear out all the completed To-Dos. They should also be able to filter and search for To-Dos as well.
-
-You choose the rest. Keep it simple. Should be 25 features.`
+// Sample prompt for quick testing the modernization chat
+const SAMPLE_PROMPT = `Yes, that analysis looks correct. The main goal of this modernization is to move away from the legacy stack and adopt modern best practices. I want to preserve all the existing business logic and user flows. Let's go with the full rewrite approach — a clean implementation in the target stack. Keep it to around 35 features.`
 
 type InitializerStatus = 'idle' | 'starting' | 'error'
 
@@ -233,7 +218,7 @@ export function SpecCreationChat({
       <div className="flex items-center justify-between p-4 border-b-2 border-border bg-card">
         <div className="flex items-center gap-3">
           <h2 className="font-display font-bold text-lg text-foreground">
-            Create Spec: {projectName}
+            Modernization Oracle: {projectName}
           </h2>
           <ConnectionIndicator />
         </div>
@@ -269,10 +254,10 @@ export function SpecCreationChat({
             onClick={onExitToProject}
             variant="ghost"
             size="sm"
-            title="Exit chat and go to project (you can start the agent manually)"
+            title="Exit chat and go to odyssey (you can summon the gods manually)"
           >
             <ExternalLink size={16} />
-            Exit to Project
+            Exit to Odyssey
           </Button>
 
           <Button
@@ -423,7 +408,7 @@ export function SpecCreationChat({
                   ? 'Or type a custom response...'
                   : pendingAttachments.length > 0
                     ? 'Add a message with your image(s)...'
-                    : 'Type your response... (or /exit to go to project)'
+                    : 'Type your response... (or /exit to go to odyssey)'
               }
               className="flex-1 resize-none min-h-[46px] max-h-[200px] overflow-y-auto"
               disabled={(isLoading && !currentQuestions) || connectionStatus !== 'connected'}
@@ -459,20 +444,20 @@ export function SpecCreationChat({
                 <>
                   <Loader2 size={20} className="animate-spin text-white" />
                   <span className="font-bold text-white">
-                    Starting agent{yoloEnabled ? ' (YOLO mode)' : ''}...
+                    Summoning the gods{yoloEnabled ? ' (YOLO mode)' : ''}...
                   </span>
                 </>
               ) : initializerStatus === 'error' ? (
                 <>
                   <AlertCircle size={20} className="text-white" />
                   <span className="font-bold text-white">
-                    {initializerError || 'Failed to start agent'}
+                    {initializerError || 'The gods could not be summoned'}
                   </span>
                 </>
               ) : (
                 <>
                   <CheckCircle2 size={20} className="text-white" />
-                  <span className="font-bold text-white">Specification created successfully!</span>
+                  <span className="font-bold text-white">The sacred texts have been inscribed!</span>
                 </>
               )}
             </div>
@@ -504,7 +489,7 @@ export function SpecCreationChat({
                   <Button
                     onClick={() => onComplete('', yoloEnabled)}
                   >
-                    Continue to Project
+                    Begin the Odyssey
                     <ArrowRight size={16} />
                   </Button>
                 </>

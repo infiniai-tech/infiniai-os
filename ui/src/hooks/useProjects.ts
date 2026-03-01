@@ -29,8 +29,13 @@ export function useCreateProject() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ name, path, specMethod }: { name: string; path: string; specMethod?: 'claude' | 'manual' }) =>
-      api.createProject(name, path, specMethod),
+    mutationFn: ({ name, path, specMethod, targetStack }: {
+      name: string
+      path: string
+      specMethod?: 'claude' | 'manual'
+      targetStack?: api.TargetStack
+    }) =>
+      api.createProject(name, path, specMethod, targetStack),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] })
     },

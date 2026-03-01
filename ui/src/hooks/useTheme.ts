@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 
-export type ThemeId = 'twitter' | 'claude' | 'neo-brutalism' | 'retro-arcade' | 'aurora' | 'business'
+export type ThemeId = 'twitter' | 'claude' | 'neo-brutalism' | 'retro-arcade' | 'aurora' | 'business' | 'olympus'
 
 export interface ThemeOption {
   id: ThemeId
@@ -49,11 +49,17 @@ export const THEMES: ThemeOption[] = [
     name: 'Business',
     description: 'Deep navy (#000e4e) and gray monochrome',
     previewColors: { primary: '#000e4e', background: '#eaecef', accent: '#6b7280' }
+  },
+  {
+    id: 'olympus',
+    name: 'Olympus',
+    description: 'Sage, gold, orange and crimson ember palette',
+    previewColors: { primary: '#F79A19', background: '#141008', accent: '#FFE52A' }
   }
 ]
 
-const THEME_STORAGE_KEY = 'autoforge-theme'
-const DARK_MODE_STORAGE_KEY = 'autoforge-dark-mode'
+const THEME_STORAGE_KEY = 'olympus-theme'
+const DARK_MODE_STORAGE_KEY = 'olympus-dark-mode'
 
 function getThemeClass(themeId: ThemeId): string {
   switch (themeId) {
@@ -69,30 +75,42 @@ function getThemeClass(themeId: ThemeId): string {
       return 'theme-aurora'
     case 'business':
       return 'theme-business'
+    case 'olympus':
+      return 'theme-olympus'
     default:
       return ''
   }
 }
 
 export function useTheme() {
+  try {
+    const migrated = localStorage.getItem('olympus-dark-mode-v2')
+    if (!migrated) {
+      localStorage.setItem('olympus-dark-mode', 'false')
+      localStorage.setItem('olympus-dark-mode-v2', '1')
+    }
+  } catch { /* */ }
+
   const [theme, setThemeState] = useState<ThemeId>(() => {
     try {
       const stored = localStorage.getItem(THEME_STORAGE_KEY)
-      if (stored === 'twitter' || stored === 'claude' || stored === 'neo-brutalism' || stored === 'retro-arcade' || stored === 'aurora' || stored === 'business') {
+      if (stored === 'twitter' || stored === 'claude' || stored === 'neo-brutalism' || stored === 'retro-arcade' || stored === 'aurora' || stored === 'business' || stored === 'olympus') {
         return stored
       }
     } catch {
       // localStorage not available
     }
-    return 'twitter'
+    return 'olympus'
   })
 
   const [darkMode, setDarkModeState] = useState(() => {
     try {
-      return localStorage.getItem(DARK_MODE_STORAGE_KEY) === 'true'
+      const stored = localStorage.getItem(DARK_MODE_STORAGE_KEY)
+      if (stored !== null) return stored === 'true'
     } catch {
-      return false
+      // localStorage not available
     }
+    return false
   })
 
   // Apply theme and dark mode classes to document
@@ -100,7 +118,7 @@ export function useTheme() {
     const root = document.documentElement
 
     // Remove all theme classes
-    root.classList.remove('theme-claude', 'theme-neo-brutalism', 'theme-retro-arcade', 'theme-aurora', 'theme-business')
+    root.classList.remove('theme-claude', 'theme-neo-brutalism', 'theme-retro-arcade', 'theme-aurora', 'theme-business', 'theme-olympus')
 
     // Add current theme class (if not twitter/default)
     const themeClass = getThemeClass(theme)

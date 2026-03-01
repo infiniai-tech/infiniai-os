@@ -18,8 +18,6 @@ import dagre from 'dagre'
 import { CheckCircle2, Circle, Loader2, AlertTriangle, RefreshCw, UserCircle } from 'lucide-react'
 import type { DependencyGraph as DependencyGraphData, GraphNode, ActiveAgent, AgentMascot, AgentState } from '../lib/types'
 import { AgentAvatar } from './AgentAvatar'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
 import '@xyflow/react/dist/style.css'
 
 // Node dimensions
@@ -71,17 +69,25 @@ class GraphErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryStat
   render() {
     if (this.state.hasError) {
       return (
-        <div className="h-full w-full flex items-center justify-center bg-muted">
-          <div className="text-center p-6">
-            <AlertTriangle size={48} className="mx-auto mb-4 text-yellow-500" />
-            <div className="text-foreground font-bold mb-2">Graph rendering error</div>
-            <div className="text-sm text-muted-foreground mb-4">
+        <div className="h-full w-full flex items-center justify-center" style={{ background: '#FAFAF2' }}>
+          <div style={{ textAlign: 'center', padding: '24px' }}>
+            <AlertTriangle size={48} style={{ color: '#F79A19', margin: '0 auto 16px' }} />
+            <div style={{ fontSize: '16px', fontWeight: 700, color: '#1A1A00', marginBottom: '8px' }}>Graph rendering error</div>
+            <div style={{ fontSize: '13px', color: '#6A6A20', marginBottom: '16px' }}>
               The dependency graph encountered an issue.
             </div>
-            <Button onClick={this.handleReset} className="gap-2">
+            <button
+              onClick={this.handleReset}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: '6px',
+                fontSize: '13px', fontWeight: 700, color: '#1A1A00',
+                background: '#BBCB64', border: 'none', borderRadius: '6px',
+                padding: '8px 16px', cursor: 'pointer',
+              }}
+            >
               <RefreshCw size={16} />
               Reload Graph
-            </Button>
+            </button>
           </div>
         </div>
       )
@@ -94,76 +100,91 @@ class GraphErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryStat
 // Custom node component
 function FeatureNode({ data }: { data: GraphNode & { onClick?: () => void; agent?: NodeAgentInfo } }) {
   const statusColors: Record<string, string> = {
-    pending: 'bg-yellow-100 border-yellow-300 dark:bg-yellow-900/30 dark:border-yellow-700',
-    in_progress: 'bg-cyan-100 border-cyan-300 dark:bg-cyan-900/30 dark:border-cyan-700',
-    done: 'bg-green-100 border-green-300 dark:bg-green-900/30 dark:border-green-700',
-    blocked: 'bg-red-50 border-red-300 dark:bg-red-900/20 dark:border-red-700',
-    needs_human_input: 'bg-amber-100 border-amber-300 dark:bg-amber-900/30 dark:border-amber-700',
+    pending: 'border-2',
+    in_progress: 'border-2',
+    done: 'border-2',
+    blocked: 'border-2',
+    needs_human_input: 'border-2',
+  }
+
+  const statusInlineStyles: Record<string, React.CSSProperties> = {
+    pending: { background: '#FFF0DC', borderColor: '#F0C880' },
+    in_progress: { background: '#F5F8D0', borderColor: '#BBCB64' },
+    done: { background: '#F5F8D0', borderColor: '#7A8A00' },
+    blocked: { background: '#FFE5E5', borderColor: '#CF0F0F' },
+    needs_human_input: { background: '#FFF0DC', borderColor: '#F79A19' },
+  }
+
+  const textInlineStyles: Record<string, React.CSSProperties> = {
+    pending: { color: '#A05A00' },
+    in_progress: { color: '#7A8A00' },
+    done: { color: '#7A8A00' },
+    blocked: { color: '#CF0F0F' },
+    needs_human_input: { color: '#A05A00' },
   }
 
   const textColors: Record<string, string> = {
-    pending: 'text-yellow-900 dark:text-yellow-100',
-    in_progress: 'text-cyan-900 dark:text-cyan-100',
-    done: 'text-green-900 dark:text-green-100',
-    blocked: 'text-red-900 dark:text-red-100',
-    needs_human_input: 'text-amber-900 dark:text-amber-100',
+    pending: '',
+    in_progress: '',
+    done: '',
+    blocked: '',
+    needs_human_input: '',
   }
 
   const StatusIcon = () => {
+    const style = textInlineStyles[data.status]
     switch (data.status) {
       case 'done':
-        return <CheckCircle2 size={16} className={textColors[data.status]} />
+        return <CheckCircle2 size={16} style={style} />
       case 'in_progress':
-        return <Loader2 size={16} className={`${textColors[data.status]} animate-spin`} />
+        return <Loader2 size={16} style={style} className="animate-spin" />
       case 'blocked':
-        return <AlertTriangle size={16} className="text-destructive" />
+        return <AlertTriangle size={16} style={style} />
       case 'needs_human_input':
-        return <UserCircle size={16} className={textColors[data.status]} />
+        return <UserCircle size={16} style={style} />
       default:
-        return <Circle size={16} className={textColors[data.status]} />
+        return <Circle size={16} style={style} />
     }
   }
 
   return (
     <>
-      <Handle type="target" position={Position.Left} className="!bg-border !w-2 !h-2" />
+      <Handle type="target" position={Position.Left} className="!w-2 !h-2" style={{ background: '#DDEC90' }} />
       <div
         className={`
-          px-4 py-3 rounded-lg border-2 cursor-pointer
+          px-4 py-3 rounded-lg cursor-pointer
           transition-all hover:shadow-md relative
           ${statusColors[data.status]}
         `}
         onClick={data.onClick}
-        style={{ minWidth: NODE_WIDTH - 20, maxWidth: NODE_WIDTH }}
+        style={{ minWidth: NODE_WIDTH - 20, maxWidth: NODE_WIDTH, ...statusInlineStyles[data.status] }}
       >
-        {/* Agent avatar badge - positioned at top right */}
         {data.agent && (
           <div className="absolute -top-3 -right-3 z-10">
-            <div className="rounded-full border-2 border-border bg-background shadow-sm">
+            <div className="rounded-full border-2 shadow-sm" style={{ borderColor: '#DDEC90', background: '#FFFFFF' }}>
               <AgentAvatar name={data.agent.name} state={data.agent.state} size="sm" />
             </div>
           </div>
         )}
         <div className="flex items-center gap-2 mb-1">
           <StatusIcon />
-          <span className={`text-xs font-mono ${textColors[data.status]} opacity-70`}>
+          <span className="text-xs font-mono opacity-70" style={textInlineStyles[data.status]}>
             #{data.priority}
           </span>
-          {/* Show agent name inline if present */}
           {data.agent && (
-            <span className={`text-xs font-bold ${textColors[data.status]} ml-auto`}>
+            <span className="text-xs font-bold ml-auto" style={textInlineStyles[data.status]}>
               {data.agent.name}
             </span>
           )}
         </div>
-        <div className={`font-bold text-sm ${textColors[data.status]} truncate`} title={data.name}>
+        <div className="font-bold text-sm truncate" style={textInlineStyles[data.status]} title={data.name}>
           {data.name}
         </div>
-        <div className={`text-xs ${textColors[data.status]} opacity-70 truncate`} title={data.category}>
+        <div className="text-xs opacity-70 truncate" style={textInlineStyles[data.status]} title={data.category}>
           {data.category}
         </div>
       </div>
-      <Handle type="source" position={Position.Right} className="!bg-border !w-2 !h-2" />
+      <Handle type="source" position={Position.Right} className="!w-2 !h-2" style={{ background: '#DDEC90' }} />
     </>
   )
 }
@@ -263,10 +284,10 @@ function DependencyGraphInner({ graphData, onNodeClick, activeAgents = [] }: Dep
       target: String(edge.target),
       type: 'smoothstep',
       animated: false,
-      style: { stroke: '#a1a1aa', strokeWidth: 2 },
+      style: { stroke: '#BBCB64', strokeWidth: 2 },
       markerEnd: {
         type: MarkerType.ArrowClosed,
-        color: '#a1a1aa',
+        color: '#BBCB64',
       },
     }))
 
@@ -322,24 +343,24 @@ function DependencyGraphInner({ graphData, onNodeClick, activeAgents = [] }: Dep
     const status = (node.data as unknown as GraphNode).status
     switch (status) {
       case 'done':
-        return '#22c55e' // green-500
+        return '#7A8A00'
       case 'in_progress':
-        return '#06b6d4' // cyan-500
+        return '#BBCB64'
       case 'blocked':
-        return '#ef4444' // red-500
+        return '#CF0F0F'
       case 'needs_human_input':
-        return '#f59e0b' // amber-500
+        return '#F79A19'
       default:
-        return '#eab308' // yellow-500
+        return '#F0C880'
     }
   }, [])
 
   if (graphData.nodes.length === 0) {
     return (
-      <div className="h-full w-full flex items-center justify-center bg-muted">
-        <div className="text-center">
-          <div className="text-muted-foreground mb-2">No features to display</div>
-          <div className="text-sm text-muted-foreground/70">
+      <div className="h-full w-full flex items-center justify-center" style={{ background: '#FAFAF2' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '14px', color: '#6A6A20', marginBottom: '8px' }}>No features to display</div>
+          <div style={{ fontSize: '13px', color: '#9A9A50' }}>
             Create features to see the dependency graph
           </div>
         </div>
@@ -348,49 +369,60 @@ function DependencyGraphInner({ graphData, onNodeClick, activeAgents = [] }: Dep
   }
 
   return (
-    <div className="h-full w-full relative bg-background">
+    <div className="h-full w-full relative" style={{ background: '#FAFAF2' }}>
       {/* Layout toggle */}
-      <div className="absolute top-4 left-4 z-10 flex gap-2">
-        <Button
-          variant={direction === 'LR' ? 'default' : 'outline'}
-          size="sm"
+      <div className="absolute top-4 left-4 z-10 flex" style={{
+        background: '#FFFFFF', border: '1px solid #DDEC90', borderRadius: '8px', overflow: 'hidden',
+      }}>
+        <button
           onClick={() => onLayout('LR')}
+          style={{
+            fontSize: '12px', fontWeight: 700, padding: '6px 14px', cursor: 'pointer',
+            border: 'none', borderRight: '1px solid #DDEC90',
+            background: direction === 'LR' ? '#F5F8D0' : 'transparent',
+            color: direction === 'LR' ? '#7A8A00' : '#6A6A20',
+          }}
         >
           Horizontal
-        </Button>
-        <Button
-          variant={direction === 'TB' ? 'default' : 'outline'}
-          size="sm"
+        </button>
+        <button
           onClick={() => onLayout('TB')}
+          style={{
+            fontSize: '12px', fontWeight: 700, padding: '6px 14px', cursor: 'pointer',
+            border: 'none',
+            background: direction === 'TB' ? '#F5F8D0' : 'transparent',
+            color: direction === 'TB' ? '#7A8A00' : '#6A6A20',
+          }}
         >
           Vertical
-        </Button>
+        </button>
       </div>
 
       {/* Legend */}
-      <Card className="absolute top-4 right-4 z-10">
-        <CardContent className="p-3">
-          <div className="text-xs font-bold mb-2">Status</div>
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-2 text-xs">
-              <div className="w-3 h-3 rounded bg-yellow-400 border border-yellow-500" />
-              <span>Pending</span>
-            </div>
-            <div className="flex items-center gap-2 text-xs">
-              <div className="w-3 h-3 rounded bg-cyan-400 border border-cyan-500" />
-              <span>In Progress</span>
-            </div>
-            <div className="flex items-center gap-2 text-xs">
-              <div className="w-3 h-3 rounded bg-green-400 border border-green-500" />
-              <span>Done</span>
-            </div>
-            <div className="flex items-center gap-2 text-xs">
-              <div className="w-3 h-3 rounded bg-red-100 border border-red-400" />
-              <span>Blocked</span>
-            </div>
+      <div className="absolute top-4 right-4 z-10" style={{
+        background: '#FFFFFF', border: '1px solid #DDEC90', borderRadius: '8px',
+        padding: '12px 16px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+      }}>
+        <div style={{ fontSize: '12px', fontWeight: 700, color: '#1A1A00', marginBottom: '8px' }}>Status</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#6A6A20' }}>
+            <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#F0C880', border: '1px solid #A05A00' }} />
+            Pending
           </div>
-        </CardContent>
-      </Card>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#6A6A20' }}>
+            <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#BBCB64', border: '1px solid #7A8A00' }} />
+            In Progress
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#6A6A20' }}>
+            <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#7A8A00', border: '1px solid #5A6A00' }} />
+            Done
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#6A6A20' }}>
+            <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#FFE5E5', border: '1px solid #CF0F0F' }} />
+            Blocked
+          </div>
+        </div>
+      </div>
 
       <ReactFlow
         nodes={nodes}
@@ -405,15 +437,17 @@ function DependencyGraphInner({ graphData, onNodeClick, activeAgents = [] }: Dep
         minZoom={0.1}
         maxZoom={2}
       >
-        <Background color="#d4d4d8" gap={20} size={1} />
+        <Background color="#DDEC90" gap={20} size={1} />
         <Controls
-          className="!bg-card !border !border-border !rounded-lg !shadow-sm"
+          className="!rounded-lg !shadow-sm"
+          style={{ background: '#FFFFFF', border: '1px solid #DDEC90' }}
           showInteractive={false}
         />
         <MiniMap
           nodeColor={nodeColor}
-          className="!bg-card !border !border-border !rounded-lg !shadow-sm"
-          maskColor="rgba(0, 0, 0, 0.1)"
+          className="!rounded-lg !shadow-sm"
+          style={{ background: '#FFFFFF', border: '1px solid #DDEC90' }}
+          maskColor="rgba(122, 138, 0, 0.08)"
         />
       </ReactFlow>
     </div>

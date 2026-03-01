@@ -192,7 +192,7 @@ export function ExpandProjectChat({
       <div className="flex items-center justify-between p-4 border-b-2 border-border bg-card">
         <div className="flex items-center gap-3">
           <h2 className="font-display font-bold text-lg text-foreground">
-            Expand Project: {projectName}
+            Expand Odyssey: {projectName}
           </h2>
           <ConnectionIndicator />
           {featuresCreated > 0 && (

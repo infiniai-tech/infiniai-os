@@ -790,6 +790,7 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+    zoom: 1.1;
   }
 
   /* Form elements inherit colors */
@@ -1471,4 +1472,248 @@
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--muted-foreground);
+}
+
+/* ============================================================================
+   Theme: Olympus
+   Dark-first design with Olympic Gold and Divine Violet accents.
+   Inspired by Greek mythology — warm marble parchment text on near-black,
+   Cinzel serif headings, glassmorphism effects, gold glow interactions.
+   ============================================================================ */
+
+.theme-olympus {
+  --radius: 0.625rem;
+  --background: oklch(0.975 0.006 95);
+  --foreground: oklch(0.18 0.02 65);
+  --card: oklch(0.96 0.008 95);
+  --card-foreground: oklch(0.18 0.02 65);
+  --popover: oklch(0.975 0.006 95);
+  --popover-foreground: oklch(0.18 0.02 65);
+  --primary: oklch(0.75 0.16 64);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.92 0.05 118);
+  --secondary-foreground: oklch(0.25 0.02 65);
+  --muted: oklch(0.93 0.008 95);
+  --muted-foreground: oklch(0.50 0.01 65);
+  --accent: oklch(0.92 0.18 98);
+  --accent-foreground: oklch(0.18 0.02 65);
+  --destructive: oklch(0.48 0.22 27);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(0.88 0.012 95);
+  --input: oklch(0.94 0.006 95);
+  --ring: oklch(0.75 0.16 64);
+  --chart-1: oklch(0.75 0.16 64);
+  --chart-2: oklch(0.80 0.11 118);
+  --chart-3: oklch(0.92 0.18 98);
+  --chart-4: oklch(0.48 0.22 27);
+  --chart-5: oklch(0.68 0.14 85);
+  --sidebar: oklch(0.96 0.006 95);
+  --sidebar-foreground: oklch(0.18 0.02 65);
+  --sidebar-primary: oklch(0.75 0.16 64);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.92 0.05 118);
+  --sidebar-accent-foreground: oklch(0.25 0.02 65);
+  --sidebar-border: oklch(0.88 0.012 95);
+  --sidebar-ring: oklch(0.75 0.16 64);
+
+  --shadow-sm: 0 1px 2px 0 rgb(247 154 25 / 0.06);
+  --shadow: 0 1px 3px 0 rgb(247 154 25 / 0.08), 0 1px 2px -1px rgb(247 154 25 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(247 154 25 / 0.08), 0 2px 4px -2px rgb(247 154 25 / 0.05);
+  --shadow-lg: 0 10px 15px -3px rgb(247 154 25 / 0.10), 0 4px 6px -4px rgb(247 154 25 / 0.06);
+
+  --color-log-error: #CF0F0F;
+  --color-log-warning: #F79A19;
+  --color-log-info: #BBCB64;
+  --color-log-debug: #8a8a8a;
+  --color-log-success: #6b9e6b;
+
+  --color-status-pending: oklch(0.92 0.05 118);
+  --color-status-progress: oklch(0.88 0.12 98);
+  --color-status-done: oklch(0.85 0.10 64);
+
+  --font-sans: 'DM Sans', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+}
+
+.theme-olympus.dark {
+  --background: oklch(0.08 0.005 65);
+  --foreground: oklch(0.93 0.015 95);
+  --card: oklch(0.13 0.008 65);
+  --card-foreground: oklch(0.93 0.015 95);
+  --popover: oklch(0.13 0.008 65);
+  --popover-foreground: oklch(0.93 0.015 95);
+  --primary: oklch(0.78 0.16 64);
+  --primary-foreground: oklch(0.08 0 0);
+  --secondary: oklch(0.20 0.02 118);
+  --secondary-foreground: oklch(0.93 0.015 95);
+  --muted: oklch(0.22 0.005 65);
+  --muted-foreground: oklch(0.58 0.01 65);
+  --accent: oklch(0.90 0.17 98);
+  --accent-foreground: oklch(0.15 0.01 65);
+  --destructive: oklch(0.58 0.22 27);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(0.22 0.008 65);
+  --input: oklch(0.10 0.005 65);
+  --ring: oklch(0.78 0.16 64);
+  --chart-1: oklch(0.78 0.16 64);
+  --chart-2: oklch(0.75 0.11 118);
+  --chart-3: oklch(0.90 0.17 98);
+  --chart-4: oklch(0.58 0.22 27);
+  --chart-5: oklch(0.72 0.14 85);
+  --sidebar: oklch(0.10 0.005 65);
+  --sidebar-foreground: oklch(0.93 0.015 95);
+  --sidebar-primary: oklch(0.78 0.16 64);
+  --sidebar-primary-foreground: oklch(0.08 0 0);
+  --sidebar-accent: oklch(0.20 0.02 118);
+  --sidebar-accent-foreground: oklch(0.93 0.015 95);
+  --sidebar-border: oklch(0.22 0.008 65);
+  --sidebar-ring: oklch(0.78 0.16 64);
+
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.4);
+  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.5), 0 1px 2px -1px rgb(0 0 0 / 0.4);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.5), 0 2px 4px -2px rgb(0 0 0 / 0.4);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.4);
+
+  --color-log-error: #f87171;
+  --color-log-warning: #FFE52A;
+  --color-log-info: #BBCB64;
+  --color-log-debug: #8a8a8a;
+  --color-log-success: #4ade80;
+
+  --color-status-pending: oklch(0.20 0.02 118);
+  --color-status-progress: oklch(0.28 0.08 98);
+  --color-status-done: oklch(0.28 0.08 64);
+}
+
+/* ── Olympus: Glassmorphism Utilities ───────────────────────────────────────── */
+
+.theme-olympus .glass,
+.theme-olympus.dark .glass {
+  background: oklch(0.78 0.16 64 / 6%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid oklch(0.78 0.16 64 / 24%);
+}
+
+.theme-olympus .glass-divine,
+.theme-olympus.dark .glass-divine {
+  background: oklch(0.80 0.11 118 / 6%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid oklch(0.80 0.11 118 / 24%);
+}
+
+.theme-olympus .glass-neutral,
+.theme-olympus.dark .glass-neutral {
+  background: rgb(255 255 255 / 4%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgb(255 255 255 / 10%);
+}
+
+/* ── Olympus: Ember Gradient & Shimmer Text ─────────────────────────────────── */
+
+.theme-olympus .text-gold-gradient {
+  background: linear-gradient(135deg, #FFE52A 0%, #F79A19 45%, #CF0F0F 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.theme-olympus .text-gold-shimmer {
+  background: linear-gradient(90deg, #CF0F0F 0%, #F79A19 30%, #FFE52A 50%, #F79A19 70%, #CF0F0F 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: olympus-shimmer 2.5s linear infinite;
+}
+
+.theme-olympus .text-divine-gradient {
+  background: linear-gradient(135deg, #BBCB64 0%, #FFE52A 50%, #F79A19 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ── Olympus: Ember Glow Button ─────────────────────────────────────────────── */
+
+.theme-olympus .btn-gold {
+  box-shadow: 0 0 0 oklch(0.75 0.16 64 / 0%);
+  transition: box-shadow 0.2s ease, opacity 0.2s ease;
+}
+.theme-olympus .btn-gold:hover {
+  box-shadow: 0 0 20px oklch(0.75 0.16 64 / 40%);
+}
+
+/* ── Olympus: Meander Border ────────────────────────────────────────────────── */
+
+.theme-olympus .meander-border {
+  border-top: 1px solid;
+  border-image: linear-gradient(90deg, transparent 0%, oklch(0.75 0.16 64 / 40%) 20%, oklch(0.75 0.16 64 / 70%) 50%, oklch(0.75 0.16 64 / 40%) 80%, transparent 100%) 1;
+}
+
+/* ── Olympus: Hero Glow Background ──────────────────────────────────────────── */
+
+.theme-olympus .bg-olympus {
+  background-image: radial-gradient(ellipse 70% 45% at 50% 0%, oklch(0.75 0.16 64 / 14%) 0%, transparent 70%);
+}
+
+/* ── Olympus: Cinzel display font for headings ──────────────────────────────── */
+
+.theme-olympus h1,
+.theme-olympus h2,
+.theme-olympus h3,
+.theme-olympus .font-display {
+  font-family: 'Cinzel', Georgia, serif;
+  font-weight: 700;
+}
+
+/* ── Olympus: Scrollbar accent ──────────────────────────────────────────────── */
+
+.theme-olympus ::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.75 0.16 64);
+}
+
+/* ── Olympus: Dashboard Utilities ─────────────────────────────────────────── */
+
+.theme-olympus .bg-dashboard {
+  background-color: #f8f9f4;
+}
+
+.theme-olympus.dark .bg-dashboard {
+  background-color: #0e0f0a;
+}
+
+.theme-olympus .text-dashboard-heading {
+  color: #1a1d10;
+}
+
+.theme-olympus.dark .text-dashboard-heading {
+  color: #e8eada;
+}
+
+.theme-olympus .text-dashboard-body {
+  color: #2a2f1a;
+}
+
+.theme-olympus.dark .text-dashboard-body {
+  color: #e8eada;
+}
+
+.theme-olympus .border-dashboard {
+  border-color: rgb(187 203 100 / 0.2);
+}
+
+.theme-olympus .bg-dashboard-card {
+  background-color: #ffffff;
+}
+
+.theme-olympus.dark .bg-dashboard-card {
+  background-color: #1a1c14;
+}
+
+@keyframes olympus-shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
 }

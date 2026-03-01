@@ -20,10 +20,10 @@ export function ProjectSetupRequired({
       <Card className="border-2">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-display">
-            Project Setup Required
+            The Oracle Awaits Your Vision
           </CardTitle>
           <CardDescription className="text-base">
-            <span className="font-semibold">{projectName}</span> needs an app spec to get started
+            <span className="font-semibold">{projectName}</span> needs a modernization specification to begin the odyssey
           </CardDescription>
           {projectPath && (
             <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mt-2">
@@ -34,7 +34,7 @@ export function ProjectSetupRequired({
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-center text-muted-foreground">
-            Choose how you want to create your app specification:
+            Choose how you wish to define the modernization plan:
           </p>
 
           <div className="grid gap-4 md:grid-cols-2">
@@ -47,9 +47,9 @@ export function ProjectSetupRequired({
                 <div className="w-12 h-12 mx-auto bg-primary/10 rounded-full flex items-center justify-center">
                   <Sparkles className="text-primary" size={24} />
                 </div>
-                <h3 className="font-semibold text-lg">Create with Claude</h3>
+                <h3 className="font-semibold text-lg">Commune with the Oracle</h3>
                 <p className="text-sm text-muted-foreground">
-                  Describe your app idea and Claude will help create a detailed specification
+                  The oracle will analyze your codebase and craft a modernization plan
                 </p>
                 <Button className="w-full">
                   <Sparkles size={16} className="mr-2" />
@@ -67,9 +67,9 @@ export function ProjectSetupRequired({
                 <div className="w-12 h-12 mx-auto bg-muted rounded-full flex items-center justify-center">
                   <FileEdit className="text-muted-foreground" size={24} />
                 </div>
-                <h3 className="font-semibold text-lg">Edit Templates Manually</h3>
+                <h3 className="font-semibold text-lg">Inscribe Manually</h3>
                 <p className="text-sm text-muted-foreground">
-                  Create the prompts directory and edit template files yourself
+                  Create the prompts directory and inscribe the sacred templates yourself
                 </p>
                 <Button variant="outline" className="w-full">
                   <FileEdit size={16} className="mr-2" />
@@ -80,8 +80,8 @@ export function ProjectSetupRequired({
           </div>
 
           <p className="text-center text-xs text-muted-foreground pt-4">
-            The app spec tells the agent what to build. It includes the application name,
-            description, tech stack, and feature requirements.
+            The modernization specification guides the gods in transforming your legacy codebase.
+            It includes the analysis, target stack, migration strategy, and feature requirements.
           </p>
         </CardContent>
       </Card>

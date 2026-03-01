@@ -67,14 +67,27 @@ export async function listProjects(): Promise<ProjectSummary[]> {
   return fetchJSON('/projects')
 }
 
+export interface TargetStack {
+  frontend: string | null
+  backend: string | null
+  database: string | null
+  styling: string | null
+}
+
 export async function createProject(
   name: string,
   path: string,
-  specMethod: 'claude' | 'manual' = 'manual'
+  specMethod: 'claude' | 'manual' = 'manual',
+  targetStack?: TargetStack
 ): Promise<ProjectSummary> {
   return fetchJSON('/projects', {
     method: 'POST',
-    body: JSON.stringify({ name, path, spec_method: specMethod }),
+    body: JSON.stringify({
+      name,
+      path,
+      spec_method: specMethod,
+      ...(targetStack ? { target_stack: targetStack } : {}),
+    }),
   })
 }
 
@@ -563,4 +576,64 @@ export async function deleteSchedule(
 
 export async function getNextScheduledRun(projectName: string): Promise<NextRunResponse> {
   return fetchJSON(`/projects/${encodeURIComponent(projectName)}/schedules/next`)
+}
+
+// ============================================================================
+// Spec Files API (Brownfield Modernization)
+// ============================================================================
+
+export interface SpecFileInfo {
+  filename: string
+  status: 'pending' | 'approved'
+  approved_at: string | null
+  size: number
+}
+
+export interface SpecListResponse {
+  files: SpecFileInfo[]
+  all_approved: boolean
+  analysis_status: 'not_started' | 'running' | 'complete' | 'error'
+}
+
+export interface SpecFileContent {
+  filename: string
+  content: string
+  status: string
+}
+
+export interface ModernizeStatusResponse {
+  status: 'not_started' | 'idle' | 'running' | 'complete' | 'error'
+  error: string | null
+  progress_messages: string[]
+}
+
+export async function listSpecFiles(projectName: string): Promise<SpecListResponse> {
+  return fetchJSON(`/projects/${encodeURIComponent(projectName)}/specs`)
+}
+
+export async function readSpecFile(projectName: string, filename: string): Promise<SpecFileContent> {
+  return fetchJSON(`/projects/${encodeURIComponent(projectName)}/specs/${encodeURIComponent(filename)}`)
+}
+
+export async function writeSpecFile(projectName: string, filename: string, content: string): Promise<SpecFileContent> {
+  return fetchJSON(`/projects/${encodeURIComponent(projectName)}/specs/${encodeURIComponent(filename)}`, {
+    method: 'PUT',
+    body: JSON.stringify({ content }),
+  })
+}
+
+export async function approveSpecFile(projectName: string, filename: string): Promise<{ filename: string; status: string; all_approved: boolean }> {
+  return fetchJSON(`/projects/${encodeURIComponent(projectName)}/specs/${encodeURIComponent(filename)}/approve`, {
+    method: 'POST',
+  })
+}
+
+export async function startModernizeAnalysis(projectName: string): Promise<{ status: string; message: string }> {
+  return fetchJSON(`/projects/${encodeURIComponent(projectName)}/specs/modernize/start`, {
+    method: 'POST',
+  })
+}
+
+export async function getModernizeStatus(projectName: string): Promise<ModernizeStatusResponse> {
+  return fetchJSON(`/projects/${encodeURIComponent(projectName)}/specs/modernize/status`)
 }

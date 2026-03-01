@@ -1,14 +1,11 @@
-import { Rocket, ChevronDown, ChevronUp, Activity } from 'lucide-react'
+import { Crown, ChevronDown, ChevronUp, Activity } from 'lucide-react'
 import { useState } from 'react'
 import { AgentCard, AgentLogModal } from './AgentCard'
 import { ActivityFeed } from './ActivityFeed'
 import { OrchestratorStatusCard } from './OrchestratorStatusCard'
 import type { ActiveAgent, AgentLogEntry, OrchestratorStatus } from '../lib/types'
-import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 
-const ACTIVITY_COLLAPSED_KEY = 'autoforge-activity-collapsed'
+const ACTIVITY_COLLAPSED_KEY = 'olympus-activity-collapsed'
 
 interface AgentMissionControlProps {
   agents: ActiveAgent[]
@@ -50,53 +47,86 @@ export function AgentMissionControl({
     }
   }
 
-  // Don't render if no orchestrator status and no agents
   if (!orchestratorStatus && agents.length === 0) {
     return null
   }
 
+  const statusText = agents.length > 0
+    ? `${agents.length} ${agents.length === 1 ? 'agent' : 'agents'} active`
+    : orchestratorStatus?.state === 'initializing'
+      ? 'Initializing'
+      : orchestratorStatus?.state === 'draining'
+        ? 'Draining'
+        : orchestratorStatus?.state === 'paused'
+          ? 'Paused'
+          : orchestratorStatus?.state === 'complete'
+            ? 'Complete'
+            : 'Orchestrating'
+
   return (
-    <Card className="mb-6 overflow-hidden py-0">
+    <div
+      style={{
+        background: '#FFFFFF',
+        border: '1px solid #DDEC90',
+        borderRadius: '8px',
+        marginBottom: '24px',
+        overflow: 'hidden',
+        fontFamily: 'Arial, sans-serif',
+      }}
+    >
       {/* Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between px-4 py-3 bg-primary hover:bg-primary/90 transition-colors"
+        style={{
+          background: '#7A8A00',
+          color: '#FFFFFF',
+          border: 'none',
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '10px 16px',
+          cursor: 'pointer',
+          fontFamily: 'Arial, sans-serif',
+        }}
       >
-        <div className="flex items-center gap-2">
-          <Rocket size={20} className="text-primary-foreground" />
-          <span className="font-semibold text-primary-foreground uppercase tracking-wide">
-            Mission Control
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Crown size={20} style={{ color: '#FFFFFF' }} />
+          <span style={{ fontWeight: 600, color: '#FFFFFF', textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '14px' }}>
+            Zeus Command Center
           </span>
-          <Badge variant="secondary" className="ml-2">
-            {agents.length > 0
-              ? `${agents.length} ${agents.length === 1 ? 'agent' : 'agents'} active`
-              : orchestratorStatus?.state === 'initializing'
-                ? 'Initializing'
-                : orchestratorStatus?.state === 'draining'
-                  ? 'Draining'
-                  : orchestratorStatus?.state === 'paused'
-                    ? 'Paused'
-                    : orchestratorStatus?.state === 'complete'
-                      ? 'Complete'
-                      : 'Orchestrating'
-            }
-          </Badge>
+          <span
+            style={{
+              background: '#F5F8D0',
+              color: '#7A8A00',
+              border: '1px solid #DDEC90',
+              borderRadius: '20px',
+              padding: '3px 10px',
+              fontSize: '11px',
+              fontWeight: 700,
+              marginLeft: '8px',
+            }}
+          >
+            {statusText}
+          </span>
         </div>
         {isExpanded ? (
-          <ChevronUp size={20} className="text-primary-foreground" />
+          <ChevronUp size={20} style={{ color: '#FFFFFF' }} />
         ) : (
-          <ChevronDown size={20} className="text-primary-foreground" />
+          <ChevronDown size={20} style={{ color: '#FFFFFF' }} />
         )}
       </button>
 
       {/* Content */}
       <div
-        className={`
-          transition-all duration-300 ease-out
-          ${isExpanded ? 'max-h-[600px] opacity-100 overflow-y-auto' : 'max-h-0 opacity-0 overflow-hidden'}
-        `}
+        style={{
+          transition: 'all 300ms ease-out',
+          maxHeight: isExpanded ? '600px' : '0px',
+          opacity: isExpanded ? 1 : 0,
+          overflow: isExpanded ? 'auto' : 'hidden',
+        }}
       >
-        <CardContent className="p-4">
+        <div style={{ padding: '16px', background: '#FFFFFF' }}>
           {/* Orchestrator Status Card */}
           {orchestratorStatus && (
             <OrchestratorStatusCard status={orchestratorStatus} />
@@ -104,7 +134,7 @@ export function AgentMissionControl({
 
           {/* Agent Cards Row */}
           {agents.length > 0 && (
-            <div className="flex gap-4 overflow-x-auto pb-4">
+            <div style={{ display: 'flex', gap: '16px', overflowX: 'auto', paddingBottom: '16px' }}>
               {agents.map((agent) => (
                 <AgentCard
                   key={`agent-${agent.agentIndex}`}
@@ -122,37 +152,47 @@ export function AgentMissionControl({
 
           {/* Collapsible Activity Feed */}
           {recentActivity.length > 0 && (
-            <div className="mt-4 pt-4 border-t">
-              <Button
-                variant="ghost"
-                size="sm"
+            <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #DDEC90' }}>
+              <button
                 onClick={toggleActivityCollapsed}
-                className="gap-2 mb-2 h-auto p-1"
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  marginBottom: '8px',
+                  padding: '4px',
+                  cursor: 'pointer',
+                  fontFamily: 'Arial, sans-serif',
+                }}
               >
-                <Activity size={14} className="text-muted-foreground" />
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                <Activity size={14} style={{ color: '#7A8A00' }} />
+                <span style={{ fontSize: '11px', fontWeight: 600, color: '#7A8A00', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   Recent Activity
                 </span>
-                <span className="text-xs text-muted-foreground">
+                <span style={{ fontSize: '11px', color: '#6A6A20' }}>
                   ({recentActivity.length})
                 </span>
                 {activityCollapsed ? (
-                  <ChevronDown size={14} className="text-muted-foreground" />
+                  <ChevronDown size={14} style={{ color: '#7A8A00' }} />
                 ) : (
-                  <ChevronUp size={14} className="text-muted-foreground" />
+                  <ChevronUp size={14} style={{ color: '#7A8A00' }} />
                 )}
-              </Button>
+              </button>
               <div
-                className={`
-                  transition-all duration-200 ease-out overflow-hidden
-                  ${activityCollapsed ? 'max-h-0 opacity-0' : 'max-h-[300px] opacity-100'}
-                `}
+                style={{
+                  transition: 'all 200ms ease-out',
+                  overflow: 'hidden',
+                  maxHeight: activityCollapsed ? '0px' : '300px',
+                  opacity: activityCollapsed ? 0 : 1,
+                }}
               >
                 <ActivityFeed activities={recentActivity} maxItems={5} showHeader={false} />
               </div>
             </div>
           )}
-        </CardContent>
+        </div>
       </div>
 
       {/* Log Modal */}
@@ -163,6 +203,6 @@ export function AgentMissionControl({
           onClose={() => setSelectedAgentForLogs(null)}
         />
       )}
-    </Card>
+    </div>
   )
 }

@@ -170,7 +170,7 @@ export function AssistantPanel({ projectName, isOpen, onClose }: AssistantPanelP
         `}
         style={{ width: `${panelWidth}px`, maxWidth: `${MAX_WIDTH_VW}vw` }}
         role="dialog"
-        aria-label="Project Assistant"
+        aria-label="Oracle Assistant"
         aria-hidden={!isOpen}
       >
         {/* Resize handle */}
@@ -188,7 +188,7 @@ export function AssistantPanel({ projectName, isOpen, onClose }: AssistantPanelP
               <Bot size={18} />
             </div>
             <div>
-              <h2 className="font-semibold">Project Assistant</h2>
+              <h2 className="font-semibold">Oracle</h2>
               <p className="text-xs opacity-80 font-mono">{projectName}</p>
             </div>
           </div>
@@ -197,8 +197,8 @@ export function AssistantPanel({ projectName, isOpen, onClose }: AssistantPanelP
             size="icon"
             onClick={onClose}
             className="text-primary-foreground hover:bg-primary-foreground/20"
-            title="Close Assistant (Press A)"
-            aria-label="Close Assistant"
+            title="Close Oracle (Press A)"
+            aria-label="Close Oracle"
           >
             <X size={18} />
           </Button>

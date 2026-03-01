@@ -16,6 +16,12 @@ export interface ProjectSummary {
   has_spec: boolean
   stats: ProjectStats
   default_concurrency: number
+  target_stack?: {
+    frontend: string | null
+    backend: string | null
+    database: string | null
+    styling: string | null
+  } | null
 }
 
 export interface ProjectDetail extends ProjectSummary {

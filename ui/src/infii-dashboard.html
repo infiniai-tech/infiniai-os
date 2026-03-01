@@ -1,0 +1,1818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InfiniiAI — Command Center</title>
+<style>
+/* ── RESET & BASE ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 14px; }
+body {
+  font-family: Arial, sans-serif;
+  background: #FAFAF2;
+  color: #1A1A00;
+  min-height: 100vh;
+  line-height: 1.4;
+}
+button { font-family: Arial, sans-serif; cursor: pointer; }
+
+/* ── TOP NAV ── */
+.topnav {
+  background: #1A1A00;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 0;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  border-bottom: 2px solid #2A2A00;
+}
+.logo {
+  font-size: 17px;
+  font-weight: 700;
+  color: #FFFFFF;
+  letter-spacing: -0.3px;
+  flex-shrink: 0;
+  margin-right: 32px;
+}
+.logo span { color: #FFE52A; }
+.logo sup { font-size: 8px; font-weight: 400; letter-spacing: 2px; color: #4A4A10; text-transform: uppercase; margin-left: 3px; }
+.nav-tabs { display: flex; gap: 2px; }
+.nav-tab {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 6px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #4A4A10;
+  border: none;
+  background: transparent;
+  transition: all 0.15s;
+}
+.nav-tab:hover { color: #BBCB64; }
+.nav-tab.active { background: #BBCB64; color: #1A1A00; }
+.nav-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.nav-pill-badge {
+  font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+  padding: 4px 10px; border-radius: 20px;
+  background: rgba(187,203,100,0.12); color: #BBCB64;
+  border: 1px solid rgba(187,203,100,0.25);
+}
+.nav-pill-badge.warn {
+  background: rgba(247,154,25,0.12); color: #F79A19;
+  border-color: rgba(247,154,25,0.3);
+}
+.nav-avatar {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: #BBCB64; color: #1A1A00;
+  font-size: 11px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ── APP BODY ── */
+.app-body { display: flex; height: calc(100vh - 52px); overflow: hidden; }
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  background: #FFFFFF;
+  border-right: 1px solid #DDEC90;
+  overflow-y: auto;
+  padding: 16px 0 24px;
+}
+.sb-section { margin-bottom: 4px; }
+.sb-label {
+  font-size: 9px; font-weight: 700; letter-spacing: 2px;
+  text-transform: uppercase; color: #7A8A00;
+  padding: 10px 18px 5px;
+}
+.sb-item {
+  display: flex; align-items: center; gap: 9px;
+  padding: 8px 18px; font-size: 12px; font-weight: 600;
+  color: #6A6A20; cursor: pointer;
+  border-left: 3px solid transparent;
+  transition: all 0.12s;
+}
+.sb-item:hover { background: #F5F8D0; color: #1A1A00; }
+.sb-item.active { background: #F5F8D0; border-left-color: #BBCB64; color: #1A1A00; }
+.sb-dot { width: 7px; height: 7px; border-radius: 50%; background: #E0E0E0; flex-shrink: 0; }
+.sb-dot.g { background: #22C55E; }
+.sb-dot.o { background: #F79A19; }
+.sb-dot.y { background: #FFE52A; }
+.sb-count {
+  margin-left: auto; font-size: 9px; font-weight: 700;
+  background: #F5F8D0; color: #7A8A00;
+  border: 1px solid #DDEC90; border-radius: 10px;
+  padding: 1px 7px; flex-shrink: 0;
+}
+.sb-count.warn { background: #FFF0DC; color: #A05A00; border-color: #F0C880; }
+.sb-divider { height: 1px; background: #DDEC90; margin: 8px 18px; }
+
+/* ── MAIN SCROLL AREA ── */
+.main {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 28px 40px;
+}
+
+/* ── PAGE VIEWS ── */
+.view { display: none; }
+.view.active { display: block; }
+
+/* ── PAGE HEADER ── */
+.page-header {
+  display: flex; align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+.ph-eyebrow {
+  font-size: 9px; font-weight: 700; letter-spacing: 2px;
+  text-transform: uppercase; color: #7A8A00; margin-bottom: 3px;
+}
+.ph-title { font-size: 24px; font-weight: 700; color: #1A1A00; letter-spacing: -0.3px; }
+.ph-title span { color: #7A8A00; }
+.ph-sub { font-size: 11px; color: #6A6A20; margin-top: 3px; }
+.ph-actions { display: flex; gap: 8px; align-items: center; }
+
+/* ── BUTTONS ── */
+.btn {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;
+  padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer;
+  transition: all 0.12s;
+}
+.btn-ghost { background: transparent; color: #6A6A20; border: 1px solid #DDEC90; }
+.btn-ghost:hover { border-color: #BBCB64; color: #1A1A00; }
+.btn-lime { background: #BBCB64; color: #1A1A00; }
+.btn-lime:hover { background: #AABB50; }
+.btn-orange { background: #F79A19; color: #FFFFFF; }
+.btn-orange:hover { background: #D88515; }
+
+/* ── FILTER BAR ── */
+.filter-bar {
+  display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+  background: #FFFFFF; border: 1px solid #DDEC90; border-radius: 8px;
+  padding: 10px 14px; margin-bottom: 20px;
+}
+.filter-group { display: flex; align-items: center; gap: 6px; }
+.filter-group-label { font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #7A8A00; }
+.f-chip {
+  font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 20px;
+  border: 1px solid #DDEC90; color: #6A6A20;
+  cursor: pointer; background: #FAFAF2; transition: all 0.12s;
+}
+.f-chip:hover { border-color: #BBCB64; color: #1A1A00; }
+.f-chip.on { background: #BBCB64; color: #1A1A00; border-color: #BBCB64; }
+.filter-sep { width: 1px; height: 20px; background: #DDEC90; margin: 0 4px; }
+.filter-search {
+  margin-left: auto; font-size: 11px; font-family: Arial, sans-serif;
+  padding: 5px 10px; border-radius: 6px;
+  border: 1px solid #DDEC90; background: #FAFAF2; color: #1A1A00; outline: none; width: 180px;
+}
+.filter-search:focus { border-color: #BBCB64; }
+
+/* ── KPI ROW ── */
+.kpi-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 20px; }
+.kpi-card {
+  background: #FFFFFF; border: 1px solid #DDEC90; border-radius: 8px;
+  padding: 14px 14px 12px 18px;
+  border-left: 4px solid #BBCB64;
+}
+.kpi-card.kc-y { border-left-color: #FFE52A; }
+.kpi-card.kc-o { border-left-color: #F79A19; }
+.kpi-card.kc-r { border-left-color: #CF0F0F; }
+.kpi-card.kc-g { border-left-color: #22C55E; }
+.kpi-val { font-size: 26px; font-weight: 700; color: #7A8A00; line-height: 1; }
+.kpi-card.kc-y .kpi-val { color: #B8A000; }
+.kpi-card.kc-o .kpi-val { color: #C07000; }
+.kpi-card.kc-r .kpi-val { color: #CF0F0F; }
+.kpi-card.kc-g .kpi-val { color: #166534; }
+.kpi-lbl { font-size: 10px; color: #6A6A20; margin-top: 4px; line-height: 1.3; }
+.kpi-delta { font-size: 9px; font-weight: 700; color: #22C55E; margin-top: 3px; }
+.kpi-delta.neg { color: #CF0F0F; }
+.kpi-delta.muted { color: #6A6A20; }
+
+/* ── TWO-COL ── */
+.two-col { display: grid; grid-template-columns: 1fr 320px; gap: 18px; margin-bottom: 20px; }
+
+/* ── CARD ── */
+.card { background: #FFFFFF; border: 1px solid #DDEC90; border-radius: 8px; overflow: hidden; }
+.card-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; border-bottom: 1px solid #DDEC90; background: #FAFAF2;
+}
+.card-head-title {
+  font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #7A8A00;
+}
+.card-head-right { display: flex; gap: 6px; align-items: center; }
+.badge {
+  font-size: 8px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+  padding: 3px 8px; border-radius: 20px;
+}
+.b-lime { background: #F5F8D0; color: #7A8A00; border: 1px solid #DDEC90; }
+.b-green { background: #DCFCE7; color: #166534; border: 1px solid #86EFAC; }
+.b-orange { background: #FFF0DC; color: #A05A00; border: 1px solid #F0C880; }
+.b-red { background: #FEE2E2; color: #CF0F0F; border: 1px solid #FCA5A5; }
+.b-yellow { background: #FFFBCC; color: #7A6500; border: 1px solid #FDE047; }
+.b-blue { background: #EEF2FF; color: #3730A3; border: 1px solid #C7D2FE; }
+
+/* ── PROJECT TABLE ── */
+.proj-table { width: 100%; border-collapse: collapse; }
+.proj-table th {
+  font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+  color: #6A6A20; padding: 8px 12px; border-bottom: 2px solid #DDEC90;
+  text-align: left; background: #FAFAF2; white-space: nowrap;
+}
+.proj-table td {
+  padding: 10px 12px; border-bottom: 1px solid #F5F8D0;
+  vertical-align: middle;
+}
+.proj-table tr:hover td { background: #F5F8D0; cursor: pointer; }
+.proj-name { font-size: 13px; font-weight: 700; color: #1A1A00; }
+.proj-sub { font-size: 10px; color: #6A6A20; margin-top: 2px; }
+
+.prog-bar-wrap { display: flex; align-items: center; gap: 6px; }
+.prog-track { flex: 1; height: 5px; background: #F5F8D0; border-radius: 3px; overflow: hidden; min-width: 55px; }
+.prog-fill { height: 100%; border-radius: 3px; background: #BBCB64; }
+.prog-fill.o { background: #F79A19; }
+.prog-fill.y { background: #FFE52A; }
+.prog-pct { font-size: 10px; font-weight: 700; color: #7A8A00; min-width: 28px; }
+.prog-pct.o { color: #C07000; }
+.prog-pct.y { color: #B8A000; }
+.phase-lbl { font-size: 9px; color: #6A6A20; margin-top: 3px; }
+
+.it-pill {
+  font-size: 8px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;
+  padding: 3px 8px; border-radius: 20px; white-space: nowrap;
+}
+.it-folder { background: #EEF2FF; color: #3730A3; border: 1px solid #C7D2FE; }
+.it-figma  { background: #FFF0F9; color: #9D174D; border: 1px solid #FBCFE8; }
+.it-proto  { background: #FFFBCC; color: #7A6500; border: 1px solid #FDE047; }
+
+.hitl-pill {
+  font-size: 8px; font-weight: 700; padding: 3px 8px; border-radius: 20px;
+  display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;
+}
+.hitl-clear { background: #DCFCE7; color: #166534; border: 1px solid #86EFAC; }
+.hitl-pending { background: #FFF0DC; color: #A05A00; border: 1px solid #F0C880; }
+.hitl-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+
+.agent-avs { display: flex; }
+.agent-av {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: #F5F8D0; border: 2px solid #FFFFFF;
+  font-size: 8px; font-weight: 700; color: #7A8A00;
+  display: flex; align-items: center; justify-content: center;
+  margin-right: -5px; flex-shrink: 0;
+}
+.agent-av.act { background: #BBCB64; }
+
+.open-btn {
+  font-size: 10px; font-weight: 700; color: #7A8A00; cursor: pointer;
+  padding: 4px 9px; border-radius: 4px; border: 1px solid #DDEC90;
+  background: transparent; white-space: nowrap; transition: all 0.12s;
+}
+.open-btn:hover { background: #F5F8D0; border-color: #BBCB64; }
+
+/* ── RIGHT PANEL ── */
+.right-panels { display: flex; flex-direction: column; gap: 16px; }
+.card-body { padding: 14px 16px; }
+
+/* ── AGENT LIST ── */
+.agent-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 0; border-bottom: 1px solid #F5F8D0;
+}
+.agent-row:last-of-type { border-bottom: none; }
+.ag-icon {
+  width: 34px; height: 34px; border-radius: 8px; border: 1.5px solid #DDEC90;
+  background: #FAFAF2; display: flex; align-items: center; justify-content: center;
+  font-size: 16px; flex-shrink: 0;
+}
+.ag-info { flex: 1; min-width: 0; }
+.ag-name { font-size: 12px; font-weight: 700; color: #1A1A00; }
+.ag-role { font-size: 10px; color: #6A6A20; }
+.ag-type {
+  font-size: 8px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+  padding: 2px 7px; border-radius: 20px; border: 1px solid; flex-shrink: 0;
+}
+.ag-lead { background: #FFF0DC; color: #A05A00; border-color: #F0C880; }
+.ag-int  { background: #F5F8D0; color: #7A8A00; border-color: #DDEC90; }
+.ag-spc  { background: #EEF2FF; color: #3730A3; border-color: #C7D2FE; }
+.ag-status { font-size: 8px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: #22C55E; display: flex; align-items: center; gap: 4px; margin-top: 2px; }
+.ag-sdot { width: 5px; height: 5px; border-radius: 50%; background: #22C55E; }
+
+/* ── TOKEN / COST ── */
+.tok-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.tok-lbl { font-size: 10px; color: #6A6A20; width: 68px; flex-shrink: 0; font-weight: 600; }
+.tok-track { flex: 1; height: 6px; background: #F5F8D0; border-radius: 3px; overflow: hidden; }
+.tok-fill { height: 100%; border-radius: 3px; }
+.tok-pct { font-size: 9px; color: #6A6A20; width: 30px; text-align: right; flex-shrink: 0; }
+.cost-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid #F5F8D0; }
+.cost-row:last-child { border-bottom: none; }
+.cost-lbl { font-size: 11px; color: #1A1A00; font-weight: 600; }
+.cost-val { font-size: 12px; font-weight: 700; color: #7A8A00; }
+.cost-val.o { color: #C07000; }
+
+/* ── ORCHESTRATION FLOW ── */
+.orch-flow {
+  display: flex; align-items: center; overflow-x: auto;
+  padding: 16px 16px; gap: 0;
+}
+.orch-node { display: flex; flex-direction: column; align-items: center; min-width: 72px; }
+.orch-icon {
+  width: 40px; height: 40px; border-radius: 8px;
+  background: #F5F8D0; border: 1.5px solid #DDEC90;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; margin-bottom: 5px; position: relative;
+}
+.orch-icon.running { background: #BBCB64; border-color: #7A8A00; }
+.orch-icon.lead    { background: #F79A19; border-color: #D07000; }
+.orch-pulse {
+  position: absolute; top: -3px; right: -3px;
+  width: 9px; height: 9px; border-radius: 50%;
+  background: #22C55E; border: 2px solid #FFFFFF;
+}
+.orch-lbl { font-size: 9px; font-weight: 700; color: #1A1A00; text-align: center; }
+.orch-sub { font-size: 8px; color: #6A6A20; text-align: center; }
+.orch-arrow { flex: 1; height: 2px; background: #DDEC90; min-width: 16px; position: relative; }
+.orch-arrow::after {
+  content: '▶'; position: absolute; right: -5px; top: -6px;
+  font-size: 8px; color: #DDEC90;
+}
+.orch-arrow.active { background: #BBCB64; }
+.orch-arrow.active::after { color: #7A8A00; }
+
+/* ── UPLOAD SECTION ── */
+.upload-section { display: none; margin-bottom: 20px; }
+.upload-section.show { display: block; }
+.upload-zone {
+  border: 2px dashed #DDEC90; border-radius: 8px;
+  padding: 28px; text-align: center; background: #FAFAF2;
+  cursor: pointer; transition: all 0.15s; margin: 16px;
+}
+.upload-zone:hover { border-color: #BBCB64; background: #F5F8D0; }
+.upload-icon { font-size: 32px; margin-bottom: 8px; }
+.upload-title { font-size: 14px; font-weight: 700; color: #1A1A00; }
+.upload-sub { font-size: 11px; color: #6A6A20; margin-top: 4px; }
+.upload-pills { display: flex; gap: 8px; justify-content: center; margin-top: 14px; }
+.config-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 0 16px; }
+.cfg-lbl { font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #6A6A20; margin-bottom: 5px; }
+.cfg-select {
+  width: 100%; font-size: 11px; font-family: Arial, sans-serif;
+  padding: 7px 9px; border-radius: 6px; border: 1px solid #DDEC90;
+  background: #FAFAF2; color: #1A1A00; outline: none; cursor: pointer;
+}
+.cfg-select:focus { border-color: #BBCB64; }
+.upload-actions { display: flex; gap: 10px; padding: 14px 16px 16px; }
+
+/* ══════════════════════════════
+   KANBAN VIEW
+══════════════════════════════ */
+.kanban-header {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 20px; padding-bottom: 16px;
+  border-bottom: 2px solid #DDEC90; flex-wrap: wrap;
+}
+.kb-back {
+  font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+  color: #7A8A00; cursor: pointer; display: flex; align-items: center; gap: 5px;
+  padding: 5px 10px; border-radius: 4px; border: 1px solid #DDEC90; background: transparent;
+  transition: all 0.12s;
+}
+.kb-back:hover { background: #F5F8D0; }
+.kb-proj-name { font-size: 20px; font-weight: 700; color: #1A1A00; }
+.kb-meta { font-size: 10px; color: #6A6A20; }
+.kb-badges { display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* ── KANBAN BOARD ── */
+.kanban-board { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+.kb-col {}
+.kb-col-head {
+  font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+  padding: 8px 10px; border-radius: 6px 6px 0 0;
+  border: 1px solid #DDEC90; border-bottom: none;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.kb-col-head .kb-col-count { font-size: 11px; font-weight: 700; }
+.kch-backlog  { background: #FAFAF2; color: #6A6A20; }
+.kch-progress { background: #EEF2FF; color: #3730A3; }
+.kch-review   { background: #FFFBCC; color: #7A6500; }
+.kch-hitl     { background: #FFF0DC; color: #A05A00; }
+.kch-done     { background: #DCFCE7; color: #166534; }
+.kb-col-body {
+  min-height: 180px; padding: 8px;
+  background: #FAFAF2; border: 1px solid #DDEC90;
+  border-radius: 0 0 6px 6px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+
+/* ── KANBAN CARDS ── */
+.kb-card {
+  background: #FFFFFF; border: 1px solid #DDEC90; border-radius: 6px;
+  padding: 10px; cursor: pointer; transition: all 0.12s;
+}
+.kb-card:hover { border-color: #BBCB64; box-shadow: 0 2px 8px rgba(187,203,100,0.15); transform: translateY(-1px); }
+.kbc-task { font-size: 11px; font-weight: 700; color: #1A1A00; margin-bottom: 6px; line-height: 1.35; }
+.kbc-agent { font-size: 10px; color: #6A6A20; display: flex; align-items: center; gap: 5px; }
+.kbc-adot { width: 7px; height: 7px; border-radius: 50%; background: #BBCB64; flex-shrink: 0; }
+.kbc-adot.run { background: #F79A19; }
+.kbc-adot.done { background: #22C55E; }
+.kbc-adot.rev { background: #FFE52A; }
+.kbc-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 7px; }
+.kbc-tag { font-size: 8px; font-weight: 700; letter-spacing: 0.3px; padding: 2px 6px; border-radius: 10px; }
+.kbt-tok  { background: #F5F8D0; color: #7A8A00; border: 1px solid #DDEC90; }
+.kbt-auto { background: #DCFCE7; color: #166534; border: 1px solid #86EFAC; }
+.kbt-hitl { background: #FFF0DC; color: #A05A00; border: 1px solid #F0C880; }
+.kbt-done { background: #DCFCE7; color: #166534; border: 1px solid #86EFAC; }
+
+/* ── HITL CARD ── */
+.hitl-card {
+  background: #FFFFFF; border: 1.5px solid #F79A19; border-radius: 6px;
+  padding: 10px; cursor: pointer; transition: all 0.12s; position: relative;
+}
+.hitl-card::before {
+  content: '⚡ AWAITING REVIEW';
+  position: absolute; top: -1px; left: 10px;
+  font-size: 7px; font-weight: 700; letter-spacing: 1px;
+  background: #F79A19; color: #FFFFFF;
+  padding: 2px 7px; border-radius: 0 0 5px 5px;
+}
+.hitl-card .kbc-task { margin-top: 14px; }
+.hitl-question {
+  font-size: 10px; color: #2A2A00; background: #FFF8EC; border-radius: 4px;
+  padding: 8px; margin-top: 7px; line-height: 1.5; border: 1px solid #F0C880;
+}
+.hitl-actions { display: flex; gap: 6px; margin-top: 8px; }
+.hitl-btn {
+  font-size: 9px; font-weight: 700; padding: 5px 11px; border-radius: 4px;
+  border: none; cursor: pointer; font-family: Arial, sans-serif;
+  transition: all 0.12s;
+}
+.hitl-approve { background: #BBCB64; color: #1A1A00; }
+.hitl-approve:hover { background: #AABB50; }
+.hitl-reject  { background: #FEE2E2; color: #CF0F0F; border: 1px solid #FCA5A5; }
+.hitl-reject:hover  { background: #FECACA; }
+.hitl-edit    { background: #FAFAF2; color: #6A6A20; border: 1px solid #DDEC90; }
+.hitl-edit:hover    { background: #F5F8D0; }
+
+/* ── DONE CARD (faded) ── */
+.kb-card.done-card { opacity: 0.7; }
+
+/* ── TIMELINE ── */
+.tl-wrap { padding: 14px 16px; }
+.tl-item { display: flex; gap: 10px; margin-bottom: 12px; }
+.tl-item:last-child { margin-bottom: 0; }
+.tl-left { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+.tl-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 2px; }
+.tl-dot.done   { background: #22C55E; }
+.tl-dot.active { background: #FFE52A; }
+.tl-dot.idle   { background: #E0E0E0; }
+.tl-dot.warn   { background: #F79A19; }
+.tl-line { width: 2px; flex: 1; background: #DDEC90; margin-top: 3px; min-height: 16px; }
+.tl-title { font-size: 12px; font-weight: 700; color: #1A1A00; }
+.tl-meta  { font-size: 10px; color: #6A6A20; margin-top: 2px; }
+
+/* ══════════════════════════════
+   AGENTS VIEW
+══════════════════════════════ */
+.agents-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
+.agent-card {
+  background: #FFFFFF; border: 1px solid #DDEC90; border-radius: 8px;
+  padding: 16px; transition: all 0.15s;
+}
+.agent-card:hover { border-color: #BBCB64; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(187,203,100,0.15); }
+.ac-icon { font-size: 28px; margin-bottom: 10px; }
+.ac-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 6px; }
+.ac-name { font-size: 15px; font-weight: 700; color: #1A1A00; }
+.ac-role { font-size: 11px; color: #6A6A20; margin-bottom: 10px; }
+.ac-status-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.ac-working { font-size: 9px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: #22C55E; display: flex; align-items: center; gap: 4px; }
+.ac-sdot { width: 6px; height: 6px; border-radius: 50%; background: #22C55E; }
+.ac-sdot.idle { background: #E0E0E0; }
+.ac-working.off { color: #6A6A20; }
+.ac-tasks { font-size: 10px; color: #6A6A20; }
+.ac-divider { height: 1px; background: #F5F8D0; margin: 10px 0; }
+.ac-caps { font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #7A8A00; margin-bottom: 6px; }
+.ac-cap-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+.ac-cap-tag { font-size: 8px; padding: 2px 7px; border-radius: 10px; background: #F5F8D0; color: #1A1A00; border: 1px solid #DDEC90; }
+.orch-section { margin-top: 20px; }
+.orch-section-title { font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #7A8A00; margin-bottom: 10px; }
+
+/* ══════════════════════════════
+   ANALYTICS VIEW
+══════════════════════════════ */
+.analytics-top { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+.an-card { background: #FFFFFF; border: 1px solid #DDEC90; border-radius: 8px; padding: 16px; }
+.an-label { font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #7A8A00; margin-bottom: 6px; }
+.an-value { font-size: 28px; font-weight: 700; color: #7A8A00; line-height: 1; }
+.an-value.o { color: #C07000; }
+.an-value.r { color: #CF0F0F; }
+.an-value.y { color: #B8A000; }
+.an-sub { font-size: 10px; color: #6A6A20; margin-top: 4px; }
+
+.analytics-mid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+.an-table { width: 100%; border-collapse: collapse; }
+.an-table th { font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #6A6A20; padding: 8px 12px; border-bottom: 2px solid #DDEC90; text-align: left; background: #FAFAF2; }
+.an-table td { padding: 9px 12px; font-size: 11px; color: #1A1A00; border-bottom: 1px solid #F5F8D0; }
+.an-table tr:nth-child(even) td { background: #F5F8D0; }
+.an-bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.an-bar-lbl { font-size: 10px; color: #1A1A00; font-weight: 600; width: 80px; flex-shrink: 0; }
+.an-bar-track { flex: 1; height: 8px; background: #F5F8D0; border-radius: 4px; overflow: hidden; }
+.an-bar-fill { height: 100%; border-radius: 4px; }
+.an-bar-val { font-size: 10px; font-weight: 700; width: 50px; text-align: right; flex-shrink: 0; }
+
+/* ══════════════════════════════
+   CONFIG VIEW
+══════════════════════════════ */
+.config-full { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.cfg-card { background: #FFFFFF; border: 1px solid #DDEC90; border-radius: 8px; overflow: hidden; }
+.cfg-card-head { padding: 12px 16px; border-bottom: 1px solid #DDEC90; background: #FAFAF2; }
+.cfg-card-title { font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #7A8A00; }
+.cfg-card-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+.cfg-field { }
+.cfg-field-lbl { font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #6A6A20; margin-bottom: 5px; }
+.cfg-field-sub { font-size: 10px; color: #6A6A20; margin-bottom: 5px; }
+.cfg-select-full {
+  width: 100%; font-size: 12px; font-family: Arial, sans-serif;
+  padding: 8px 10px; border-radius: 6px; border: 1px solid #DDEC90;
+  background: #FAFAF2; color: #1A1A00; outline: none; cursor: pointer;
+}
+.cfg-select-full:focus { border-color: #BBCB64; }
+.cfg-toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #F5F8D0; }
+.cfg-toggle-row:last-child { border-bottom: none; }
+.cfg-toggle-info { }
+.cfg-toggle-name { font-size: 12px; font-weight: 700; color: #1A1A00; }
+.cfg-toggle-desc { font-size: 10px; color: #6A6A20; margin-top: 2px; }
+.toggle {
+  width: 38px; height: 20px; background: #DDEC90; border-radius: 10px;
+  position: relative; cursor: pointer; flex-shrink: 0; border: none;
+  transition: background 0.15s;
+}
+.toggle.on { background: #BBCB64; }
+.toggle::after {
+  content: ''; position: absolute; top: 3px; left: 3px;
+  width: 14px; height: 14px; border-radius: 50%; background: #FFFFFF;
+  transition: left 0.15s;
+}
+.toggle.on::after { left: 21px; }
+
+/* ── MISC ── */
+.mt-16 { margin-top: 16px; }
+.mt-20 { margin-top: 20px; }
+.see-all { display: block; text-align: center; padding: 8px; font-size: 10px; font-weight: 700; letter-spacing: 0.5px; color: #7A8A00; cursor: pointer; text-decoration: none; }
+.see-all:hover { background: #F5F8D0; color: #1A1A00; }
+.info-box { background: #FFFFFF; border: 1px solid #DDEC90; border-radius: 6px; padding: 12px 14px; font-size: 11px; color: #1A1A00; line-height: 1.6; }
+.info-box strong { color: #7A8A00; }
+.divider { height: 1px; background: #DDEC90; margin: 16px 0; }
+</style>
+</head>
+<body>
+
+<!-- ══ TOP NAV ══ -->
+<nav class="topnav">
+  <div class="logo">infini<span>AI</span><sup>OS</sup></div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="switchView('dashboard', this)">Dashboard</button>
+    <button class="nav-tab" onclick="switchView('agents', this)">Agents</button>
+    <button class="nav-tab" onclick="switchView('analytics', this)">Analytics</button>
+    <button class="nav-tab" onclick="switchView('config', this)">Config</button>
+  </div>
+  <div class="nav-right">
+    <div class="nav-pill-badge">● 14 Active</div>
+    <div class="nav-pill-badge warn">⚡ 3 HITL Pending</div>
+    <div class="nav-avatar">BK</div>
+  </div>
+</nav>
+
+<div class="app-body">
+
+<!-- ══ SIDEBAR ══ -->
+<aside class="sidebar">
+  <div class="sb-section">
+    <div class="sb-label">Projects</div>
+    <div class="sb-item active" id="sb-all" onclick="showDashboard()">
+      <div class="sb-dot g"></div> All Projects <span class="sb-count">12</span>
+    </div>
+    <div class="sb-item" onclick="openKanban('Alpha Rewrite','Build','72','6','Folder','1')">
+      <div class="sb-dot g"></div> Alpha Rewrite
+    </div>
+    <div class="sb-item" onclick="openKanban('Portal Modernization','Review','45','3','Folder','2')">
+      <div class="sb-dot o"></div> Portal Modernization
+    </div>
+    <div class="sb-item" onclick="openKanban('Design Rebuild','Deploy','88','2','Figma','0')">
+      <div class="sb-dot g"></div> Design Rebuild
+    </div>
+    <div class="sb-item" onclick="openKanban('Legacy API Migration','Discovery','30','5','Folder','0')">
+      <div class="sb-dot g"></div> Legacy API Migration
+    </div>
+    <div class="sb-item" onclick="openKanban('Mobile Proto Rebuild','Build','55','2','Prototype','1')">
+      <div class="sb-dot y"></div> Mobile Proto Rebuild
+    </div>
+    <div class="sb-item" onclick="openKanban('Dashboard Overhaul','Discovery','18','2','Figma','0')">
+      <div class="sb-dot g"></div> Dashboard Overhaul
+    </div>
+  </div>
+  <div class="sb-divider"></div>
+  <div class="sb-section">
+    <div class="sb-label">Agents</div>
+    <div class="sb-item" onclick="switchView('agents', null)">
+      <div class="sb-dot g"></div> Bhanu <span class="sb-count warn">LEAD</span>
+    </div>
+    <div class="sb-item" onclick="switchView('agents', null)"><div class="sb-dot g"></div> Friday</div>
+    <div class="sb-item" onclick="switchView('agents', null)"><div class="sb-dot g"></div> Fury</div>
+    <div class="sb-item" onclick="switchView('agents', null)"><div class="sb-dot g"></div> Groot</div>
+    <div class="sb-item" onclick="switchView('agents', null)"><div class="sb-dot g"></div> Hawkeye</div>
+    <div class="sb-item" onclick="switchView('agents', null)">
+      <div class="sb-dot g"></div> Jarvis <span class="sb-count warn">LEAD</span>
+    </div>
+    <div class="sb-item" onclick="switchView('agents', null)"><div class="sb-dot g"></div> Loki</div>
+    <div class="sb-item" style="color:#9A9A50;font-size:10px;padding-left:36px;">+ 9 more agents</div>
+  </div>
+  <div class="sb-divider"></div>
+  <div class="sb-section">
+    <div class="sb-label">Quick Actions</div>
+    <div class="sb-item" onclick="toggleUpload()"><div class="sb-dot"></div> Upload Project</div>
+    <div class="sb-item" onclick="openHITLQueue()"><div class="sb-dot o"></div> HITL Queue <span class="sb-count warn">3</span></div>
+    <div class="sb-item" onclick="switchView('analytics', null)"><div class="sb-dot"></div> Token Report</div>
+    <div class="sb-item" onclick="switchView('config', null)"><div class="sb-dot"></div> Configuration</div>
+  </div>
+</aside>
+
+<!-- ══ MAIN ══ -->
+<main class="main">
+
+  <!-- ════════════════════════════
+       DASHBOARD VIEW
+  ════════════════════════════ -->
+  <div id="view-dashboard" class="view active">
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <div>
+        <div class="ph-eyebrow">Command Center</div>
+        <div class="ph-title">Project <span>Overview</span></div>
+        <div class="ph-sub">Multi-agent orchestration across 12 active workstreams · Feb 28, 2026</div>
+      </div>
+      <div class="ph-actions">
+        <button class="btn btn-ghost">↓ Export Report</button>
+        <button class="btn btn-lime" onclick="toggleUpload()">+ New Project</button>
+      </div>
+    </div>
+
+    <!-- Upload Section -->
+    <div id="upload-section" class="card upload-section mb-20" style="margin-bottom:20px;">
+      <div class="card-head">
+        <span class="card-head-title">Upload New Project</span>
+        <div class="card-head-right">
+          <span class="badge b-lime">Auto-detect workflow</span>
+          <button class="btn btn-ghost" style="padding:4px 10px;font-size:10px;" onclick="toggleUpload()">✕ Close</button>
+        </div>
+      </div>
+      <div class="upload-zone" onclick="alert('File picker would open here')">
+        <div class="upload-icon">📂</div>
+        <div class="upload-title">Drop files, folders, or design assets here</div>
+        <div class="upload-sub">System will auto-detect input type and configure the optimal agent workflow</div>
+        <div class="upload-pills">
+          <span class="it-pill it-folder">📁 Code Folder</span>
+          <span class="it-pill it-figma">🎨 Figma File</span>
+          <span class="it-pill it-proto">⚡ Prototype</span>
+        </div>
+      </div>
+      <div class="config-grid">
+        <div><div class="cfg-lbl">Framework Target</div>
+          <select class="cfg-select">
+            <option>React + TypeScript</option><option>Next.js 14</option>
+            <option>Vue 3</option><option>Angular 17</option>
+          </select>
+        </div>
+        <div><div class="cfg-lbl">Model Provider</div>
+          <select class="cfg-select">
+            <option>Claude Sonnet 4.6</option><option>Claude Haiku 4.5</option>
+            <option>Claude Opus 4.6</option>
+          </select>
+        </div>
+        <div><div class="cfg-lbl">HITL Mode</div>
+          <select class="cfg-select">
+            <option>Standard (key decisions)</option>
+            <option>Verbose (all decisions)</option>
+            <option>Minimal (critical only)</option>
+          </select>
+        </div>
+      </div>
+      <div class="upload-actions">
+        <button class="btn btn-lime">🚀 Launch Workflow</button>
+        <button class="btn btn-ghost" onclick="toggleUpload()">Cancel</button>
+      </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+      <div class="filter-group">
+        <span class="filter-group-label">Phase:</span>
+        <span class="f-chip on" onclick="toggleChip(this)">All</span>
+        <span class="f-chip" onclick="toggleChip(this)">Discovery</span>
+        <span class="f-chip" onclick="toggleChip(this)">Build</span>
+        <span class="f-chip" onclick="toggleChip(this)">Review</span>
+        <span class="f-chip" onclick="toggleChip(this)">Deploy</span>
+      </div>
+      <div class="filter-sep"></div>
+      <div class="filter-group">
+        <span class="filter-group-label">Input:</span>
+        <span class="f-chip" onclick="toggleChip(this)">Folder</span>
+        <span class="f-chip" onclick="toggleChip(this)">Figma</span>
+        <span class="f-chip" onclick="toggleChip(this)">Prototype</span>
+      </div>
+      <input class="filter-search" type="text" placeholder="🔍  Search projects..." />
+    </div>
+
+    <!-- KPI Row -->
+    <div class="kpi-row">
+      <div class="kpi-card">
+        <div class="kpi-val">12</div>
+        <div class="kpi-lbl">Active Projects</div>
+        <div class="kpi-delta">↑ +3 this week</div>
+      </div>
+      <div class="kpi-card kc-y">
+        <div class="kpi-val">16</div>
+        <div class="kpi-lbl">Agents Deployed</div>
+        <div class="kpi-delta muted">14 working · 2 idle</div>
+      </div>
+      <div class="kpi-card kc-o">
+        <div class="kpi-val">3</div>
+        <div class="kpi-lbl">HITL Checkpoints<br>Awaiting Review</div>
+        <div class="kpi-delta neg">↑ needs attention</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-val">$4.2k</div>
+        <div class="kpi-lbl">Monthly Spend</div>
+        <div class="kpi-delta">↓ −12% vs last mo.</div>
+      </div>
+      <div class="kpi-card kc-g">
+        <div class="kpi-val">84M</div>
+        <div class="kpi-lbl">Tokens Used (MTD)</div>
+        <div class="kpi-delta muted">Sonnet 67% · Haiku 33%</div>
+      </div>
+    </div>
+
+    <!-- Main Two-Col Layout -->
+    <div class="two-col">
+
+      <!-- Projects Table -->
+      <div class="card">
+        <div class="card-head">
+          <span class="card-head-title">All Projects</span>
+          <div class="card-head-right">
+            <span class="badge b-lime">12 Total</span>
+            <span class="badge b-orange">3 HITL Pending</span>
+          </div>
+        </div>
+        <table class="proj-table">
+          <thead>
+            <tr>
+              <th>Project</th>
+              <th>Input Type</th>
+              <th>Phase &amp; Progress</th>
+              <th>Agents</th>
+              <th>HITL Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr onclick="openKanban('Alpha Rewrite','Build','72','6','Folder','1')">
+              <td><div class="proj-name">Alpha Rewrite</div><div class="proj-sub">Codebase modernization · 2,431 files</div></td>
+              <td><span class="it-pill it-folder">📁 Folder</span></td>
+              <td>
+                <div class="prog-bar-wrap"><div class="prog-track"><div class="prog-fill" style="width:72%"></div></div><span class="prog-pct">72%</span></div>
+                <div class="phase-lbl">Build phase</div>
+              </td>
+              <td><div class="agent-avs"><div class="agent-av act">B</div><div class="agent-av act">F</div><div class="agent-av act">J</div><div class="agent-av">+3</div></div></td>
+              <td><span class="hitl-pill hitl-clear"><span class="hitl-dot"></span> Clear</span></td>
+              <td><button class="open-btn">Open ↗</button></td>
+            </tr>
+            <tr onclick="openKanban('Portal Modernization','Review','45','3','Folder','2')">
+              <td><div class="proj-name">Portal Modernization</div><div class="proj-sub">Legacy → React migration</div></td>
+              <td><span class="it-pill it-folder">📁 Folder</span></td>
+              <td>
+                <div class="prog-bar-wrap"><div class="prog-track"><div class="prog-fill o" style="width:45%"></div></div><span class="prog-pct o">45%</span></div>
+                <div class="phase-lbl">Review phase</div>
+              </td>
+              <td><div class="agent-avs"><div class="agent-av act">L</div><div class="agent-av act">H</div><div class="agent-av">G</div></div></td>
+              <td><span class="hitl-pill hitl-pending"><span class="hitl-dot"></span> 2 Pending</span></td>
+              <td><button class="open-btn">Open ↗</button></td>
+            </tr>
+            <tr onclick="openKanban('Design Rebuild','Deploy','88','2','Figma','0')">
+              <td><div class="proj-name">Design Rebuild — Figma</div><div class="proj-sub">Full app flow from design assets</div></td>
+              <td><span class="it-pill it-figma">🎨 Figma</span></td>
+              <td>
+                <div class="prog-bar-wrap"><div class="prog-track"><div class="prog-fill" style="width:88%"></div></div><span class="prog-pct">88%</span></div>
+                <div class="phase-lbl">Deploy phase</div>
+              </td>
+              <td><div class="agent-avs"><div class="agent-av act">L</div><div class="agent-av act">F</div></div></td>
+              <td><span class="hitl-pill hitl-clear"><span class="hitl-dot"></span> Clear</span></td>
+              <td><button class="open-btn">Open ↗</button></td>
+            </tr>
+            <tr onclick="openKanban('Legacy API Migration','Discovery','30','5','Folder','0')">
+              <td><div class="proj-name">Legacy API Migration</div><div class="proj-sub">REST → GraphQL transformation</div></td>
+              <td><span class="it-pill it-folder">📁 Folder</span></td>
+              <td>
+                <div class="prog-bar-wrap"><div class="prog-track"><div class="prog-fill" style="width:30%"></div></div><span class="prog-pct">30%</span></div>
+                <div class="phase-lbl">Discovery phase</div>
+              </td>
+              <td><div class="agent-avs"><div class="agent-av act">B</div><div class="agent-av act">F</div><div class="agent-av">R</div><div class="agent-av">+2</div></div></td>
+              <td><span class="hitl-pill hitl-clear"><span class="hitl-dot"></span> Clear</span></td>
+              <td><button class="open-btn">Open ↗</button></td>
+            </tr>
+            <tr onclick="openKanban('Mobile Proto Rebuild','Build','55','2','Prototype','1')">
+              <td><div class="proj-name">Mobile Proto Rebuild</div><div class="proj-sub">Prototype → Production specification</div></td>
+              <td><span class="it-pill it-proto">⚡ Prototype</span></td>
+              <td>
+                <div class="prog-bar-wrap"><div class="prog-track"><div class="prog-fill y" style="width:55%"></div></div><span class="prog-pct y">55%</span></div>
+                <div class="phase-lbl">Build phase</div>
+              </td>
+              <td><div class="agent-avs"><div class="agent-av act">J</div><div class="agent-av act">L</div></div></td>
+              <td><span class="hitl-pill hitl-pending"><span class="hitl-dot"></span> 1 Pending</span></td>
+              <td><button class="open-btn">Open ↗</button></td>
+            </tr>
+            <tr onclick="openKanban('Dashboard Overhaul','Discovery','18','2','Figma','0')">
+              <td><div class="proj-name">Dashboard Overhaul</div><div class="proj-sub">Analytics platform redesign</div></td>
+              <td><span class="it-pill it-figma">🎨 Figma</span></td>
+              <td>
+                <div class="prog-bar-wrap"><div class="prog-track"><div class="prog-fill" style="width:18%"></div></div><span class="prog-pct">18%</span></div>
+                <div class="phase-lbl">Discovery phase</div>
+              </td>
+              <td><div class="agent-avs"><div class="agent-av act">H</div><div class="agent-av">G</div></div></td>
+              <td><span class="hitl-pill hitl-clear"><span class="hitl-dot"></span> Clear</span></td>
+              <td><button class="open-btn">Open ↗</button></td>
+            </tr>
+            <tr>
+              <td><div class="proj-name">CRM Integration Layer</div><div class="proj-sub">Salesforce → internal data bridge</div></td>
+              <td><span class="it-pill it-folder">📁 Folder</span></td>
+              <td>
+                <div class="prog-bar-wrap"><div class="prog-track"><div class="prog-fill" style="width:62%"></div></div><span class="prog-pct">62%</span></div>
+                <div class="phase-lbl">Build phase</div>
+              </td>
+              <td><div class="agent-avs"><div class="agent-av act">F</div><div class="agent-av act">G</div></div></td>
+              <td><span class="hitl-pill hitl-clear"><span class="hitl-dot"></span> Clear</span></td>
+              <td><button class="open-btn">Open ↗</button></td>
+            </tr>
+          </tbody>
+        </table>
+        <a class="see-all">View all 12 projects →</a>
+      </div>
+
+      <!-- Right Panels -->
+      <div class="right-panels">
+
+        <!-- Agent Roster -->
+        <div class="card">
+          <div class="card-head">
+            <span class="card-head-title">Agent Roster</span>
+            <span class="badge b-green">14 Working</span>
+          </div>
+          <div class="card-body" style="padding-top:6px;padding-bottom:6px;">
+            <div class="agent-row">
+              <div class="ag-icon">🧑‍💼</div>
+              <div class="ag-info">
+                <div class="ag-name">Bhanu</div>
+                <div class="ag-role">Founder · Lead Orchestrator</div>
+                <div class="ag-status"><div class="ag-sdot"></div> Working</div>
+              </div>
+              <span class="ag-type ag-lead">Lead</span>
+            </div>
+            <div class="agent-row">
+              <div class="ag-icon">🔧</div>
+              <div class="ag-info">
+                <div class="ag-name">Friday</div>
+                <div class="ag-role">Developer Agent</div>
+                <div class="ag-status"><div class="ag-sdot"></div> Working</div>
+              </div>
+              <span class="ag-type ag-int">Int</span>
+            </div>
+            <div class="agent-row">
+              <div class="ag-icon">🔬</div>
+              <div class="ag-info">
+                <div class="ag-name">Fury</div>
+                <div class="ag-role">Customer Research</div>
+                <div class="ag-status"><div class="ag-sdot"></div> Working</div>
+              </div>
+              <span class="ag-type ag-spc">Spc</span>
+            </div>
+            <div class="agent-row">
+              <div class="ag-icon">🌱</div>
+              <div class="ag-info">
+                <div class="ag-name">Groot</div>
+                <div class="ag-role">Retention Specialist</div>
+                <div class="ag-status"><div class="ag-sdot"></div> Working</div>
+              </div>
+              <span class="ag-type ag-spc">Spc</span>
+            </div>
+            <div class="agent-row">
+              <div class="ag-icon">🎯</div>
+              <div class="ag-info">
+                <div class="ag-name">Hawkeye</div>
+                <div class="ag-role">Outbound Scout</div>
+                <div class="ag-status"><div class="ag-sdot"></div> Working</div>
+              </div>
+              <span class="ag-type ag-spc">Spc</span>
+            </div>
+            <div class="agent-row">
+              <div class="ag-icon">🤖</div>
+              <div class="ag-info">
+                <div class="ag-name">Jarvis</div>
+                <div class="ag-role">Squad Lead</div>
+                <div class="ag-status"><div class="ag-sdot"></div> Working</div>
+              </div>
+              <span class="ag-type ag-lead">Lead</span>
+            </div>
+            <div class="agent-row">
+              <div class="ag-icon">✍️</div>
+              <div class="ag-info">
+                <div class="ag-name">Loki</div>
+                <div class="ag-role">Content Writer</div>
+                <div class="ag-status"><div class="ag-sdot"></div> Working</div>
+              </div>
+              <span class="ag-type ag-spc">Spc</span>
+            </div>
+          </div>
+          <a class="see-all" onclick="switchView('agents', document.querySelectorAll('.nav-tab')[1])">View all 16 agents →</a>
+        </div>
+
+        <!-- Token & Cost -->
+        <div class="card">
+          <div class="card-head">
+            <span class="card-head-title">Token Usage &amp; Cost · MTD</span>
+            <span class="badge b-lime">84M tokens</span>
+          </div>
+          <div class="card-body">
+            <div class="tok-row">
+              <span class="tok-lbl">Sonnet 4.6</span>
+              <div class="tok-track"><div class="tok-fill" style="width:67%;background:#BBCB64;"></div></div>
+              <span class="tok-pct">67%</span>
+            </div>
+            <div class="tok-row">
+              <span class="tok-lbl">Haiku 4.5</span>
+              <div class="tok-track"><div class="tok-fill" style="width:33%;background:#FFE52A;"></div></div>
+              <span class="tok-pct">33%</span>
+            </div>
+            <div class="divider" style="margin:10px 0;"></div>
+            <div class="cost-row"><span class="cost-lbl">Compute Cost</span><span class="cost-val">$3,840</span></div>
+            <div class="cost-row"><span class="cost-lbl">Infra &amp; Storage</span><span class="cost-val">$360</span></div>
+            <div class="cost-row"><span class="cost-lbl">Total MTD</span><span class="cost-val o">$4,200</span></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Orchestration Flow -->
+    <div class="card mt-20" style="margin-top:20px;">
+      <div class="card-head">
+        <span class="card-head-title">Live Orchestration — Alpha Rewrite</span>
+        <div class="card-head-right">
+          <span class="badge b-green">● Running</span>
+          <span class="badge b-lime">6 Agents Active</span>
+        </div>
+      </div>
+      <div class="orch-flow">
+        <div class="orch-node">
+          <div class="orch-icon lead"><span>🧑‍💼</span><div class="orch-pulse"></div></div>
+          <div class="orch-lbl">Bhanu</div><div class="orch-sub">Lead</div>
+        </div>
+        <div class="orch-arrow active"></div>
+        <div class="orch-node">
+          <div class="orch-icon running"><span>🔧</span><div class="orch-pulse"></div></div>
+          <div class="orch-lbl">Friday</div><div class="orch-sub">Dev</div>
+        </div>
+        <div class="orch-arrow active"></div>
+        <div class="orch-node">
+          <div class="orch-icon running"><span>🤖</span><div class="orch-pulse"></div></div>
+          <div class="orch-lbl">Jarvis</div><div class="orch-sub">Squad Lead</div>
+        </div>
+        <div class="orch-arrow active"></div>
+        <div class="orch-node">
+          <div class="orch-icon running"><span>✍️</span><div class="orch-pulse"></div></div>
+          <div class="orch-lbl">Loki</div><div class="orch-sub">Content</div>
+        </div>
+        <div class="orch-arrow"></div>
+        <div class="orch-node">
+          <div class="orch-icon"><span>🎯</span></div>
+          <div class="orch-lbl">Hawkeye</div><div class="orch-sub">Scout</div>
+        </div>
+        <div class="orch-arrow"></div>
+        <div class="orch-node">
+          <div class="orch-icon"><span>🔬</span></div>
+          <div class="orch-lbl">Fury</div><div class="orch-sub">Research</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /dashboard view -->
+
+
+  <!-- ════════════════════════════
+       KANBAN VIEW
+  ════════════════════════════ -->
+  <div id="view-kanban" class="view">
+
+    <div class="kanban-header">
+      <button class="kb-back" onclick="showDashboard()">← Dashboard</button>
+      <div>
+        <div class="kb-proj-name" id="kb-title">Alpha Rewrite</div>
+        <div class="kb-meta" id="kb-meta">Build phase · 72% complete · 6 agents active</div>
+      </div>
+      <div class="kb-badges" id="kb-badges">
+        <span class="badge b-blue">📁 Folder Input</span>
+        <span class="badge b-orange">1 HITL Pending</span>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:8px;">
+        <button class="btn btn-ghost">↓ Export</button>
+        <button class="btn btn-lime">+ Add Task</button>
+      </div>
+    </div>
+
+    <!-- Kanban Board -->
+    <div class="kanban-board">
+
+      <!-- BACKLOG -->
+      <div class="kb-col">
+        <div class="kb-col-head kch-backlog">Backlog <span class="kb-col-count">4</span></div>
+        <div class="kb-col-body">
+          <div class="kb-card">
+            <div class="kbc-task">Extract shared utility functions into common lib</div>
+            <div class="kbc-agent"><div class="kbc-adot"></div> Friday</div>
+            <div class="kbc-tags"><span class="kbc-tag kbt-tok">~1.2k tokens</span><span class="kbc-tag kbt-auto">Auto</span></div>
+          </div>
+          <div class="kb-card">
+            <div class="kbc-task">Add TypeScript strict mode to all service files</div>
+            <div class="kbc-agent"><div class="kbc-adot"></div> Friday</div>
+            <div class="kbc-tags"><span class="kbc-tag kbt-tok">~800 tokens</span><span class="kbc-tag kbt-auto">Auto</span></div>
+          </div>
+          <div class="kb-card">
+            <div class="kbc-task">Audit deprecated npm packages, update lockfile</div>
+            <div class="kbc-agent"><div class="kbc-adot"></div> Groot</div>
+            <div class="kbc-tags"><span class="kbc-tag kbt-tok">~400 tokens</span><span class="kbc-tag kbt-auto">Auto</span></div>
+          </div>
+          <div class="kb-card">
+            <div class="kbc-task">Write unit test coverage for auth module</div>
+            <div class="kbc-agent"><div class="kbc-adot"></div> Jarvis</div>
+            <div class="kbc-tags"><span class="kbc-tag kbt-tok">~2.1k tokens</span><span class="kbc-tag kbt-hitl">HITL</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- IN PROGRESS -->
+      <div class="kb-col">
+        <div class="kb-col-head kch-progress">In Progress <span class="kb-col-count">5</span></div>
+        <div class="kb-col-body">
+          <div class="kb-card">
+            <div class="kbc-task">Migrate class components to functional hooks</div>
+            <div class="kbc-agent"><div class="kbc-adot run"></div> Bhanu + Friday</div>
+            <div class="kbc-tags"><span class="kbc-tag kbt-tok">~4.8k tokens</span><span class="kbc-tag kbt-auto">Auto</span></div>
+          </div>
+          <div class="kb-card">
+            <div class="kbc-task">Replace Redux with Zustand state management</div>
+            <div class="kbc-agent"><div class="kbc-adot run"></div> Friday</div>
+            <div class="kbc-tags"><span class="kbc-tag kbt-tok">~3.2k tokens</span><span class="kbc-tag kbt-auto">Auto</span></div>
+          </div>
+          <div class="kb-card">
+            <div class="kbc-task">Build API response error boundary components</div>
+            <div class="kbc-agent"><div class="kbc-adot run"></div> Jarvis</div>
+            <div class="kbc-tags"><span class="kbc-tag kbt-tok">~1.6k tokens</span><span class="kbc-tag kbt-auto">Auto</span></div>
+          </div>
+          <div class="kb-card">
+            <div class="kbc-task">Generate OpenAPI spec from existing route handlers</div>
+            <div class="kbc-agent"><div class="kbc-adot run"></div> Fury</div>
+            <div class="kbc-tags"><span class="kbc-tag kbt-tok">~2.0k tokens</span><span class="kbc-tag kbt-hitl">HITL</span></div>
+          </div>
+          <div class="kb-card">
+            <div class="kbc-task">Rewrite CMS content schema for new data model</div>
+            <div class="kbc-agent"><div class="kbc-adot run"></div> Loki</div>
+            <div class="kbc-tags"><span class="kbc-tag kbt-tok">~1.1k tokens</span><span class="kbc-tag kbt-auto">Auto</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- REVIEW -->
+      <div class="kb-col">
+        <div class="kb-col-head kch-review">Review <span class="kb-col-count">3</span></div>
+        <div class="kb-col-body">
+          <div class="kb-card">
+            <div class="kbc-task">Validate new routing structure matches sitemap</div>
+            <div class="kbc-agent"><div class="kbc-adot rev"></div> Hawkeye</div>
+            <div class="kbc-tags"><span class="kbc-tag kbt-tok">~600 tokens</span><span class="kbc-tag kbt-auto">Auto</span></div>
+          </div>
+          <div class="kb-card">
+            <div class="kbc-task">Performance audit on rebuilt dashboard screens</div>
+            <div class="kbc-agent"><div class="kbc-adot rev"></div> Fury</div>
+            <div class="kbc-tags"><span class="kbc-tag kbt-tok">~900 tokens</span><span class="kbc-tag kbt-hitl">HITL</span></div>
+          </div>
+          <div class="kb-card">
+            <div class="kbc-task">Accessibility scan on all rebuilt form components</div>
+            <div class="kbc-agent"><div class="kbc-adot rev"></div> Groot</div>
+            <div class="kbc-tags"><span class="kbc-tag kbt-tok">~700 tokens</span><span class="kbc-tag kbt-auto">Auto</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- HUMAN IN LOOP -->
+      <div class="kb-col">
+        <div class="kb-col-head kch-hitl">⚡ Human-in-Loop <span class="kb-col-count">1</span></div>
+        <div class="kb-col-body">
+          <div class="hitl-card" id="hitl-card-1">
+            <div class="kbc-task">Database schema migration strategy</div>
+            <div class="kbc-agent" style="margin-top:4px;"><div class="kbc-adot run"></div> Bhanu → Awaiting: BK</div>
+            <div class="hitl-question">
+              "The current schema has circular FK constraints in the <strong>orders → customers</strong> tables. Recommending event-sourcing pattern — requires a 2-hour downtime window. Proceed?"
+            </div>
+            <div class="kbc-tags" style="margin-top:8px;">
+              <span class="kbc-tag kbt-tok">~5.4k tokens</span>
+              <span class="kbc-tag" style="background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;font-size:8px;font-weight:700;padding:2px 6px;border-radius:10px;">High Impact</span>
+            </div>
+            <div class="hitl-actions">
+              <button class="hitl-btn hitl-approve" onclick="approveHITL(1)">✓ Approve</button>
+              <button class="hitl-btn hitl-reject" onclick="rejectHITL(1)">✗ Reject</button>
+              <button class="hitl-btn hitl-edit">Edit</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DONE -->
+      <div class="kb-col">
+        <div class="kb-col-head kch-done">Done <span class="kb-col-count">14</span></div>
+        <div class="kb-col-body">
+          <div class="kb-card done-card">
+            <div class="kbc-task">Scaffold monorepo structure with workspaces</div>
+            <div class="kbc-agent"><div class="kbc-adot done"></div> Bhanu · 2d ago</div>
+            <div class="kbc-tags"><span class="kbc-tag kbt-done">Completed</span></div>
+          </div>
+          <div class="kb-card done-card">
+            <div class="kbc-task">Migrate auth to JWT + refresh token flow</div>
+            <div class="kbc-agent"><div class="kbc-adot done"></div> Friday · 1d ago</div>
+            <div class="kbc-tags"><span class="kbc-tag kbt-done">Completed</span></div>
+          </div>
+          <div class="kb-card done-card">
+            <div class="kbc-task">Design system tokens extracted and documented</div>
+            <div class="kbc-agent"><div class="kbc-adot done"></div> Loki · 3d ago</div>
+            <div class="kbc-tags"><span class="kbc-tag kbt-done">Completed</span></div>
+          </div>
+          <div class="kb-card done-card">
+            <div class="kbc-task">CI/CD pipeline configured and validated</div>
+            <div class="kbc-agent"><div class="kbc-adot done"></div> Jarvis · 2d ago</div>
+            <div class="kbc-tags"><span class="kbc-tag kbt-done">Completed</span></div>
+          </div>
+          <div style="text-align:center;padding:6px 0;font-size:10px;color:#6A6A20;">+ 10 more completed tasks</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Project Timeline -->
+    <div class="card mt-20" style="margin-top:20px;">
+      <div class="card-head">
+        <span class="card-head-title">Project Timeline</span>
+        <span class="badge b-lime" id="kb-timeline-badge">Alpha Rewrite</span>
+      </div>
+      <div class="tl-wrap">
+        <div class="tl-item">
+          <div class="tl-left"><div class="tl-dot done"></div><div class="tl-line"></div></div>
+          <div>
+            <div class="tl-title">Project Ingested &amp; Analyzed</div>
+            <div class="tl-meta">Bhanu · Feb 24, 2026 · 2,431 files parsed · 3 agents assigned</div>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-left"><div class="tl-dot done"></div><div class="tl-line"></div></div>
+          <div>
+            <div class="tl-title">Architecture Decision — HITL Approved</div>
+            <div class="tl-meta">BK approved monorepo structure · Feb 25, 2026 · 14s response time</div>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-left"><div class="tl-dot done"></div><div class="tl-line"></div></div>
+          <div>
+            <div class="tl-title">Build Phase Initiated</div>
+            <div class="tl-meta">6 agents activated · Feb 26, 2026 · Parallel task execution enabled</div>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-left"><div class="tl-dot warn"></div><div class="tl-line"></div></div>
+          <div>
+            <div class="tl-title">Database Migration Decision — Awaiting HITL ⚡</div>
+            <div class="tl-meta" style="color:#F79A19;">Bhanu · Feb 28, 2026 · Pending your review — action required</div>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-left"><div class="tl-dot idle"></div><div class="tl-line"></div></div>
+          <div>
+            <div class="tl-title">QA &amp; Testing Phase</div>
+            <div class="tl-meta">Estimated: Mar 3–4, 2026 · Automated + manual review</div>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-left"><div class="tl-dot idle"></div></div>
+          <div>
+            <div class="tl-title">Production Deployment</div>
+            <div class="tl-meta">Estimated: Mar 5, 2026 · Staged rollout with monitoring</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /kanban view -->
+
+
+  <!-- ════════════════════════════
+       AGENTS VIEW
+  ════════════════════════════ -->
+  <div id="view-agents" class="view">
+
+    <div class="page-header">
+      <div>
+        <div class="ph-eyebrow">Multi-Agent System</div>
+        <div class="ph-title">Agent <span>Roster</span></div>
+        <div class="ph-sub">16 agents deployed · 14 active · 2 idle · Real-time orchestration</div>
+      </div>
+      <div class="ph-actions">
+        <button class="btn btn-ghost">↓ Agent Report</button>
+        <button class="btn btn-lime">+ Configure Agent</button>
+      </div>
+    </div>
+
+    <div class="agents-grid">
+
+      <div class="agent-card">
+        <div class="ac-icon">🧑‍💼</div>
+        <div class="ac-header"><div class="ac-name">Bhanu</div><span class="ag-type ag-lead">Lead</span></div>
+        <div class="ac-role">Founder · Lead Orchestrator</div>
+        <div class="ac-status-row">
+          <div class="ac-working"><div class="ac-sdot"></div> Working</div>
+          <div class="ac-tasks">4 active tasks</div>
+        </div>
+        <div class="ac-divider"></div>
+        <div class="ac-caps">Capabilities</div>
+        <div class="ac-cap-tags">
+          <span class="ac-cap-tag">Project routing</span>
+          <span class="ac-cap-tag">Agent orchestration</span>
+          <span class="ac-cap-tag">Decision making</span>
+          <span class="ac-cap-tag">HITL escalation</span>
+        </div>
+      </div>
+
+      <div class="agent-card">
+        <div class="ac-icon">🔧</div>
+        <div class="ac-header"><div class="ac-name">Friday</div><span class="ag-type ag-int">Int</span></div>
+        <div class="ac-role">Developer Agent</div>
+        <div class="ac-status-row">
+          <div class="ac-working"><div class="ac-sdot"></div> Working</div>
+          <div class="ac-tasks">3 active tasks</div>
+        </div>
+        <div class="ac-divider"></div>
+        <div class="ac-caps">Capabilities</div>
+        <div class="ac-cap-tags">
+          <span class="ac-cap-tag">Code generation</span>
+          <span class="ac-cap-tag">Refactoring</span>
+          <span class="ac-cap-tag">TypeScript</span>
+          <span class="ac-cap-tag">API design</span>
+        </div>
+      </div>
+
+      <div class="agent-card">
+        <div class="ac-icon">🔬</div>
+        <div class="ac-header"><div class="ac-name">Fury</div><span class="ag-type ag-spc">Spc</span></div>
+        <div class="ac-role">Customer Research Agent</div>
+        <div class="ac-status-row">
+          <div class="ac-working"><div class="ac-sdot"></div> Working</div>
+          <div class="ac-tasks">2 active tasks</div>
+        </div>
+        <div class="ac-divider"></div>
+        <div class="ac-caps">Capabilities</div>
+        <div class="ac-cap-tags">
+          <span class="ac-cap-tag">User research</span>
+          <span class="ac-cap-tag">Data analysis</span>
+          <span class="ac-cap-tag">Persona mapping</span>
+        </div>
+      </div>
+
+      <div class="agent-card">
+        <div class="ac-icon">🌱</div>
+        <div class="ac-header"><div class="ac-name">Groot</div><span class="ag-type ag-spc">Spc</span></div>
+        <div class="ac-role">Retention Specialist</div>
+        <div class="ac-status-row">
+          <div class="ac-working"><div class="ac-sdot"></div> Working</div>
+          <div class="ac-tasks">1 active task</div>
+        </div>
+        <div class="ac-divider"></div>
+        <div class="ac-caps">Capabilities</div>
+        <div class="ac-cap-tags">
+          <span class="ac-cap-tag">Churn analysis</span>
+          <span class="ac-cap-tag">Re-engagement</span>
+          <span class="ac-cap-tag">Health scoring</span>
+        </div>
+      </div>
+
+      <div class="agent-card">
+        <div class="ac-icon">🎯</div>
+        <div class="ac-header"><div class="ac-name">Hawkeye</div><span class="ag-type ag-spc">Spc</span></div>
+        <div class="ac-role">Outbound Scout</div>
+        <div class="ac-status-row">
+          <div class="ac-working"><div class="ac-sdot"></div> Working</div>
+          <div class="ac-tasks">2 active tasks</div>
+        </div>
+        <div class="ac-divider"></div>
+        <div class="ac-caps">Capabilities</div>
+        <div class="ac-cap-tags">
+          <span class="ac-cap-tag">Lead discovery</span>
+          <span class="ac-cap-tag">Signal detection</span>
+          <span class="ac-cap-tag">Qualification</span>
+        </div>
+      </div>
+
+      <div class="agent-card">
+        <div class="ac-icon">🤖</div>
+        <div class="ac-header"><div class="ac-name">Jarvis</div><span class="ag-type ag-lead">Lead</span></div>
+        <div class="ac-role">Squad Lead</div>
+        <div class="ac-status-row">
+          <div class="ac-working"><div class="ac-sdot"></div> Working</div>
+          <div class="ac-tasks">3 active tasks</div>
+        </div>
+        <div class="ac-divider"></div>
+        <div class="ac-caps">Capabilities</div>
+        <div class="ac-cap-tags">
+          <span class="ac-cap-tag">Task delegation</span>
+          <span class="ac-cap-tag">QA oversight</span>
+          <span class="ac-cap-tag">Progress reporting</span>
+        </div>
+      </div>
+
+      <div class="agent-card">
+        <div class="ac-icon">✍️</div>
+        <div class="ac-header"><div class="ac-name">Loki</div><span class="ag-type ag-spc">Spc</span></div>
+        <div class="ac-role">Content Writer</div>
+        <div class="ac-status-row">
+          <div class="ac-working"><div class="ac-sdot"></div> Working</div>
+          <div class="ac-tasks">2 active tasks</div>
+        </div>
+        <div class="ac-divider"></div>
+        <div class="ac-caps">Capabilities</div>
+        <div class="ac-cap-tags">
+          <span class="ac-cap-tag">Copywriting</span>
+          <span class="ac-cap-tag">Documentation</span>
+          <span class="ac-cap-tag">Schema writing</span>
+        </div>
+      </div>
+
+      <div class="agent-card">
+        <div class="ac-icon">📊</div>
+        <div class="ac-header"><div class="ac-name">Vision</div><span class="ag-type ag-spc">Spc</span></div>
+        <div class="ac-role">UI/UX Analyst</div>
+        <div class="ac-status-row">
+          <div class="ac-working"><div class="ac-sdot"></div> Working</div>
+          <div class="ac-tasks">1 active task</div>
+        </div>
+        <div class="ac-divider"></div>
+        <div class="ac-caps">Capabilities</div>
+        <div class="ac-cap-tags">
+          <span class="ac-cap-tag">Figma parsing</span>
+          <span class="ac-cap-tag">Component mapping</span>
+          <span class="ac-cap-tag">Design tokens</span>
+        </div>
+      </div>
+
+      <div class="agent-card" style="opacity:0.7;">
+        <div class="ac-icon">🛡️</div>
+        <div class="ac-header"><div class="ac-name">Shield</div><span class="ag-type ag-spc">Spc</span></div>
+        <div class="ac-role">Security Auditor</div>
+        <div class="ac-status-row">
+          <div class="ac-working off"><div class="ac-sdot idle"></div> Idle</div>
+          <div class="ac-tasks">0 active tasks</div>
+        </div>
+        <div class="ac-divider"></div>
+        <div class="ac-caps">Capabilities</div>
+        <div class="ac-cap-tags">
+          <span class="ac-cap-tag">Vuln scanning</span>
+          <span class="ac-cap-tag">Auth review</span>
+          <span class="ac-cap-tag">OWASP checks</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Orchestration diagram -->
+    <div class="orch-section">
+      <div class="orch-section-title">Orchestration Pathways</div>
+      <div class="card">
+        <div class="card-head">
+          <span class="card-head-title">Standard Workflow — Folder Input</span>
+          <span class="badge b-lime">Auto-configured</span>
+        </div>
+        <div class="orch-flow">
+          <div class="orch-node">
+            <div class="orch-icon lead"><span>🧑‍💼</span></div>
+            <div class="orch-lbl">Bhanu</div><div class="orch-sub">Ingest &amp; Route</div>
+          </div>
+          <div class="orch-arrow active"></div>
+          <div class="orch-node">
+            <div class="orch-icon running"><span>🔧</span></div>
+            <div class="orch-lbl">Friday</div><div class="orch-sub">Build</div>
+          </div>
+          <div class="orch-arrow active"></div>
+          <div class="orch-node">
+            <div class="orch-icon running"><span>🤖</span></div>
+            <div class="orch-lbl">Jarvis</div><div class="orch-sub">QA</div>
+          </div>
+          <div class="orch-arrow active"></div>
+          <div class="orch-node">
+            <div class="orch-icon"><span>✍️</span></div>
+            <div class="orch-lbl">Loki</div><div class="orch-sub">Docs</div>
+          </div>
+          <div class="orch-arrow"></div>
+          <div class="orch-node">
+            <div class="orch-icon"><span>🎯</span></div>
+            <div class="orch-lbl">Hawkeye</div><div class="orch-sub">Validate</div>
+          </div>
+        </div>
+        <div class="card-head" style="border-top:1px solid #DDEC90;border-bottom:none;margin-top:0;">
+          <span class="card-head-title">Figma Input Workflow</span>
+          <span class="badge b-blue">Design-first path</span>
+        </div>
+        <div class="orch-flow">
+          <div class="orch-node">
+            <div class="orch-icon lead"><span>🧑‍💼</span></div>
+            <div class="orch-lbl">Bhanu</div><div class="orch-sub">Ingest</div>
+          </div>
+          <div class="orch-arrow active"></div>
+          <div class="orch-node">
+            <div class="orch-icon running"><span>📊</span></div>
+            <div class="orch-lbl">Vision</div><div class="orch-sub">Parse Design</div>
+          </div>
+          <div class="orch-arrow active"></div>
+          <div class="orch-node">
+            <div class="orch-icon running"><span>🔧</span></div>
+            <div class="orch-lbl">Friday</div><div class="orch-sub">Build</div>
+          </div>
+          <div class="orch-arrow"></div>
+          <div class="orch-node">
+            <div class="orch-icon"><span>🤖</span></div>
+            <div class="orch-lbl">Jarvis</div><div class="orch-sub">QA</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /agents view -->
+
+
+  <!-- ════════════════════════════
+       ANALYTICS VIEW
+  ════════════════════════════ -->
+  <div id="view-analytics" class="view">
+
+    <div class="page-header">
+      <div>
+        <div class="ph-eyebrow">Operational Intelligence</div>
+        <div class="ph-title">Analytics &amp; <span>Cost Governance</span></div>
+        <div class="ph-sub">Full operational visibility · Token usage · Infrastructure spend · ROI metrics</div>
+      </div>
+      <div class="ph-actions">
+        <button class="btn btn-ghost">↓ Full Report</button>
+        <button class="btn btn-lime">Set Budget Alert</button>
+      </div>
+    </div>
+
+    <div class="analytics-top">
+      <div class="an-card">
+        <div class="an-label">Total Tokens (MTD)</div>
+        <div class="an-value">84M</div>
+        <div class="an-sub">↑ +18% vs last month</div>
+      </div>
+      <div class="an-card">
+        <div class="an-label">Monthly AI Cost</div>
+        <div class="an-value o">$4,200</div>
+        <div class="an-sub">↓ −12% vs last month</div>
+      </div>
+      <div class="an-card">
+        <div class="an-label">Cost per Project</div>
+        <div class="an-value" style="font-size:22px;">$350 avg</div>
+        <div class="an-sub">Range: $80 – $920</div>
+      </div>
+      <div class="an-card">
+        <div class="an-label">HITL Response Time</div>
+        <div class="an-value" style="font-size:22px;">14s avg</div>
+        <div class="an-sub">↓ −40% vs last quarter</div>
+      </div>
+    </div>
+
+    <div class="analytics-mid">
+
+      <div class="card">
+        <div class="card-head"><span class="card-head-title">Token Usage by Model</span><span class="badge b-lime">MTD</span></div>
+        <div class="card-body">
+          <div class="an-bar-row">
+            <span class="an-bar-lbl">Sonnet 4.6</span>
+            <div class="an-bar-track"><div class="an-bar-fill" style="width:67%;background:#BBCB64;"></div></div>
+            <span class="an-bar-val" style="color:#7A8A00;">56.3M</span>
+          </div>
+          <div class="an-bar-row">
+            <span class="an-bar-lbl">Haiku 4.5</span>
+            <div class="an-bar-track"><div class="an-bar-fill" style="width:33%;background:#FFE52A;"></div></div>
+            <span class="an-bar-val" style="color:#B8A000;">27.7M</span>
+          </div>
+          <div class="divider" style="margin:12px 0;"></div>
+          <div class="an-bar-row" style="margin-bottom:0;">
+            <span class="an-bar-lbl" style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#7A8A00;">By Agent</span>
+          </div>
+          <div style="margin-top:8px;">
+            <div class="an-bar-row">
+              <span class="an-bar-lbl">Friday</span>
+              <div class="an-bar-track"><div class="an-bar-fill" style="width:38%;background:#BBCB64;"></div></div>
+              <span class="an-bar-val" style="color:#7A8A00;">31.9M</span>
+            </div>
+            <div class="an-bar-row">
+              <span class="an-bar-lbl">Bhanu</span>
+              <div class="an-bar-track"><div class="an-bar-fill" style="width:24%;background:#DDEC90;"></div></div>
+              <span class="an-bar-val" style="color:#7A8A00;">20.2M</span>
+            </div>
+            <div class="an-bar-row">
+              <span class="an-bar-lbl">Jarvis</span>
+              <div class="an-bar-track"><div class="an-bar-fill" style="width:19%;background:#DDEC90;"></div></div>
+              <span class="an-bar-val" style="color:#7A8A00;">15.9M</span>
+            </div>
+            <div class="an-bar-row">
+              <span class="an-bar-lbl">Loki</span>
+              <div class="an-bar-track"><div class="an-bar-fill" style="width:12%;background:#F5F8D0;border:1px solid #DDEC90;"></div></div>
+              <span class="an-bar-val" style="color:#7A8A00;">10.1M</span>
+            </div>
+            <div class="an-bar-row">
+              <span class="an-bar-lbl">Others</span>
+              <div class="an-bar-track"><div class="an-bar-fill" style="width:7%;background:#E0E0E0;"></div></div>
+              <span class="an-bar-val" style="color:#6A6A20;">5.9M</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><span class="card-head-title">Cost by Project</span><span class="badge b-lime">MTD</span></div>
+        <table class="an-table">
+          <thead>
+            <tr><th>Project</th><th>Tokens</th><th>Cost</th><th>Phase</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Alpha Rewrite</td><td>22.4M</td><td style="font-weight:700;color:#C07000;">$920</td><td><span class="it-pill it-folder" style="font-size:8px;">Build</span></td></tr>
+            <tr><td>Portal Modernization</td><td>18.1M</td><td style="font-weight:700;color:#C07000;">$742</td><td><span class="it-pill" style="background:#FFFBCC;color:#7A6500;border:1px solid #FDE047;font-size:8px;padding:2px 7px;border-radius:10px;font-weight:700;">Review</span></td></tr>
+            <tr><td>Design Rebuild</td><td>14.8M</td><td style="font-weight:700;color:#7A8A00;">$607</td><td><span class="it-pill it-figma" style="font-size:8px;">Deploy</span></td></tr>
+            <tr><td>Legacy API Migration</td><td>11.2M</td><td style="font-weight:700;color:#7A8A00;">$459</td><td><span class="it-pill it-folder" style="font-size:8px;">Discovery</span></td></tr>
+            <tr><td>Mobile Proto Rebuild</td><td>9.6M</td><td style="font-weight:700;color:#7A8A00;">$394</td><td><span class="it-pill it-proto" style="font-size:8px;">Build</span></td></tr>
+            <tr><td>CRM Integration</td><td>5.1M</td><td style="font-weight:700;color:#7A8A00;">$209</td><td><span class="it-pill it-folder" style="font-size:8px;">Build</span></td></tr>
+            <tr><td>Dashboard Overhaul</td><td>2.8M</td><td style="font-weight:700;color:#7A8A00;">$115</td><td><span class="it-pill it-figma" style="font-size:8px;">Discovery</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+
+    <div class="card">
+      <div class="card-head"><span class="card-head-title">Infrastructure &amp; Spend Summary</span><span class="badge b-orange">Feb 2026</span></div>
+      <div class="card-body">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;">
+          <div class="info-box"><strong>AI Compute</strong><br>$3,840 · Claude API usage across all agents and projects</div>
+          <div class="info-box"><strong>Storage &amp; Infra</strong><br>$360 · File storage, vector DB, logging infrastructure</div>
+          <div class="info-box"><strong>Total MTD</strong><br><span style="font-size:18px;font-weight:700;color:#C07000;">$4,200</span> · Budget: $5,000 · 84% utilized</div>
+          <div class="info-box"><strong>Projected Month-End</strong><br>$4,650 · Within budget · On pace for −7% vs target</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /analytics view -->
+
+
+  <!-- ════════════════════════════
+       CONFIG VIEW
+  ════════════════════════════ -->
+  <div id="view-config" class="view">
+
+    <div class="page-header">
+      <div>
+        <div class="ph-eyebrow">Platform Control</div>
+        <div class="ph-title">Configuration &amp; <span>Governance</span></div>
+        <div class="ph-sub">Frameworks, models, HITL settings, and execution strategy — full enterprise control</div>
+      </div>
+      <div class="ph-actions">
+        <button class="btn btn-ghost">↓ Export Config</button>
+        <button class="btn btn-lime">Save Changes</button>
+      </div>
+    </div>
+
+    <div class="config-full">
+
+      <div class="cfg-card">
+        <div class="cfg-card-head"><div class="cfg-card-title">Model Provider Settings</div></div>
+        <div class="cfg-card-body">
+          <div class="cfg-field">
+            <div class="cfg-field-lbl">Primary Model</div>
+            <div class="cfg-field-sub">Used for complex reasoning, architecture decisions, HITL escalations</div>
+            <select class="cfg-select-full"><option>Claude Sonnet 4.6 (claude-sonnet-4-6)</option><option>Claude Opus 4.6 (claude-opus-4-6)</option></select>
+          </div>
+          <div class="cfg-field">
+            <div class="cfg-field-lbl">Secondary Model</div>
+            <div class="cfg-field-sub">Used for routine tasks, code formatting, documentation generation</div>
+            <select class="cfg-select-full"><option>Claude Haiku 4.5 (claude-haiku-4-5)</option><option>Claude Sonnet 4.6</option></select>
+          </div>
+          <div class="cfg-field">
+            <div class="cfg-field-lbl">Max Tokens per Task</div>
+            <select class="cfg-select-full"><option>4,096 tokens (standard)</option><option>8,192 tokens (extended)</option><option>16,384 tokens (large)</option></select>
+          </div>
+        </div>
+      </div>
+
+      <div class="cfg-card">
+        <div class="cfg-card-head"><div class="cfg-card-title">Framework &amp; Architecture</div></div>
+        <div class="cfg-card-body">
+          <div class="cfg-field">
+            <div class="cfg-field-lbl">Default Output Framework</div>
+            <select class="cfg-select-full"><option>React + TypeScript</option><option>Next.js 14</option><option>Vue 3</option><option>Angular 17</option></select>
+          </div>
+          <div class="cfg-field">
+            <div class="cfg-field-lbl">State Management</div>
+            <select class="cfg-select-full"><option>Zustand (recommended)</option><option>Redux Toolkit</option><option>Jotai</option><option>Context API</option></select>
+          </div>
+          <div class="cfg-field">
+            <div class="cfg-field-lbl">Architectural Pattern</div>
+            <select class="cfg-select-full"><option>Feature-based monorepo</option><option>Micro-frontends</option><option>Layered architecture</option></select>
+          </div>
+        </div>
+      </div>
+
+      <div class="cfg-card">
+        <div class="cfg-card-head"><div class="cfg-card-title">Human-in-Loop (HITL) Settings</div></div>
+        <div class="cfg-card-body">
+          <div class="cfg-field">
+            <div class="cfg-field-lbl">HITL Trigger Mode</div>
+            <select class="cfg-select-full"><option>Standard — key decisions only</option><option>Verbose — all agent decisions</option><option>Minimal — critical path only</option></select>
+          </div>
+          <div class="cfg-toggle-row">
+            <div class="cfg-toggle-info">
+              <div class="cfg-toggle-name">Schema migration approvals</div>
+              <div class="cfg-toggle-desc">Require human approval before any DB schema changes</div>
+            </div>
+            <button class="toggle on" onclick="this.classList.toggle('on')"></button>
+          </div>
+          <div class="cfg-toggle-row">
+            <div class="cfg-toggle-info">
+              <div class="cfg-toggle-name">Architecture pattern changes</div>
+              <div class="cfg-toggle-desc">Escalate if agent recommends structural changes</div>
+            </div>
+            <button class="toggle on" onclick="this.classList.toggle('on')"></button>
+          </div>
+          <div class="cfg-toggle-row">
+            <div class="cfg-toggle-info">
+              <div class="cfg-toggle-name">Downtime-requiring operations</div>
+              <div class="cfg-toggle-desc">Always require approval when downtime is predicted</div>
+            </div>
+            <button class="toggle on" onclick="this.classList.toggle('on')"></button>
+          </div>
+          <div class="cfg-toggle-row">
+            <div class="cfg-toggle-info">
+              <div class="cfg-toggle-name">Auto-approve formatting tasks</div>
+              <div class="cfg-toggle-desc">Bypass HITL for linting, formatting, and docs</div>
+            </div>
+            <button class="toggle" onclick="this.classList.toggle('on')"></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="cfg-card">
+        <div class="cfg-card-head"><div class="cfg-card-title">Budget &amp; Cost Controls</div></div>
+        <div class="cfg-card-body">
+          <div class="cfg-field">
+            <div class="cfg-field-lbl">Monthly Budget Cap</div>
+            <select class="cfg-select-full"><option>$5,000 (current)</option><option>$7,500</option><option>$10,000</option><option>Custom</option></select>
+          </div>
+          <div class="cfg-field">
+            <div class="cfg-field-lbl">Budget Alert Threshold</div>
+            <select class="cfg-select-full"><option>80% of budget (alert)</option><option>90% of budget (alert)</option><option>100% (hard stop)</option></select>
+          </div>
+          <div class="cfg-toggle-row">
+            <div class="cfg-toggle-info">
+              <div class="cfg-toggle-name">Auto-switch to Haiku on budget alert</div>
+              <div class="cfg-toggle-desc">Use cheaper model for routine tasks when near budget</div>
+            </div>
+            <button class="toggle on" onclick="this.classList.toggle('on')"></button>
+          </div>
+          <div class="cfg-toggle-row">
+            <div class="cfg-toggle-info">
+              <div class="cfg-toggle-name">Weekly cost reports via email</div>
+              <div class="cfg-toggle-desc">Send governance reports to admins every Monday</div>
+            </div>
+            <button class="toggle on" onclick="this.classList.toggle('on')"></button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div><!-- /config view -->
+
+</main>
+</div>
+
+<script>
+// ── VIEW SWITCHING ──
+function switchView(viewName, navBtn) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + viewName).classList.add('active');
+
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  if (navBtn) navBtn.classList.add('active');
+
+  // Update sidebar active state
+  document.querySelectorAll('.sb-item').forEach(i => i.classList.remove('active'));
+  if (viewName === 'dashboard') {
+    document.getElementById('sb-all').classList.add('active');
+  }
+}
+
+// ── OPEN KANBAN ──
+function openKanban(name, phase, pct, agents, inputType, hitlCount) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-kanban').classList.add('active');
+
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav-tab')[0].classList.add('active');
+
+  document.getElementById('kb-title').textContent = name;
+  document.getElementById('kb-meta').textContent = phase + ' phase · ' + pct + '% complete · ' + agents + ' agents active';
+  document.getElementById('kb-timeline-badge').textContent = name;
+
+  // Update badges
+  var typeClass = inputType === 'Figma' ? 'b-blue' : inputType === 'Prototype' ? 'b-yellow' : 'b-lime';
+  var typeIcon = inputType === 'Figma' ? '🎨' : inputType === 'Prototype' ? '⚡' : '📁';
+  var hitlBadge = parseInt(hitlCount) > 0
+    ? '<span class="badge b-orange">' + hitlCount + ' HITL Pending</span>'
+    : '<span class="badge b-green">HITL Clear</span>';
+  document.getElementById('kb-badges').innerHTML =
+    '<span class="badge ' + typeClass + '">' + typeIcon + ' ' + inputType + ' Input</span>' + hitlBadge;
+
+  // Update sidebar
+  document.querySelectorAll('.sb-item').forEach(i => i.classList.remove('active'));
+}
+
+// ── SHOW DASHBOARD ──
+function showDashboard() {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-dashboard').classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav-tab')[0].classList.add('active');
+  document.querySelectorAll('.sb-item').forEach(i => i.classList.remove('active'));
+  document.getElementById('sb-all').classList.add('active');
+}
+
+// ── OPEN HITL QUEUE ──
+function openHITLQueue() {
+  openKanban('Portal Modernization', 'Review', '45', '3', 'Folder', '2');
+}
+
+// ── TOGGLE UPLOAD ──
+function toggleUpload() {
+  var el = document.getElementById('upload-section');
+  el.classList.toggle('show');
+  if (el.classList.contains('show')) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+}
+
+// ── TOGGLE FILTER CHIPS ──
+function toggleChip(el) {
+  el.classList.toggle('on');
+}
+
+// ── HITL APPROVE / REJECT ──
+function approveHITL(id) {
+  var card = document.getElementById('hitl-card-' + id);
+  if (!card) return;
+  card.style.borderColor = '#22C55E';
+  card.style.background = '#DCFCE7';
+  card.querySelector('.hitl-actions').innerHTML =
+    '<span style="font-size:11px;font-weight:700;color:#166534;">✓ Approved — agents proceeding</span>';
+}
+
+function rejectHITL(id) {
+  var card = document.getElementById('hitl-card-' + id);
+  if (!card) return;
+  card.style.borderColor = '#CF0F0F';
+  card.style.background = '#FEE2E2';
+  card.querySelector('.hitl-actions').innerHTML =
+    '<span style="font-size:11px;font-weight:700;color:#CF0F0F;">✗ Rejected — agents re-routing</span>';
+}
+</script>
+
+</body>
+</html>

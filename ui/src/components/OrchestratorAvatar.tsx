@@ -163,7 +163,7 @@ function getStateDescription(state: OrchestratorState): string {
 export function OrchestratorAvatar({ state, size = 'md' }: OrchestratorAvatarProps) {
   const { svg: svgSize } = SIZES[size]
   const stateDesc = getStateDescription(state)
-  const ariaLabel = `Orchestrator Maestro is ${stateDesc}`
+  const ariaLabel = `Zeus is ${stateDesc}`
 
   return (
     <div

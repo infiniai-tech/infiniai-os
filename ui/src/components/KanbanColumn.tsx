@@ -1,9 +1,6 @@
 import { FeatureCard } from './FeatureCard'
 import { Plus, Sparkles, Wand2 } from 'lucide-react'
 import type { Feature, ActiveAgent } from '../lib/types'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 
 interface KanbanColumnProps {
   title: string
@@ -11,20 +8,22 @@ interface KanbanColumnProps {
   features: Feature[]
   allFeatures?: Feature[]
   activeAgents?: ActiveAgent[]
-  color: 'pending' | 'progress' | 'done' | 'human_input'
+  color: 'pending' | 'progress' | 'review' | 'human_input' | 'done'
   onFeatureClick: (feature: Feature) => void
   onAddFeature?: () => void
   onExpandProject?: () => void
   showExpandButton?: boolean
   onCreateSpec?: () => void
   showCreateSpec?: boolean
+  specReviewContent?: React.ReactNode
 }
 
-const colorMap = {
-  pending: 'border-t-4 border-t-muted',
-  progress: 'border-t-4 border-t-primary',
-  done: 'border-t-4 border-t-primary',
-  human_input: 'border-t-4 border-t-amber-500',
+const COLUMN_COLORS: Record<string, { bg: string; color: string; label: string }> = {
+  pending: { bg: '#FAFAF2', color: '#6A6A20', label: 'Backlog' },
+  progress: { bg: '#F5F8D0', color: '#7A8A00', label: 'In Progress' },
+  review: { bg: '#FFF0DC', color: '#A05A00', label: 'Review' },
+  human_input: { bg: '#FFF0DC', color: '#A05A00', label: '\u26A1 Human-in-Loop' },
+  done: { bg: '#F5F8D0', color: '#7A8A00', label: 'Done' },
 }
 
 export function KanbanColumn({
@@ -40,9 +39,9 @@ export function KanbanColumn({
   showExpandButton,
   onCreateSpec,
   showCreateSpec,
+  specReviewContent,
 }: KanbanColumnProps) {
   // Create a map of feature ID to active agent for quick lookup
-  // Maps ALL batch feature IDs to the same agent
   const agentByFeatureId = new Map<number, ActiveAgent>()
   for (const agent of activeAgents) {
     const ids = agent.featureIds || [agent.featureId]
@@ -51,77 +50,158 @@ export function KanbanColumn({
     }
   }
 
+  const colConfig = COLUMN_COLORS[color] || COLUMN_COLORS.pending
+  // Use the config label unless an override title is given that differs from defaults
+  const displayTitle = title || colConfig.label
+
   return (
-    <Card className={`overflow-hidden ${colorMap[color]} py-0`}>
-      {/* Header */}
-      <CardHeader className="px-4 py-3 border-b flex-row items-center justify-between space-y-0">
-        <CardTitle className="text-lg font-semibold flex items-center gap-2">
-          {title}
-          <Badge variant="secondary">{count}</Badge>
-        </CardTitle>
-        {(onAddFeature || onExpandProject) && (
-          <div className="flex items-center gap-2">
+    <div style={{ fontFamily: 'Arial, sans-serif' }}>
+      {/* Column header */}
+      <div
+        style={{
+          borderRadius: '6px 6px 0 0',
+          border: '1px solid #DDEC90',
+          borderBottom: 'none',
+          padding: '8px 10px',
+          background: colConfig.bg,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <span
+            style={{
+              fontSize: '9px',
+              fontWeight: 700,
+              letterSpacing: '2px',
+              textTransform: 'uppercase',
+              color: colConfig.color,
+            }}
+          >
+            {displayTitle}
+          </span>
+          <span style={{ fontSize: '11px', fontWeight: 700, color: colConfig.color }}>{count}</span>
+        </div>
+
+        {/* Action buttons in pending column */}
+        {color === 'pending' && (onAddFeature || (onExpandProject && showExpandButton)) && (
+          <div style={{ display: 'flex', gap: '4px' }}>
             {onAddFeature && (
-              <Button
+              <button
                 onClick={onAddFeature}
-                size="icon-sm"
                 title="Add new feature (N)"
+                style={{
+                  width: '22px',
+                  height: '22px',
+                  borderRadius: '4px',
+                  border: '1px solid #DDEC90',
+                  background: '#FFFFFF',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#7A8A00',
+                  transition: 'background 0.12s',
+                }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#F5F8D0' }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = '#FFFFFF' }}
               >
-                <Plus size={16} />
-              </Button>
+                <Plus size={14} />
+              </button>
             )}
             {onExpandProject && showExpandButton && (
-              <Button
+              <button
                 onClick={onExpandProject}
-                size="icon-sm"
-                variant="secondary"
-                title="Expand project with AI (E)"
+                title="Expand project (E)"
+                style={{
+                  width: '22px',
+                  height: '22px',
+                  borderRadius: '4px',
+                  border: '1px solid #DDEC90',
+                  background: '#FFFFFF',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#7A8A00',
+                  transition: 'background 0.12s',
+                }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#F5F8D0' }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = '#FFFFFF' }}
               >
-                <Sparkles size={16} />
-              </Button>
+                <Sparkles size={14} />
+              </button>
             )}
           </div>
         )}
-      </CardHeader>
+      </div>
 
-      {/* Cards */}
-      <CardContent className="p-0">
-        <div className="h-[600px] overflow-y-auto">
-          <div className="p-4 space-y-3">
-            {features.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                {showCreateSpec && onCreateSpec ? (
-                  <div className="space-y-4">
-                    <p>No spec created yet</p>
-                    <Button onClick={onCreateSpec}>
-                      <Wand2 size={18} />
-                      Create Spec with AI
-                    </Button>
-                  </div>
-                ) : (
-                  'No features'
-                )}
+      {/* Column body */}
+      <div
+        style={{
+          background: '#FAFAF2',
+          border: '1px solid #DDEC90',
+          borderRadius: '0 0 6px 6px',
+          minHeight: '180px',
+          padding: '8px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px',
+          overflowY: 'auto',
+          maxHeight: '600px',
+        }}
+      >
+        {/* Spec review content (rendered at top of HITL column) */}
+        {specReviewContent}
+
+        {features.length === 0 && !specReviewContent ? (
+          <div style={{ textAlign: 'center', padding: '32px 8px', color: '#6A6A20', fontSize: '11px' }}>
+            {showCreateSpec && onCreateSpec ? (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+                <p>No spec created yet</p>
+                <button
+                  onClick={onCreateSpec}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '6px 14px',
+                    borderRadius: '4px',
+                    background: '#BBCB64',
+                    color: '#1A1A00',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    border: 'none',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <Wand2 size={14} />
+                  Create Spec
+                </button>
               </div>
             ) : (
-              features.map((feature, index) => (
-                <div
-                  key={feature.id}
-                  className="animate-slide-in"
-                  style={{ animationDelay: `${index * 50}ms` }}
-                >
-                  <FeatureCard
-                    feature={feature}
-                    onClick={() => onFeatureClick(feature)}
-                    isInProgress={color === 'progress'}
-                    allFeatures={allFeatures}
-                    activeAgent={agentByFeatureId.get(feature.id)}
-                  />
-                </div>
-              ))
+              'No features'
             )}
           </div>
-        </div>
-      </CardContent>
-    </Card>
+        ) : (
+          features.map((feature, index) => (
+            <div
+              key={feature.id}
+              className="animate-slide-in"
+              style={{ animationDelay: `${index * 50}ms` }}
+            >
+              <FeatureCard
+                feature={feature}
+                onClick={() => onFeatureClick(feature)}
+                isInProgress={color === 'progress'}
+                allFeatures={allFeatures}
+                activeAgent={agentByFeatureId.get(feature.id)}
+              />
+            </div>
+          ))
+        )}
+      </div>
+    </div>
   )
 }

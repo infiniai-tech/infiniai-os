@@ -3,16 +3,12 @@ import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { AgentAvatar } from './AgentAvatar'
 import type { ActiveAgent, AgentLogEntry, AgentType } from '../lib/types'
-import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 
 interface AgentCardProps {
   agent: ActiveAgent
   onShowLogs?: (agentIndex: number) => void
 }
 
-// Get a friendly state description
 function getStateText(state: ActiveAgent['state']): string {
   switch (state) {
     case 'idle':
@@ -34,39 +30,29 @@ function getStateText(state: ActiveAgent['state']): string {
   }
 }
 
-// Get state color class
 function getStateColor(state: ActiveAgent['state']): string {
   switch (state) {
     case 'success':
-      return 'text-primary'
+      return '#7A8A00'
     case 'error':
-      return 'text-yellow-600'
+      return '#CF0F0F'
     case 'struggling':
-      return 'text-orange-500'
+      return '#A05A00'
     case 'working':
     case 'testing':
-      return 'text-primary'
+      return '#7A8A00'
     case 'thinking':
-      return 'text-yellow-600'
+      return '#F79A19'
     default:
-      return 'text-muted-foreground'
+      return '#6A6A20'
   }
 }
 
-// Get agent type badge config
-function getAgentTypeBadge(agentType: AgentType): { label: string; className: string; icon: typeof Code } {
+function getAgentTypeBadge(agentType: AgentType): { label: string; bg: string; color: string; icon: typeof Code } {
   if (agentType === 'testing') {
-    return {
-      label: 'TEST',
-      className: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
-      icon: FlaskConical,
-    }
+    return { label: 'TEST', bg: '#F5F8D0', color: '#7A8A00', icon: FlaskConical }
   }
-  return {
-    label: 'CODE',
-    className: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
-    icon: Code,
-  }
+  return { label: 'CODE', bg: '#F5F8D0', color: '#7A8A00', icon: Code }
 }
 
 export function AgentCard({ agent, onShowLogs }: AgentCardProps) {
@@ -76,83 +62,85 @@ export function AgentCard({ agent, onShowLogs }: AgentCardProps) {
   const TypeIcon = typeBadge.icon
 
   return (
-    <Card className={`min-w-[180px] max-w-[220px] py-3 ${isActive ? 'animate-pulse' : ''}`}>
-      <CardContent className="p-3 space-y-2">
-        {/* Agent type badge */}
-        <div className="flex justify-end">
-          <Badge variant="outline" className={`text-[10px] ${typeBadge.className}`}>
+    <div style={{
+      minWidth: '180px', maxWidth: '220px', padding: '12px', borderRadius: '8px',
+      background: '#FFFFFF', border: '1px solid #DDEC90',
+      fontFamily: 'Arial, sans-serif',
+      animation: isActive ? 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' : undefined,
+    }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', gap: '3px',
+            fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '20px',
+            background: typeBadge.bg, color: typeBadge.color, border: '1px solid #DDEC90',
+          }}>
             <TypeIcon size={10} />
             {typeBadge.label}
-          </Badge>
+          </span>
         </div>
 
-        {/* Header with avatar and name */}
-        <div className="flex items-center gap-2">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <AgentAvatar name={agent.agentName} state={agent.state} size="sm" />
-          <div className="flex-1 min-w-0">
-            <div className="font-semibold text-sm truncate">
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: '13px', fontWeight: 700, color: '#1A1A00', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {agent.agentName}
             </div>
-            <div className={`text-xs ${getStateColor(agent.state)}`}>
+            <div style={{ fontSize: '11px', color: getStateColor(agent.state) }}>
               {getStateText(agent.state)}
             </div>
           </div>
-          {/* Log button */}
           {hasLogs && onShowLogs && (
-            <Button
-              variant="ghost"
-              size="icon-xs"
+            <button
               onClick={() => onShowLogs(agent.agentIndex)}
               title={`View logs (${agent.logs?.length || 0} entries)`}
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '2px', color: '#6A6A20' }}
             >
-              <ScrollText size={14} className="text-muted-foreground" />
-            </Button>
+              <ScrollText size={14} />
+            </button>
           )}
         </div>
 
-        {/* Feature info */}
         <div>
           {agent.featureIds && agent.featureIds.length > 1 ? (
             <>
-              <div className="text-xs text-muted-foreground mb-0.5">
+              <div style={{ fontSize: '11px', color: '#6A6A20', marginBottom: '2px' }}>
                 Batch: {agent.featureIds.map(id => `#${id}`).join(', ')}
               </div>
-              <div className="text-sm font-bold truncate">
+              <div style={{ fontSize: '13px', fontWeight: 700, color: '#1A1A00', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 Active: Feature #{agent.featureId}
               </div>
             </>
           ) : (
             <>
-              <div className="text-xs text-muted-foreground mb-0.5">
+              <div style={{ fontSize: '11px', color: '#6A6A20', marginBottom: '2px' }}>
                 Feature #{agent.featureId}
               </div>
-              <div className="text-sm font-medium truncate" title={agent.featureName}>
+              <div style={{ fontSize: '13px', fontWeight: 600, color: '#1A1A00', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={agent.featureName}>
                 {agent.featureName}
               </div>
             </>
           )}
         </div>
 
-        {/* Thought bubble */}
         {agent.thought && (
-          <div className="pt-2 border-t border-border/50">
-            <div className="flex items-start gap-1.5">
-              <MessageCircle size={14} className="text-primary shrink-0 mt-0.5" />
-              <p
-                className="text-xs text-muted-foreground line-clamp-2 italic"
-                title={agent.thought}
-              >
+          <div style={{ paddingTop: '8px', borderTop: '1px solid #DDEC90' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
+              <MessageCircle size={14} style={{ color: '#7A8A00', flexShrink: 0, marginTop: '2px' }} />
+              <p style={{
+                fontSize: '11px', color: '#6A6A20', fontStyle: 'italic', margin: 0,
+                display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+              }} title={agent.thought}>
                 {agent.thought}
               </p>
             </div>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }
 
-// Log viewer modal component
 interface AgentLogModalProps {
   agent: ActiveAgent
   logs: AgentLogEntry[]
@@ -173,68 +161,77 @@ export function AgentLogModal({ agent, logs, onClose }: AgentLogModalProps) {
     setTimeout(() => setCopied(false), 2000)
   }
 
-  const getLogColor = (type: AgentLogEntry['type']) => {
+  const getLogColor = (type: AgentLogEntry['type']): string => {
     switch (type) {
       case 'error':
-        return 'text-destructive'
+        return '#CF0F0F'
       case 'state_change':
-        return 'text-primary'
+        return '#7A8A00'
       default:
-        return 'text-foreground'
+        return '#1A1A00'
     }
   }
 
   return createPortal(
     <div
-      className="fixed inset-0 flex items-center justify-center p-4 bg-black/50"
-      style={{ zIndex: 9999 }}
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose()
-      }}
+      style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', background: 'rgba(0,0,0,0.5)', zIndex: 9999 }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
-      <Card className="w-full max-w-4xl max-h-[80vh] flex flex-col py-0">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b">
-          <div className="flex items-center gap-3">
+      <div style={{
+        width: '100%', maxWidth: '56rem', maxHeight: '80vh', display: 'flex', flexDirection: 'column',
+        background: '#FFFFFF', border: '1px solid #DDEC90', borderRadius: '8px',
+        fontFamily: 'Arial, sans-serif', overflow: 'hidden',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', borderBottom: '1px solid #DDEC90' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <AgentAvatar name={agent.agentName} state={agent.state} size="sm" />
             <div>
-              <div className="flex items-center gap-2">
-                <h2 className="font-semibold text-lg">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#1A1A00', margin: 0 }}>
                   {agent.agentName} Logs
                 </h2>
-                <Badge variant="outline" className={`text-[10px] ${typeBadge.className}`}>
+                <span style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '3px',
+                  fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '20px',
+                  background: typeBadge.bg, color: typeBadge.color, border: '1px solid #DDEC90',
+                }}>
                   <TypeIcon size={10} />
                   {typeBadge.label}
-                </Badge>
+                </span>
               </div>
-              <p className="text-sm text-muted-foreground">
+              <p style={{ fontSize: '13px', color: '#6A6A20', margin: 0 }}>
                 {agent.featureIds && agent.featureIds.length > 1
                   ? `Batch: ${agent.featureIds.map(id => `#${id}`).join(', ')}`
-                  : `Feature #${agent.featureId}: ${agent.featureName}`
-                }
+                  : `Feature #${agent.featureId}: ${agent.featureName}`}
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={handleCopy}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button onClick={handleCopy} style={{
+              display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px',
+              background: 'transparent', color: '#7A8A00', border: '1px solid #DDEC90',
+              borderRadius: '6px', padding: '4px 10px', cursor: 'pointer',
+            }}>
               {copied ? <Check size={14} /> : <Copy size={14} />}
               {copied ? 'Copied!' : 'Copy'}
-            </Button>
-            <Button variant="ghost" size="icon-sm" onClick={onClose}>
+            </button>
+            <button onClick={onClose} style={{
+              background: 'transparent', border: 'none', cursor: 'pointer',
+              color: '#6A6A20', padding: '4px',
+            }}>
               <X size={20} />
-            </Button>
+            </button>
           </div>
         </div>
 
-        {/* Log content */}
-        <div className="flex-1 min-h-0 overflow-y-auto p-4 bg-muted/50">
-          <div className="font-mono text-xs space-y-1">
+        <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '16px', background: '#FAFAF2' }}>
+          <div style={{ fontFamily: 'monospace', fontSize: '12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
             {logs.length === 0 ? (
-              <p className="text-muted-foreground italic">No logs available</p>
+              <p style={{ color: '#6A6A20', fontStyle: 'italic' }}>No logs available</p>
             ) : (
               logs.map((log, idx) => (
-                <div key={idx} className={`${getLogColor(log.type)} whitespace-pre-wrap break-all`}>
-                  <span className="text-muted-foreground">
+                <div key={idx} style={{ color: getLogColor(log.type), whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+                  <span style={{ color: '#6A6A20' }}>
                     [{new Date(log.timestamp).toLocaleTimeString()}]
                   </span>{' '}
                   {log.line}
@@ -244,11 +241,10 @@ export function AgentLogModal({ agent, logs, onClose }: AgentLogModalProps) {
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="p-3 border-t text-xs text-muted-foreground">
+        <div style={{ padding: '12px', borderTop: '1px solid #DDEC90', fontSize: '12px', color: '#6A6A20' }}>
           {logs.length} log entries
         </div>
-      </Card>
+      </div>
     </div>,
     document.body
   )

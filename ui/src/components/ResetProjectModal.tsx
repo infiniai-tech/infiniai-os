@@ -53,10 +53,10 @@ export function ResetProjectModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <RotateCcw size={20} />
-            Reset Project
+            Reset Odyssey
           </DialogTitle>
           <DialogDescription>
-            Reset <span className="font-semibold">{projectName}</span> to start fresh
+            Reset <span className="font-semibold">{projectName}</span> and begin anew
           </DialogDescription>
         </DialogHeader>
 

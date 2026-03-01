@@ -1,9 +1,5 @@
-import { CheckCircle2, Circle, Loader2, MessageCircle, UserCircle } from 'lucide-react'
+import { useState } from 'react'
 import type { Feature, ActiveAgent } from '../lib/types'
-import { DependencyBadge } from './DependencyBadge'
-import { AgentAvatar } from './AgentAvatar'
-import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 
 interface FeatureCardProps {
   feature: Feature
@@ -13,117 +9,192 @@ interface FeatureCardProps {
   activeAgent?: ActiveAgent
 }
 
-// Generate consistent color for category
-function getCategoryColor(category: string): string {
-  const colors = [
-    'bg-pink-500',
-    'bg-cyan-500',
-    'bg-green-500',
-    'bg-yellow-500',
-    'bg-orange-500',
-    'bg-purple-500',
-    'bg-blue-500',
-  ]
-
-  let hash = 0
-  for (let i = 0; i < category.length; i++) {
-    hash = category.charCodeAt(i) + ((hash << 5) - hash)
-  }
-
-  return colors[Math.abs(hash) % colors.length]
+function getStatusDotColor(feature: Feature, isInProgress?: boolean): string {
+  if (feature.passes) return '#BBCB64'
+  if (feature.needs_human_input) return '#FFE52A'
+  if (isInProgress || feature.in_progress) return '#F79A19'
+  return '#DDEC90'
 }
 
-export function FeatureCard({ feature, onClick, isInProgress, allFeatures = [], activeAgent }: FeatureCardProps) {
-  const categoryColor = getCategoryColor(feature.category)
-  const isBlocked = feature.blocked || (feature.blocking_dependencies && feature.blocking_dependencies.length > 0)
-  const hasActiveAgent = !!activeAgent
+function getStatusLabel(feature: Feature, isInProgress?: boolean): string {
+  if (feature.passes) return 'Done'
+  if (feature.needs_human_input) return 'Awaiting Input'
+  if (isInProgress || feature.in_progress) return 'In Progress'
+  return 'Pending'
+}
+
+export function FeatureCard({ feature, onClick, isInProgress, activeAgent }: FeatureCardProps) {
+  const [hovered, setHovered] = useState(false)
+  const isHITL = feature.needs_human_input
+  const isDone = feature.passes
 
   return (
-    <Card
+    <div
       onClick={onClick}
-      className={`
-        cursor-pointer transition-all hover:border-primary py-3
-        ${isInProgress ? 'animate-pulse' : ''}
-        ${feature.passes ? 'border-primary/50' : ''}
-        ${feature.needs_human_input ? 'border-amber-500/50' : ''}
-        ${isBlocked && !feature.passes && !feature.needs_human_input ? 'border-destructive/50 opacity-80' : ''}
-        ${hasActiveAgent ? 'ring-2 ring-primary ring-offset-2' : ''}
-      `}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        background: '#FFFFFF',
+        border: isHITL ? '1.5px solid #F79A19' : '1px solid #DDEC90',
+        borderRadius: '8px',
+        padding: '10px',
+        cursor: 'pointer',
+        position: 'relative',
+        opacity: isDone ? 0.7 : 1,
+        borderColor: hovered && !isHITL ? '#BBCB64' : undefined,
+        boxShadow: hovered ? '0 2px 8px rgba(187,203,100,0.15)' : 'none',
+        transform: hovered ? 'translateY(-1px)' : 'none',
+        transition: 'all 0.15s ease',
+        fontFamily: 'Arial, sans-serif',
+      }}
     >
-      <CardContent className="p-4 space-y-3">
-        {/* Header */}
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <Badge className={`${categoryColor} text-white`}>
-              {feature.category}
-            </Badge>
-            <DependencyBadge feature={feature} allFeatures={allFeatures} compact />
-          </div>
-          <span className="font-mono text-sm text-muted-foreground">
-            #{feature.priority}
-          </span>
+      {/* HITL banner */}
+      {isHITL && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            background: '#F79A19',
+            color: '#FFFFFF',
+            fontSize: '8px',
+            fontWeight: 700,
+            letterSpacing: '1px',
+            textTransform: 'uppercase',
+            textAlign: 'center',
+            padding: '2px 0',
+            borderRadius: '4px 4px 0 0',
+          }}
+        >
+          &#9889; AWAITING INPUT
         </div>
+      )}
 
-        {/* Name */}
-        <h3 className="font-semibold line-clamp-2">
-          {feature.name}
-        </h3>
+      {/* Feature name */}
+      <div
+        style={{
+          fontSize: '11px',
+          fontWeight: 700,
+          color: '#1A1A00',
+          lineHeight: 1.35,
+          marginBottom: '6px',
+          marginTop: isHITL ? '14px' : 0,
+        }}
+      >
+        {feature.name}
+      </div>
 
-        {/* Description */}
-        <p className="text-sm text-muted-foreground line-clamp-2">
-          {feature.description}
-        </p>
-
-        {/* Agent working on this feature */}
+      {/* Agent + status row */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '10px', color: '#6A6A20' }}>
+        <span
+          style={{
+            width: '7px',
+            height: '7px',
+            borderRadius: '50%',
+            background: getStatusDotColor(feature, isInProgress),
+            flexShrink: 0,
+          }}
+        />
+        <span>{getStatusLabel(feature, isInProgress)}</span>
         {activeAgent && (
-          <div className="flex items-center gap-2 py-2 px-2 rounded-md bg-primary/10 border border-primary/30">
-            <AgentAvatar name={activeAgent.agentName} state={activeAgent.state} size="sm" />
-            <div className="flex-1 min-w-0">
-              <div className="text-xs font-semibold text-primary">
-                {activeAgent.agentName} is working on this!
-              </div>
-              {activeAgent.thought && (
-                <div className="flex items-center gap-1 mt-0.5">
-                  <MessageCircle size={10} className="text-muted-foreground shrink-0" />
-                  <p className="text-[10px] text-muted-foreground truncate italic">
-                    {activeAgent.thought}
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
+          <>
+            <span style={{ color: '#DDEC90' }}>|</span>
+            <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#F79A19', flexShrink: 0 }} />
+            <span style={{ fontWeight: 600 }}>{activeAgent.agentName}</span>
+          </>
+        )}
+      </div>
+
+      {/* HITL question preview */}
+      {isHITL && feature.human_input_request?.prompt && (
+        <div
+          style={{
+            marginTop: '6px',
+            padding: '6px 8px',
+            background: '#FFF0DC',
+            border: '1px solid #F0C880',
+            borderRadius: '4px',
+            fontSize: '9px',
+            color: '#A05A00',
+            lineHeight: 1.4,
+          }}
+        >
+          {feature.human_input_request.prompt.length > 120
+            ? feature.human_input_request.prompt.slice(0, 120) + '...'
+            : feature.human_input_request.prompt}
+        </div>
+      )}
+
+      {/* Tags row */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '7px' }}>
+        {/* Token estimate tag */}
+        <span
+          style={{
+            fontSize: '8px',
+            fontWeight: 700,
+            letterSpacing: '0.3px',
+            padding: '2px 6px',
+            borderRadius: '10px',
+            background: '#F5F8D0',
+            color: '#7A8A00',
+            border: '1px solid #DDEC90',
+          }}
+        >
+          ~{feature.priority}k tokens
+        </span>
+
+        {/* Auto/HITL tag */}
+        {isHITL ? (
+          <span
+            style={{
+              fontSize: '8px',
+              fontWeight: 700,
+              letterSpacing: '0.3px',
+              padding: '2px 6px',
+              borderRadius: '10px',
+              background: '#FFF0DC',
+              color: '#A05A00',
+              border: '1px solid #F0C880',
+            }}
+          >
+            HITL
+          </span>
+        ) : (
+          <span
+            style={{
+              fontSize: '8px',
+              fontWeight: 700,
+              letterSpacing: '0.3px',
+              padding: '2px 6px',
+              borderRadius: '10px',
+              background: '#F5F8D0',
+              color: '#7A8A00',
+              border: '1px solid #DDEC90',
+            }}
+          >
+            Auto
+          </span>
         )}
 
-        {/* Status */}
-        <div className="flex items-center gap-2 text-sm">
-          {isInProgress ? (
-            <>
-              <Loader2 size={16} className="animate-spin text-primary" />
-              <span className="text-primary font-medium">Processing...</span>
-            </>
-          ) : feature.passes ? (
-            <>
-              <CheckCircle2 size={16} className="text-primary" />
-              <span className="text-primary font-medium">Complete</span>
-            </>
-          ) : feature.needs_human_input ? (
-            <>
-              <UserCircle size={16} className="text-amber-500" />
-              <span className="text-amber-500 font-medium">Needs Your Input</span>
-            </>
-          ) : isBlocked ? (
-            <>
-              <Circle size={16} className="text-destructive" />
-              <span className="text-destructive">Blocked</span>
-            </>
-          ) : (
-            <>
-              <Circle size={16} className="text-muted-foreground" />
-              <span className="text-muted-foreground">Pending</span>
-            </>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+        {/* Category tag */}
+        {feature.category && (
+          <span
+            style={{
+              fontSize: '8px',
+              fontWeight: 700,
+              letterSpacing: '0.3px',
+              padding: '2px 6px',
+              borderRadius: '10px',
+              background: '#F5F8D0',
+              color: '#7A8A00',
+              border: '1px solid #DDEC90',
+            }}
+          >
+            {feature.category}
+          </span>
+        )}
+      </div>
+    </div>
   )
 }
