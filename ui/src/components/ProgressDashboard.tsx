@@ -76,19 +76,19 @@ export function ProgressDashboard({
   return (
     <div style={{
       background: '#FFFFFF', border: '1px solid #DDEC90', borderRadius: '8px',
-      padding: '16px 20px', fontFamily: 'Arial, sans-serif',
+      padding: '16px 20px', fontFamily: "'Inter', sans-serif",
     }}>
       {/* Header row */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <span style={{
-            fontSize: '16px', fontWeight: 700, letterSpacing: '2px',
+            fontSize: '18px', fontWeight: 700, letterSpacing: '2px',
             textTransform: 'uppercase', color: '#1A1A00',
           }}>
             Odyssey Progress
           </span>
           <span style={{
-            fontSize: '10px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase',
+            fontSize: '12px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase',
             display: 'inline-flex', alignItems: 'center', gap: '4px',
             padding: '3px 8px', borderRadius: '20px',
             background: isConnected ? '#F5F8D0' : '#FFE5E5',
@@ -100,11 +100,11 @@ export function ProgressDashboard({
           </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
-          <span style={{ fontFamily: 'monospace', fontSize: '18px', fontWeight: 700, color: '#7A8A00' }}>
+          <span style={{ fontFamily: 'monospace', fontSize: '22px', fontWeight: 700, color: '#7A8A00' }}>
             {passing}
           </span>
-          <span style={{ fontSize: '14px', color: '#6A6A20' }}>/</span>
-          <span style={{ fontFamily: 'monospace', fontSize: '18px', fontWeight: 700, color: '#1A1A00' }}>
+          <span style={{ fontSize: '16px', color: '#6A6A20' }}>/</span>
+          <span style={{ fontFamily: 'monospace', fontSize: '22px', fontWeight: 700, color: '#1A1A00' }}>
             {total}
           </span>
         </div>
@@ -124,7 +124,7 @@ export function ProgressDashboard({
           }} />
         </div>
         <span style={{
-          fontSize: '14px', fontWeight: 700, color: '#6A6A20',
+          fontSize: '16px', fontWeight: 700, color: '#6A6A20',
           fontVariantNumeric: 'tabular-nums', width: '48px', textAlign: 'right',
         }}>
           {percentage.toFixed(1)}%

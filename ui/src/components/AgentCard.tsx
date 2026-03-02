@@ -1,7 +1,7 @@
 import { MessageCircle, ScrollText, X, Copy, Check, Code, FlaskConical } from 'lucide-react'
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
-import { AgentAvatar } from './AgentAvatar'
+import { AgentAvatar, resolveAgentName } from './AgentAvatar'
 import type { ActiveAgent, AgentLogEntry, AgentType } from '../lib/types'
 
 interface AgentCardProps {
@@ -48,6 +48,24 @@ function getStateColor(state: ActiveAgent['state']): string {
   }
 }
 
+function getStateDotColor(state: ActiveAgent['state']): string {
+  switch (state) {
+    case 'success':
+      return '#BBCB64'
+    case 'error':
+      return '#CF0F0F'
+    case 'struggling':
+      return '#F79A19'
+    case 'working':
+    case 'testing':
+      return '#7A8A00'
+    case 'thinking':
+      return '#F79A19'
+    default:
+      return '#6A6A20'
+  }
+}
+
 function getAgentTypeBadge(agentType: AgentType): { label: string; bg: string; color: string; icon: typeof Code } {
   if (agentType === 'testing') {
     return { label: 'TEST', bg: '#F5F8D0', color: '#7A8A00', icon: FlaskConical }
@@ -60,83 +78,95 @@ export function AgentCard({ agent, onShowLogs }: AgentCardProps) {
   const hasLogs = agent.logs && agent.logs.length > 0
   const typeBadge = getAgentTypeBadge(agent.agentType || 'coding')
   const TypeIcon = typeBadge.icon
+  const dotColor = getStateDotColor(agent.state)
+
+  const featureLabel = agent.featureIds && agent.featureIds.length > 1
+    ? `Batch: ${agent.featureIds.map(id => `#${id}`).join(', ')}`
+    : `#${agent.featureId} ${agent.featureName || ''}`
 
   return (
-    <div style={{
-      minWidth: '180px', maxWidth: '220px', padding: '12px', borderRadius: '8px',
-      background: '#FFFFFF', border: '1px solid #DDEC90',
-      fontFamily: 'Arial, sans-serif',
-      animation: isActive ? 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' : undefined,
-    }}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <span style={{
-            display: 'inline-flex', alignItems: 'center', gap: '3px',
-            fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '20px',
-            background: typeBadge.bg, color: typeBadge.color, border: '1px solid #DDEC90',
-          }}>
-            <TypeIcon size={10} />
-            {typeBadge.label}
-          </span>
-        </div>
+    <div
+      style={{
+        display: 'flex', alignItems: 'center', gap: '12px',
+        padding: '10px 14px', borderRadius: '8px',
+        background: '#FFFFFF', border: '1px solid #DDEC90',
+        fontFamily: "'Inter', sans-serif",
+        animation: isActive ? 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' : undefined,
+      }}
+    >
+      {/* Status dot */}
+      <span style={{
+        width: '8px', height: '8px', borderRadius: '50%', flexShrink: 0,
+        background: dotColor,
+        boxShadow: isActive ? `0 0 6px ${dotColor}60` : undefined,
+      }} />
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <AgentAvatar name={agent.agentName} state={agent.state} size="sm" />
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: '13px', fontWeight: 700, color: '#1A1A00', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {agent.agentName}
-            </div>
-            <div style={{ fontSize: '11px', color: getStateColor(agent.state) }}>
-              {getStateText(agent.state)}
-            </div>
-          </div>
-          {hasLogs && onShowLogs && (
-            <button
-              onClick={() => onShowLogs(agent.agentIndex)}
-              title={`View logs (${agent.logs?.length || 0} entries)`}
-              style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '2px', color: '#6A6A20' }}
-            >
-              <ScrollText size={14} />
-            </button>
-          )}
-        </div>
+      {/* Avatar */}
+      <AgentAvatar name={agent.agentName} state={agent.state} size="sm" />
 
-        <div>
-          {agent.featureIds && agent.featureIds.length > 1 ? (
-            <>
-              <div style={{ fontSize: '11px', color: '#6A6A20', marginBottom: '2px' }}>
-                Batch: {agent.featureIds.map(id => `#${id}`).join(', ')}
-              </div>
-              <div style={{ fontSize: '13px', fontWeight: 700, color: '#1A1A00', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                Active: Feature #{agent.featureId}
-              </div>
-            </>
-          ) : (
-            <>
-              <div style={{ fontSize: '11px', color: '#6A6A20', marginBottom: '2px' }}>
-                Feature #{agent.featureId}
-              </div>
-              <div style={{ fontSize: '13px', fontWeight: 600, color: '#1A1A00', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={agent.featureName}>
-                {agent.featureName}
-              </div>
-            </>
-          )}
-        </div>
+      {/* Name */}
+      <span style={{ fontSize: '13px', fontWeight: 700, color: '#1A1A00', whiteSpace: 'nowrap' }}>
+        {resolveAgentName(agent.agentName)}
+      </span>
 
-        {agent.thought && (
-          <div style={{ paddingTop: '8px', borderTop: '1px solid #DDEC90' }}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
-              <MessageCircle size={14} style={{ color: '#7A8A00', flexShrink: 0, marginTop: '2px' }} />
-              <p style={{
-                fontSize: '11px', color: '#6A6A20', fontStyle: 'italic', margin: 0,
-                display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
-              }} title={agent.thought}>
-                {agent.thought}
-              </p>
-            </div>
-          </div>
-        )}
-      </div>
+      {/* Type badge */}
+      <span style={{
+        display: 'inline-flex', alignItems: 'center', gap: '3px', flexShrink: 0,
+        fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '20px',
+        background: typeBadge.bg, color: typeBadge.color, border: '1px solid #DDEC90',
+      }}>
+        <TypeIcon size={10} />
+        {typeBadge.label}
+      </span>
+
+      {/* Feature info */}
+      <span
+        style={{
+          flex: 1, minWidth: 0,
+          fontSize: '12px', color: '#6A6A20', fontWeight: 500,
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        }}
+        title={featureLabel}
+      >
+        {featureLabel}
+      </span>
+
+      {/* State text */}
+      <span style={{
+        fontSize: '12px', fontWeight: 600, color: getStateColor(agent.state),
+        whiteSpace: 'nowrap', flexShrink: 0,
+      }}>
+        {getStateText(agent.state)}
+      </span>
+
+      {/* Thought bubble (truncated) */}
+      {agent.thought && (
+        <span
+          style={{
+            fontSize: '11px', fontStyle: 'italic', color: '#9A9A60',
+            maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap', flexShrink: 1,
+          }}
+          title={agent.thought}
+        >
+          <MessageCircle size={10} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '3px' }} />
+          {agent.thought}
+        </span>
+      )}
+
+      {/* Log button */}
+      {hasLogs && onShowLogs && (
+        <button
+          onClick={() => onShowLogs(agent.agentIndex)}
+          title={`View logs (${agent.logs?.length || 0} entries)`}
+          style={{
+            background: 'transparent', border: 'none', cursor: 'pointer',
+            padding: '4px', color: '#6A6A20', flexShrink: 0,
+          }}
+        >
+          <ScrollText size={14} />
+        </button>
+      )}
     </div>
   )
 }
@@ -180,7 +210,7 @@ export function AgentLogModal({ agent, logs, onClose }: AgentLogModalProps) {
       <div style={{
         width: '100%', maxWidth: '56rem', maxHeight: '80vh', display: 'flex', flexDirection: 'column',
         background: '#FFFFFF', border: '1px solid #DDEC90', borderRadius: '8px',
-        fontFamily: 'Arial, sans-serif', overflow: 'hidden',
+        fontFamily: "'Inter', sans-serif", overflow: 'hidden',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', borderBottom: '1px solid #DDEC90' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -188,7 +218,7 @@ export function AgentLogModal({ agent, logs, onClose }: AgentLogModalProps) {
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#1A1A00', margin: 0 }}>
-                  {agent.agentName} Logs
+                  {resolveAgentName(agent.agentName)} Logs
                 </h2>
                 <span style={{
                   display: 'inline-flex', alignItems: 'center', gap: '3px',

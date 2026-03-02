@@ -14,11 +14,11 @@ export function DashboardHeader({ projectCount, activeTab = 'DASHBOARD', onTabCh
   return (
     <header
       className="flex items-center h-[52px] px-6 gap-0 sticky top-0 z-50 shrink-0"
-      style={{ background: '#1A1A00', borderBottom: '2px solid #2A2A00', fontFamily: 'Arial, sans-serif' }}
+      style={{ background: '#1A1A00', borderBottom: '2px solid #2A2A00', fontFamily: "'Inter', sans-serif" }}
     >
       {/* Logo */}
       <div className="text-[22px] font-bold text-white tracking-[-0.3px] shrink-0 mr-8">
-        infini<span style={{ color: '#FFE52A' }}>AI</span>
+        Infini<span style={{ color: '#FFE52A' }}>AI</span>
         <sup className="text-[10px] font-normal tracking-[2px] uppercase ml-[3px]" style={{ color: '#4A4A10' }}>OS</sup>
       </div>
 

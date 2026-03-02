@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { AgentAvatar, resolveAgentName } from './AgentAvatar'
 import type { Feature, ActiveAgent } from '../lib/types'
 
 interface FeatureCardProps {
@@ -45,7 +46,7 @@ export function FeatureCard({ feature, onClick, isInProgress, activeAgent }: Fea
         boxShadow: hovered ? '0 2px 8px rgba(187,203,100,0.15)' : 'none',
         transform: hovered ? 'translateY(-1px)' : 'none',
         transition: 'all 0.15s ease',
-        fontFamily: 'Arial, sans-serif',
+        fontFamily: "'Inter', sans-serif",
       }}
     >
       {/* HITL banner */}
@@ -58,13 +59,13 @@ export function FeatureCard({ feature, onClick, isInProgress, activeAgent }: Fea
             right: 0,
             background: '#F79A19',
             color: '#FFFFFF',
-            fontSize: '8px',
-            fontWeight: 700,
-            letterSpacing: '1px',
-            textTransform: 'uppercase',
-            textAlign: 'center',
-            padding: '2px 0',
-            borderRadius: '4px 4px 0 0',
+          fontSize: '10px',
+          fontWeight: 700,
+          letterSpacing: '1px',
+          textTransform: 'uppercase',
+          textAlign: 'center',
+          padding: '3px 0',
+          borderRadius: '4px 4px 0 0',
           }}
         >
           &#9889; AWAITING INPUT
@@ -74,7 +75,7 @@ export function FeatureCard({ feature, onClick, isInProgress, activeAgent }: Fea
       {/* Feature name */}
       <div
         style={{
-          fontSize: '11px',
+          fontSize: '14px',
           fontWeight: 700,
           color: '#1A1A00',
           lineHeight: 1.35,
@@ -86,7 +87,7 @@ export function FeatureCard({ feature, onClick, isInProgress, activeAgent }: Fea
       </div>
 
       {/* Agent + status row */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '10px', color: '#6A6A20' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: '#6A6A20' }}>
         <span
           style={{
             width: '7px',
@@ -100,8 +101,8 @@ export function FeatureCard({ feature, onClick, isInProgress, activeAgent }: Fea
         {activeAgent && (
           <>
             <span style={{ color: '#DDEC90' }}>|</span>
-            <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#F79A19', flexShrink: 0 }} />
-            <span style={{ fontWeight: 600 }}>{activeAgent.agentName}</span>
+            <AgentAvatar name={activeAgent.agentName} state={activeAgent.state} size="xs" />
+            <span style={{ fontWeight: 600 }}>{resolveAgentName(activeAgent.agentName)}</span>
           </>
         )}
       </div>
@@ -115,7 +116,7 @@ export function FeatureCard({ feature, onClick, isInProgress, activeAgent }: Fea
             background: '#FFF0DC',
             border: '1px solid #F0C880',
             borderRadius: '4px',
-            fontSize: '9px',
+            fontSize: '11px',
             color: '#A05A00',
             lineHeight: 1.4,
           }}
@@ -131,10 +132,10 @@ export function FeatureCard({ feature, onClick, isInProgress, activeAgent }: Fea
         {/* Token estimate tag */}
         <span
           style={{
-            fontSize: '8px',
+            fontSize: '10px',
             fontWeight: 700,
             letterSpacing: '0.3px',
-            padding: '2px 6px',
+            padding: '2px 7px',
             borderRadius: '10px',
             background: '#F5F8D0',
             color: '#7A8A00',
@@ -148,10 +149,10 @@ export function FeatureCard({ feature, onClick, isInProgress, activeAgent }: Fea
         {isHITL ? (
           <span
             style={{
-              fontSize: '8px',
+              fontSize: '10px',
               fontWeight: 700,
               letterSpacing: '0.3px',
-              padding: '2px 6px',
+              padding: '2px 7px',
               borderRadius: '10px',
               background: '#FFF0DC',
               color: '#A05A00',
@@ -163,10 +164,10 @@ export function FeatureCard({ feature, onClick, isInProgress, activeAgent }: Fea
         ) : (
           <span
             style={{
-              fontSize: '8px',
+              fontSize: '10px',
               fontWeight: 700,
               letterSpacing: '0.3px',
-              padding: '2px 6px',
+              padding: '2px 7px',
               borderRadius: '10px',
               background: '#F5F8D0',
               color: '#7A8A00',
@@ -181,10 +182,10 @@ export function FeatureCard({ feature, onClick, isInProgress, activeAgent }: Fea
         {feature.category && (
           <span
             style={{
-              fontSize: '8px',
+              fontSize: '10px',
               fontWeight: 700,
               letterSpacing: '0.3px',
-              padding: '2px 6px',
+              padding: '2px 7px',
               borderRadius: '10px',
               background: '#F5F8D0',
               color: '#7A8A00',

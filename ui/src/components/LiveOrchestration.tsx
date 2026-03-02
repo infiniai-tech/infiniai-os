@@ -39,8 +39,8 @@ function hexToRgb(hex: string): string {
 export function LiveOrchestration({ projectName }: LiveOrchestrationProps) {
   return (
     <div
-      className="rounded-xl border border-[#BBCB64]/20 bg-white dark:bg-[#1a1c14] p-6"
-      style={{ fontFamily: "'DM Sans', sans-serif" }}
+      className="rounded-lg border border-[#DDEC90] bg-white dark:bg-[#1a1c14] p-6"
+      style={{ fontFamily: "'Inter', sans-serif" }}
     >
       {/* Header */}
       <div className="flex flex-wrap items-center gap-3 mb-6">

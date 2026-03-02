@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { ChevronDown, ChevronUp, Code, FlaskConical, Clock, Lock, Sparkles } from 'lucide-react'
-import { OrchestratorAvatar } from './OrchestratorAvatar'
 import type { OrchestratorStatus, OrchestratorState } from '../lib/types'
 
 interface OrchestratorStatusCardProps {
@@ -10,7 +9,7 @@ interface OrchestratorStatusCardProps {
 function getStateText(state: OrchestratorState): string {
   switch (state) {
     case 'idle':
-      return 'Resting upon Olympus...'
+      return 'Standing by...'
     case 'initializing':
       return 'Zeus awakens...'
     case 'scheduling':
@@ -30,9 +29,10 @@ function getStateText(state: OrchestratorState): string {
   }
 }
 
-function getStateColor(state: OrchestratorState): string {
+function getStateDotColor(state: OrchestratorState): string {
   switch (state) {
     case 'complete':
+      return '#BBCB64'
     case 'spawning':
     case 'scheduling':
     case 'monitoring':
@@ -60,64 +60,32 @@ function formatRelativeTime(timestamp: string): string {
   return `${Math.floor(diffMins / 60)}h ago`
 }
 
-const badgeStyle = (bg: string, color: string, border: string): React.CSSProperties => ({
-  display: 'inline-flex', alignItems: 'center', gap: '4px',
-  fontSize: '11px', fontWeight: 700, padding: '3px 10px', borderRadius: '20px',
-  background: bg, color, border: `1px solid ${border}`,
-})
-
 export function OrchestratorStatusCard({ status }: OrchestratorStatusCardProps) {
   const [showEvents, setShowEvents] = useState(false)
+  const dotColor = getStateDotColor(status.state)
 
   return (
-    <div style={{
-      marginBottom: '16px', padding: '16px', borderRadius: '8px',
-      background: '#FAFAF2', border: '1px solid #DDEC90',
-      fontFamily: 'Arial, sans-serif',
-    }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
-        <OrchestratorAvatar state={status.state} size="md" />
-
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-            <span style={{ fontSize: '18px', fontWeight: 700, color: '#7A8A00' }}>
-              Zeus, Commander
-            </span>
-            <span style={{ fontSize: '13px', fontWeight: 600, color: getStateColor(status.state) }}>
-              {getStateText(status.state)}
-            </span>
-          </div>
-
-          <p style={{ fontSize: '13px', color: '#1A1A00', marginBottom: '12px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-            {status.message}
-          </p>
-
-          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px' }}>
-            <span style={badgeStyle('#F5F8D0', '#7A8A00', '#DDEC90')}>
-              <Code size={12} />
-              Coding: {status.codingAgents}
-            </span>
-            <span style={badgeStyle('#F5F8D0', '#7A8A00', '#DDEC90')}>
-              <FlaskConical size={12} />
-              Testing: {status.testingAgents}
-            </span>
-            <span style={badgeStyle('#F5F8D0', '#7A8A00', '#DDEC90')}>
-              <Clock size={12} />
-              Ready: {status.readyCount}
-            </span>
-            {status.blockedCount > 0 && (
-              <span style={badgeStyle('#FFF0DC', '#A05A00', '#F0C880')}>
-                <Lock size={12} />
-                Blocked: {status.blockedCount}
-              </span>
-            )}
-          </div>
-        </div>
+    <div style={{ fontFamily: "'Inter', sans-serif" }}>
+      {/* Inline status banner */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+        <span style={{
+          width: '10px', height: '10px', borderRadius: '50%',
+          background: dotColor, flexShrink: 0,
+          boxShadow: `0 0 6px ${dotColor}60`,
+        }} />
+        <span style={{ fontSize: '16px', fontWeight: 700, color: '#1A1A00' }}>
+          Zeus, Commander
+        </span>
+        <span style={{ fontSize: '13px', color: '#6A6A20' }}>&middot;</span>
+        <span style={{ fontSize: '13px', fontWeight: 600, color: dotColor }}>
+          {getStateText(status.state)}
+        </span>
 
         {status.recentEvents.length > 0 && (
           <button
             onClick={() => setShowEvents(!showEvents)}
             style={{
+              marginLeft: 'auto',
               display: 'flex', alignItems: 'center', gap: '4px',
               fontSize: '12px', fontWeight: 700, color: '#7A8A00',
               background: 'transparent', border: 'none', cursor: 'pointer',
@@ -133,15 +101,51 @@ export function OrchestratorStatusCard({ status }: OrchestratorStatusCardProps) 
         )}
       </div>
 
+      {/* Message */}
+      {status.message && (
+        <p style={{
+          fontSize: '13px', color: '#6A6A20', margin: '0 0 12px 20px',
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        }}>
+          {status.message}
+        </p>
+      )}
+
+      {/* Stat badges */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px', marginLeft: '20px' }}>
+        <span style={badgeStyle}>
+          <Code size={12} />
+          Coding: {status.codingAgents}
+        </span>
+        <span style={badgeStyle}>
+          <FlaskConical size={12} />
+          Testing: {status.testingAgents}
+        </span>
+        <span style={badgeStyle}>
+          <Clock size={12} />
+          Ready: {status.readyCount}
+        </span>
+        {status.blockedCount > 0 && (
+          <span style={{
+            ...badgeStyle,
+            background: '#FFF0DC', color: '#A05A00', border: '1px solid #F0C880',
+          }}>
+            <Lock size={12} />
+            Blocked: {status.blockedCount}
+          </span>
+        )}
+      </div>
+
+      {/* Expandable events */}
       {showEvents && status.recentEvents.length > 0 && (
-        <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #DDEC90' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+        <div style={{ marginTop: '12px', marginLeft: '20px', paddingTop: '10px', borderTop: '1px solid #DDEC90' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
             {status.recentEvents.map((event, idx) => (
               <div
                 key={`${event.timestamp}-${idx}`}
                 style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '12px' }}
               >
-                <span style={{ color: '#7A8A00', flexShrink: 0, fontFamily: 'monospace' }}>
+                <span style={{ color: '#7A8A00', flexShrink: 0, fontFamily: "'JetBrains Mono', monospace", fontSize: '11px' }}>
                   {formatRelativeTime(event.timestamp)}
                 </span>
                 <span style={{ color: '#1A1A00' }}>
@@ -154,4 +158,10 @@ export function OrchestratorStatusCard({ status }: OrchestratorStatusCardProps) 
       )}
     </div>
   )
+}
+
+const badgeStyle: React.CSSProperties = {
+  display: 'inline-flex', alignItems: 'center', gap: '4px',
+  fontSize: '12px', fontWeight: 700, padding: '3px 10px', borderRadius: '20px',
+  background: '#F5F8D0', color: '#7A8A00', border: '1px solid #DDEC90',
 }

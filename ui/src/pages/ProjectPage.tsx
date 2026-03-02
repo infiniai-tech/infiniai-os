@@ -4,7 +4,6 @@ import { useQueryClient, useQuery } from '@tanstack/react-query'
 import { useFeatures, useAgentStatus, useSettings, useProjects } from '../hooks/useProjects'
 import { useProjectWebSocket } from '../hooks/useWebSocket'
 import { useFeatureSound } from '../hooks/useFeatureSound'
-import { useCelebration } from '../hooks/useCelebration'
 import { OlympusHeader } from '../components/OlympusHeader'
 import { KanbanBoard } from '../components/KanbanBoard'
 import { AgentControl } from '../components/AgentControl'
@@ -13,7 +12,6 @@ import { AddFeatureForm } from '../components/AddFeatureForm'
 import { FeatureModal } from '../components/FeatureModal'
 import { DebugLogViewer, type TabType } from '../components/DebugLogViewer'
 import { AgentMissionControl } from '../components/AgentMissionControl'
-import { CelebrationOverlay } from '../components/CelebrationOverlay'
 import { AssistantFAB } from '../components/AssistantFAB'
 import { AssistantPanel } from '../components/AssistantPanel'
 import { ExpandProjectModal } from '../components/ExpandProjectModal'
@@ -117,7 +115,7 @@ export function ProjectPage() {
   }, [viewMode])
 
   useFeatureSound(features)
-  useCelebration(features, projectName)
+
 
   const handleGraphNodeClick = useCallback((nodeId: number) => {
     const allFeatures = [
@@ -450,13 +448,6 @@ export function ProjectPage() {
         />
       )}
 
-      {wsState.celebration && (
-        <CelebrationOverlay
-          agentName={wsState.celebration.agentName}
-          featureName={wsState.celebration.featureName}
-          onComplete={wsState.clearCelebration}
-        />
-      )}
     </div>
   )
 }

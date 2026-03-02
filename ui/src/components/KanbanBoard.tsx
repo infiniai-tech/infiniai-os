@@ -60,14 +60,14 @@ function SpecReviewCards({
           borderLeft: '4px solid #F79A19',
           borderRadius: '6px',
           padding: '10px',
-          fontFamily: 'Arial, sans-serif',
+          fontFamily: "'Inter', sans-serif",
           marginBottom: '4px',
         }}
       >
-        <div style={{ fontSize: '10px', fontWeight: 700, color: '#A05A00', marginBottom: '4px' }}>
+        <div style={{ fontSize: '13px', fontWeight: 700, color: '#A05A00', marginBottom: '4px' }}>
           Analyzing codebase...
         </div>
-        <div style={{ fontSize: '9px', color: '#6A6A20' }}>
+        <div style={{ fontSize: '12px', color: '#6A6A20' }}>
           Generating spec files for review. This may take a moment.
         </div>
       </div>
@@ -91,7 +91,7 @@ function SpecReviewCards({
               borderLeft: `4px solid ${isApproved ? '#BBCB64' : '#F79A19'}`,
               borderRadius: '6px',
               padding: '10px',
-              fontFamily: 'Arial, sans-serif',
+              fontFamily: "'Inter', sans-serif",
               marginBottom: '4px',
               cursor: 'pointer',
               transition: 'box-shadow 0.12s',
@@ -101,12 +101,12 @@ function SpecReviewCards({
             onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = 'none' }}
           >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-              <span style={{ fontSize: '11px', fontWeight: 700, color: '#1A1A00' }}>{meta.label}</span>
+              <span style={{ fontSize: '14px', fontWeight: 700, color: '#1A1A00' }}>{meta.label}</span>
               <span
                 style={{
-                  fontSize: '8px',
+                  fontSize: '10px',
                   fontWeight: 700,
-                  padding: '2px 6px',
+                  padding: '2px 7px',
                   borderRadius: '10px',
                   background: isApproved ? '#F5F8D0' : '#FFF0DC',
                   color: isApproved ? '#7A8A00' : '#A05A00',
@@ -116,19 +116,19 @@ function SpecReviewCards({
                 {isApproved ? 'Approved' : 'Pending'}
               </span>
             </div>
-            <div style={{ fontSize: '9px', color: '#6A6A20', marginBottom: '4px' }}>{meta.description}</div>
+            <div style={{ fontSize: '12px', color: '#6A6A20', marginBottom: '4px' }}>{meta.description}</div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: '8px', color: '#6A6A20' }}>{(file.size / 1024).toFixed(1)} KB</span>
+              <span style={{ fontSize: '11px', color: '#6A6A20' }}>{(file.size / 1024).toFixed(1)} KB</span>
               <button
                 onClick={(e) => { e.stopPropagation(); onSpecFileClick?.(file.filename) }}
                 style={{
-                  fontSize: '9px',
+                  fontSize: '12px',
                   fontWeight: 700,
                   color: '#7A8A00',
                   border: '1px solid #DDEC90',
                   background: 'transparent',
                   borderRadius: '4px',
-                  padding: '2px 8px',
+                  padding: '3px 10px',
                   cursor: 'pointer',
                   transition: 'background 0.12s',
                 }}
@@ -151,14 +151,14 @@ function SpecReviewCards({
             borderLeft: '4px solid #BBCB64',
             borderRadius: '6px',
             padding: '12px',
-            fontFamily: 'Arial, sans-serif',
+            fontFamily: "'Inter', sans-serif",
             textAlign: 'center',
           }}
         >
-          <div style={{ fontSize: '11px', fontWeight: 700, color: '#7A8A00', marginBottom: '6px' }}>
+          <div style={{ fontSize: '14px', fontWeight: 700, color: '#7A8A00', marginBottom: '6px' }}>
             All Specs Approved
           </div>
-          <div style={{ fontSize: '9px', color: '#6A6A20', marginBottom: '8px' }}>
+          <div style={{ fontSize: '12px', color: '#6A6A20', marginBottom: '8px' }}>
             Ready to start coding agents
           </div>
           <button
@@ -168,7 +168,7 @@ function SpecReviewCards({
               borderRadius: '4px',
               background: '#BBCB64',
               color: '#FFFFFF',
-              fontSize: '10px',
+              fontSize: '13px',
               fontWeight: 700,
               border: 'none',
               cursor: 'pointer',
@@ -211,7 +211,7 @@ export function KanbanBoard({
   // Loading skeleton
   if (!features) {
     return (
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '12px', fontFamily: 'Arial, sans-serif' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '12px', fontFamily: "'Inter', sans-serif" }}>
         {['Backlog', 'In Progress', 'Review', 'Human-in-Loop', 'Done'].map(title => (
           <div key={title} style={{ background: '#FAFAF2', border: '1px solid #DDEC90', borderRadius: '6px', padding: '12px' }}>
             <div style={{ height: '8px', background: '#DDEC90', borderRadius: '4px', marginBottom: '16px', opacity: 0.5 }} />

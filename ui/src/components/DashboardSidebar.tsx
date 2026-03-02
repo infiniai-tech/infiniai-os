@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import type { ProjectSummary } from '../lib/types'
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
+import { DEFAULT_PROMPTS, QUICK_INSERT_ITEMS } from './agentPrompts'
 
 interface DashboardSidebarProps {
   projects: ProjectSummary[]
@@ -50,6 +51,9 @@ const SIDEBAR_ROLE_LABELS: Record<RoleBadge, string> = {
 
 function SidebarAgentDrawer({ agent, onClose }: { agent: SidebarAgent; onClose: () => void }) {
   const [visible, setVisible] = useState(false)
+  const [view, setView] = useState<'detail' | 'configure'>('detail')
+  const [promptText, setPromptText] = useState(() => DEFAULT_PROMPTS[agent.name] || '')
+  const [saved, setSaved] = useState(false)
   const roleStyle = SIDEBAR_ROLE_STYLES[agent.role]
 
   useEffect(() => {
@@ -60,6 +64,11 @@ function SidebarAgentDrawer({ agent, onClose }: { agent: SidebarAgent; onClose: 
     setVisible(false)
     setTimeout(onClose, 250)
   }
+
+  const handleSave = useCallback(() => {
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
+  }, [])
 
   const sectionTitle: React.CSSProperties = {
     fontSize: '11px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase',
@@ -81,12 +90,12 @@ function SidebarAgentDrawer({ agent, onClose }: { agent: SidebarAgent; onClose: 
       />
       <div
         style={{
-          position: 'fixed', top: 0, right: 0, bottom: 0, width: '420px', zIndex: 999,
+          position: 'fixed', top: 0, right: 0, bottom: 0, width: view === 'configure' ? '560px' : '420px', zIndex: 999,
           background: '#FFFFFF', borderLeft: '1px solid #DDEC90',
           boxShadow: '-8px 0 30px rgba(0,0,0,0.08)',
           transform: visible ? 'translateX(0)' : 'translateX(100%)',
-          transition: 'transform 0.25s ease',
-          display: 'flex', flexDirection: 'column', fontFamily: 'Arial, sans-serif',
+          transition: 'transform 0.25s ease, width 0.25s ease',
+          display: 'flex', flexDirection: 'column', fontFamily: "'Inter', sans-serif",
         }}
       >
         <div style={{
@@ -133,93 +142,190 @@ function SidebarAgentDrawer({ agent, onClose }: { agent: SidebarAgent; onClose: 
           </button>
         </div>
 
-        <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
-          <div style={sectionTitle}>Performance Metrics</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '24px' }}>
-            {[
-              { label: 'Model', value: agent.model },
-              { label: 'Tokens Used (MTD)', value: agent.tokensUsed },
-              { label: 'Uptime', value: agent.uptime },
-              { label: 'Success Rate', value: agent.successRate },
-              { label: 'Avg Response', value: agent.avgResponseTime },
-              { label: 'Role Type', value: SIDEBAR_ROLE_LABELS[agent.role] },
-            ].map(m => (
-              <div key={m.label} style={metricBox}>
-                <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: '#7A8A00', marginBottom: '4px' }}>{m.label}</div>
-                <div style={{ fontSize: '15px', fontWeight: 700, color: '#1A1A00' }}>{m.value}</div>
+        {/* Tab bar */}
+        <div style={{ display: 'flex', borderBottom: '1px solid #DDEC90', background: '#FFFFFF', flexShrink: 0 }}>
+          {([{ id: 'detail' as const, label: 'Overview' }, { id: 'configure' as const, label: 'System Prompt' }]).map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setView(tab.id)}
+              style={{
+                flex: 1, padding: '10px 16px', fontSize: '12px', fontWeight: 700,
+                letterSpacing: '0.5px', textTransform: 'uppercase',
+                background: 'transparent', border: 'none', cursor: 'pointer',
+                color: view === tab.id ? '#7A8A00' : '#6A6A20',
+                borderBottom: view === tab.id ? '2px solid #7A8A00' : '2px solid transparent',
+                transition: 'all 0.15s',
+              }}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Detail view */}
+        {view === 'detail' && (
+          <>
+            <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
+              <div style={sectionTitle}>Performance Metrics</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '24px' }}>
+                {[
+                  { label: 'Model', value: agent.model },
+                  { label: 'Tokens Used (MTD)', value: agent.tokensUsed },
+                  { label: 'Uptime', value: agent.uptime },
+                  { label: 'Success Rate', value: agent.successRate },
+                  { label: 'Avg Response', value: agent.avgResponseTime },
+                  { label: 'Role Type', value: SIDEBAR_ROLE_LABELS[agent.role] },
+                ].map(m => (
+                  <div key={m.label} style={metricBox}>
+                    <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: '#7A8A00', marginBottom: '4px' }}>{m.label}</div>
+                    <div style={{ fontSize: '15px', fontWeight: 700, color: '#1A1A00' }}>{m.value}</div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
 
-          <div style={sectionTitle}>Capabilities</div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '24px' }}>
-            {agent.capabilities.map(cap => (
-              <span key={cap} style={{
-                fontSize: '12px', padding: '4px 10px', borderRadius: '20px',
-                background: '#F5F8D0', color: '#1A1A00', border: '1px solid #DDEC90', fontWeight: 600,
-              }}>
-                {cap}
-              </span>
-            ))}
-          </div>
-
-          <div style={sectionTitle}>Assigned Projects</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '24px' }}>
-            {agent.assignedProjects.map(p => (
-              <div key={p} style={{
-                display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px',
-                background: '#FAFAF2', borderRadius: '6px', border: '1px solid #F5F8D0',
-              }}>
-                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#BBCB64', flexShrink: 0 }} />
-                <span style={{ fontSize: '13px', fontWeight: 600, color: '#1A1A00' }}>{p}</span>
+              <div style={sectionTitle}>Capabilities</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '24px' }}>
+                {agent.capabilities.map(cap => (
+                  <span key={cap} style={{ fontSize: '12px', padding: '4px 10px', borderRadius: '20px', background: '#F5F8D0', color: '#1A1A00', border: '1px solid #DDEC90', fontWeight: 600 }}>{cap}</span>
+                ))}
               </div>
-            ))}
-          </div>
 
-          <div style={sectionTitle}>Recent Activity</div>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            {agent.recentActivity.map((act, idx) => (
-              <div key={idx} style={{
-                display: 'flex', gap: '12px', padding: '10px 0',
-                borderBottom: idx < agent.recentActivity.length - 1 ? '1px solid #F5F8D0' : 'none',
-              }}>
-                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#BBCB64', marginTop: '5px', flexShrink: 0 }} />
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '13px', fontWeight: 600, color: '#1A1A00' }}>{act.action}</div>
-                  <div style={{ fontSize: '11px', color: '#6A6A20', marginTop: '2px' }}>
-                    {act.time}{act.project && <> &middot; <span style={{ color: '#7A8A00' }}>{act.project}</span></>}
+              <div style={sectionTitle}>Assigned Projects</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '24px' }}>
+                {agent.assignedProjects.map(p => (
+                  <div key={p} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', background: '#FAFAF2', borderRadius: '6px', border: '1px solid #F5F8D0' }}>
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#BBCB64', flexShrink: 0 }} />
+                    <span style={{ fontSize: '13px', fontWeight: 600, color: '#1A1A00' }}>{p}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div style={sectionTitle}>Recent Activity</div>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                {agent.recentActivity.map((act, idx) => (
+                  <div key={idx} style={{ display: 'flex', gap: '12px', padding: '10px 0', borderBottom: idx < agent.recentActivity.length - 1 ? '1px solid #F5F8D0' : 'none' }}>
+                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#BBCB64', marginTop: '5px', flexShrink: 0 }} />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: '13px', fontWeight: 600, color: '#1A1A00' }}>{act.action}</div>
+                      <div style={{ fontSize: '11px', color: '#6A6A20', marginTop: '2px' }}>
+                        {act.time}{act.project && <> &middot; <span style={{ color: '#7A8A00' }}>{act.project}</span></>}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ padding: '16px 24px', borderTop: '1px solid #DDEC90', background: '#FAFAF2', display: 'flex', gap: '10px', flexShrink: 0 }}>
+              <button
+                style={{ flex: 1, fontSize: '13px', fontWeight: 700, color: '#7A8A00', border: '1px solid #DDEC90', background: 'transparent', borderRadius: '6px', padding: '10px 16px', cursor: 'pointer' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#F5F8D0' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+              >
+                View Logs
+              </button>
+              <button
+                onClick={() => setView('configure')}
+                style={{ flex: 1, fontSize: '13px', fontWeight: 700, color: '#1A1A00', background: '#BBCB64', border: 'none', borderRadius: '6px', padding: '10px 16px', cursor: 'pointer' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.9' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}
+              >
+                Configure
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* Configure view */}
+        {view === 'configure' && (
+          <>
+            <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '12px 14px', borderRadius: '8px', background: '#FAFAF2', border: '1px solid #DDEC90' }}>
+                <span style={{ fontSize: '16px', flexShrink: 0, marginTop: '1px' }}>&#9889;</span>
+                <div>
+                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#1A1A00', marginBottom: '3px' }}>Agent System Prompt</div>
+                  <div style={{ fontSize: '12px', color: '#6A6A20', lineHeight: 1.5 }}>
+                    This prompt defines how <strong>{agent.name}</strong> behaves. Edit to customize personality, constraints, and focus areas.
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
 
-        <div style={{
-          padding: '16px 24px', borderTop: '1px solid #DDEC90', background: '#FAFAF2',
-          display: 'flex', gap: '10px', flexShrink: 0,
-        }}>
-          <button style={{
-            flex: 1, fontSize: '13px', fontWeight: 700, color: '#7A8A00',
-            border: '1px solid #DDEC90', background: 'transparent',
-            borderRadius: '6px', padding: '10px 16px', cursor: 'pointer',
-          }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#F5F8D0' }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
-          >
-            View Logs
-          </button>
-          <button style={{
-            flex: 1, fontSize: '13px', fontWeight: 700, color: '#1A1A00',
-            background: '#BBCB64', border: 'none',
-            borderRadius: '6px', padding: '10px 16px', cursor: 'pointer',
-          }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.9' }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}
-          >
-            Configure
-          </button>
-        </div>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                {[
+                  { label: 'Model', value: agent.model },
+                  { label: 'Characters', value: promptText.length.toLocaleString() },
+                  { label: 'Lines', value: String(promptText.split('\n').length) },
+                ].map(m => (
+                  <div key={m.label} style={{ flex: 1, padding: '8px 12px', borderRadius: '6px', background: '#F5F8D0', border: '1px solid #DDEC90' }}>
+                    <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: '#7A8A00', marginBottom: '2px' }}>{m.label}</div>
+                    <div style={{ fontSize: '13px', fontWeight: 600, color: '#1A1A00' }}>{m.value}</div>
+                  </div>
+                ))}
+              </div>
+
+              <textarea
+                value={promptText}
+                onChange={e => setPromptText(e.target.value)}
+                spellCheck={false}
+                style={{
+                  flex: 1, minHeight: '300px',
+                  fontFamily: "'JetBrains Mono', 'Consolas', monospace",
+                  fontSize: '13px', lineHeight: 1.6, color: '#1A1A00',
+                  background: '#FFFFFF', border: '1px solid #DDEC90',
+                  borderRadius: '8px', padding: '16px',
+                  resize: 'none', outline: 'none', transition: 'border-color 0.15s',
+                }}
+                onFocus={e => { e.currentTarget.style.borderColor = '#7A8A00' }}
+                onBlur={e => { e.currentTarget.style.borderColor = '#DDEC90' }}
+              />
+
+              <div>
+                <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: '#7A8A00', marginBottom: '8px' }}>Quick Insert</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                  {QUICK_INSERT_ITEMS.map(item => (
+                    <button
+                      key={item.label}
+                      onClick={() => setPromptText(prev => prev + item.text)}
+                      style={{ fontSize: '11px', fontWeight: 600, padding: '4px 10px', borderRadius: '20px', background: 'transparent', color: '#7A8A00', border: '1px solid #DDEC90', cursor: 'pointer', transition: 'background 0.12s' }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#F5F8D0' }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div style={{ padding: '16px 24px', borderTop: '1px solid #DDEC90', background: '#FAFAF2', display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+              <button
+                onClick={() => setPromptText(DEFAULT_PROMPTS[agent.name] || '')}
+                style={{ fontSize: '12px', fontWeight: 600, color: '#6A6A20', border: '1px solid #DDEC90', background: 'transparent', borderRadius: '6px', padding: '8px 14px', cursor: 'pointer', transition: 'background 0.12s' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#F5F8D0' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+              >
+                Reset to Default
+              </button>
+              <div style={{ flex: 1 }} />
+              <button
+                onClick={() => setView('detail')}
+                style={{ fontSize: '13px', fontWeight: 700, color: '#7A8A00', border: '1px solid #DDEC90', background: 'transparent', borderRadius: '6px', padding: '10px 16px', cursor: 'pointer', transition: 'background 0.12s' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#F5F8D0' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                style={{ fontSize: '13px', fontWeight: 700, color: saved ? '#FFFFFF' : '#1A1A00', background: saved ? '#7A8A00' : '#BBCB64', border: 'none', borderRadius: '6px', padding: '10px 20px', cursor: 'pointer', transition: 'all 0.2s' }}
+                onMouseEnter={e => { if (!saved) (e.currentTarget as HTMLElement).style.opacity = '0.9' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}
+              >
+                {saved ? '\u2713 Saved' : 'Save Prompt'}
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </>
   )
@@ -252,19 +358,9 @@ export function DashboardSidebar({ projects }: DashboardSidebarProps) {
 
   return (
     <aside
-      className="flex flex-col h-screen w-[220px] shrink-0 overflow-y-auto"
-      style={{ background: '#FFFFFF', borderRight: '1px solid #DDEC90', fontFamily: 'Arial, sans-serif', paddingBottom: '24px' }}
+      className="flex flex-col w-[220px] shrink-0 overflow-y-auto"
+      style={{ background: '#FFFFFF', borderRight: '1px solid #DDEC90', fontFamily: "'Inter', sans-serif", paddingBottom: '24px' }}
     >
-      {/* Logo */}
-      <div style={{ padding: '16px 18px 12px' }}>
-        <Link to="/" style={{ textDecoration: 'none' }}>
-          <span style={{ fontSize: '21px', fontWeight: 700, color: '#1A1A00' }}>
-            OlympusAI
-            <sup style={{ fontSize: '13px', color: '#BBCB64', marginLeft: '2px' }}>2.0</sup>
-          </span>
-        </Link>
-      </div>
-
       {/* PROJECTS */}
       <div>
         <span style={sbLabel}>Projects</span>

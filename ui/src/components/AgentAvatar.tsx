@@ -6,14 +6,42 @@ import {
   UnknownMascotSVG,
 } from './mascotData'
 
+export const LEGACY_NAME_MAP: Record<string, AgentMascot> = {
+  Spark: 'Zeus',
+  Fizz: 'Athena',
+  Octo: 'Apollo',
+  Hoot: 'Hermes',
+  Buzz: 'Artemis',
+  Pixel: 'Hephaestus',
+  Byte: 'Ares',
+  Nova: 'Poseidon',
+  Chip: 'Demeter',
+  Bolt: 'Dionysus',
+  Dash: 'Hera',
+  Zap: 'Persephone',
+  Gizmo: 'Hades',
+  Turbo: 'Aphrodite',
+  Blip: 'Hecate',
+  Neon: 'Nike',
+  Widget: 'Iris',
+  Zippy: 'Helios',
+  Quirk: 'Selene',
+  Flux: 'Eos',
+}
+
+export function resolveAgentName(name: string): string {
+  return LEGACY_NAME_MAP[name] || name
+}
+
 interface AgentAvatarProps {
   name: AgentMascot | 'Unknown'
   state: AgentState
-  size?: 'sm' | 'md' | 'lg'
+  size?: 'xs' | 'sm' | 'md' | 'lg'
   showName?: boolean
 }
 
 const SIZES = {
+  xs: { svg: 18, font: 'text-[10px]' },
   sm: { svg: 32, font: 'text-xs' },
   md: { svg: 48, font: 'text-sm' },
   lg: { svg: 64, font: 'text-base' },
@@ -80,13 +108,15 @@ function getStateDescription(state: AgentState): string {
 }
 
 export function AgentAvatar({ name, state, size = 'md', showName = false }: AgentAvatarProps) {
-  // Handle 'Unknown' agents (synthetic completions from untracked agents)
-  const isUnknown = name === 'Unknown'
-  const colors = isUnknown ? UNKNOWN_COLORS : AVATAR_COLORS[name]
+  const resolved = (name !== 'Unknown' && LEGACY_NAME_MAP[name]) || name
+  const resolvedName = resolved as AgentMascot
+  const isUnknown = resolved === 'Unknown' || !(resolvedName in AVATAR_COLORS)
+  const colors = isUnknown ? UNKNOWN_COLORS : AVATAR_COLORS[resolvedName]
   const { svg: svgSize, font } = SIZES[size]
-  const SvgComponent = isUnknown ? UnknownMascotSVG : MASCOT_SVGS[name]
+  const SvgComponent = isUnknown ? UnknownMascotSVG : (MASCOT_SVGS[resolvedName] || UnknownMascotSVG)
+  const displayName = isUnknown ? name : resolvedName
   const stateDesc = getStateDescription(state)
-  const ariaLabel = `Agent ${name} is ${stateDesc}`
+  const ariaLabel = `Agent ${displayName} is ${stateDesc}`
 
   return (
     <div
@@ -110,7 +140,7 @@ export function AgentAvatar({ name, state, size = 'md', showName = false }: Agen
       </div>
       {showName && (
         <span className={`${font} font-bold text-foreground`} style={{ color: colors.primary }}>
-          {name}
+          {displayName}
         </span>
       )}
     </div>

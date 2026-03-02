@@ -204,10 +204,10 @@ export interface TerminalInfo {
 
 // Agent mascot names for multi-agent UI
 export const AGENT_MASCOTS = [
-  'Spark', 'Fizz', 'Octo', 'Hoot', 'Buzz',    // Original 5
-  'Pixel', 'Byte', 'Nova', 'Chip', 'Bolt',    // Tech-inspired
-  'Dash', 'Zap', 'Gizmo', 'Turbo', 'Blip',    // Energetic
-  'Neon', 'Widget', 'Zippy', 'Quirk', 'Flux', // Playful
+  'Zeus', 'Athena', 'Apollo', 'Hermes', 'Artemis',          // Olympians
+  'Hephaestus', 'Ares', 'Poseidon', 'Demeter', 'Dionysus', // Olympians
+  'Hera', 'Persephone', 'Hades', 'Aphrodite', 'Hecate',    // Divine
+  'Nike', 'Iris', 'Helios', 'Selene', 'Eos',               // Celestial
 ] as const
 export type AgentMascot = typeof AGENT_MASCOTS[number]
 

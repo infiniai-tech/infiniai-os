@@ -20,7 +20,7 @@ const btnBase: React.CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
   justifyContent: 'center',
-  fontFamily: 'Arial, sans-serif',
+  fontFamily: "'Inter', sans-serif",
   fontSize: '13px',
   fontWeight: 500,
   lineHeight: 1,
@@ -41,7 +41,7 @@ const badgeStyle: React.CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
   gap: '4px',
-  fontFamily: 'Arial, sans-serif',
+  fontFamily: "'Inter', sans-serif",
 }
 
 interface AgentControlProps {
@@ -110,7 +110,7 @@ export function AgentControl({ projectName, status, defaultConcurrency = 3 }: Ag
 
   return (
     <>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'Arial, sans-serif' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontFamily: "'Inter', sans-serif" }}>
         {/* Concurrency slider - visible when stopped */}
         {isStopped && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

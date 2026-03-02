@@ -53,7 +53,7 @@ export function ProjectTable({ projects, onOpenProject }: ProjectTableProps) {
         border: '1px solid #DDEC90',
         borderRadius: '8px',
         overflow: 'hidden',
-        fontFamily: 'Arial, sans-serif',
+        fontFamily: "'Inter', sans-serif",
       }}
     >
       {/* Card header */}

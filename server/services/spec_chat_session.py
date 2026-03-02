@@ -10,6 +10,7 @@ import json
 import logging
 import os
 import shutil
+import sys
 import threading
 from datetime import datetime
 from pathlib import Path
@@ -78,9 +79,27 @@ class SpecChatSession:
         Initialize session and get initial greeting from Claude.
 
         Yields message chunks as they stream in.
+        Routes to modernize-spec.md for brownfield projects (those with a target_stack),
+        or create-spec.md for greenfield projects.
         """
-        # Load the create-spec skill
-        skill_path = ROOT_DIR / ".claude" / "commands" / "create-spec.md"
+        # Check if this project has a target_stack (brownfield modernization)
+        target_stack_json = None
+        try:
+            from registry import get_project_info
+            project_info = get_project_info(self.project_name)
+            if project_info and project_info.get("target_stack"):
+                target_stack_json = project_info["target_stack"]
+                logger.info(f"Brownfield project detected — target_stack: {target_stack_json}")
+        except Exception as e:
+            logger.warning(f"Could not check target_stack for {self.project_name}: {e}")
+
+        # Load the appropriate skill
+        if target_stack_json:
+            skill_path = ROOT_DIR / ".claude" / "commands" / "modernize-spec.md"
+            skill_label = "modernize-spec"
+        else:
+            skill_path = ROOT_DIR / ".claude" / "commands" / "create-spec.md"
+            skill_label = "create-spec"
 
         if not skill_path.exists():
             yield {
@@ -93,6 +112,8 @@ class SpecChatSession:
             skill_content = skill_path.read_text(encoding="utf-8")
         except UnicodeDecodeError:
             skill_content = skill_path.read_text(encoding="utf-8", errors="replace")
+
+        logger.info(f"Loaded {skill_label} skill for project {self.project_name}")
 
         # Ensure project directory exists (like CLI does in start.py)
         self.project_dir.mkdir(parents=True, exist_ok=True)
@@ -132,6 +153,10 @@ class SpecChatSession:
         project_path = str(self.project_dir.resolve())
         system_prompt = skill_content.replace("$ARGUMENTS", project_path)
 
+        # For brownfield projects, inject the target stack into the prompt
+        if target_stack_json:
+            system_prompt = system_prompt.replace("$TARGET_STACK", target_stack_json)
+
         # Write system prompt to CLAUDE.md file to avoid Windows command line length limit
         # The SDK will read this via setting_sources=["project"]
         claude_md_path = self.project_dir / "CLAUDE.md"
@@ -141,8 +166,10 @@ class SpecChatSession:
 
         # Create Claude SDK client with limited tools for spec creation
         # Use Opus for best quality spec generation
-        # Use system Claude CLI to avoid bundled Bun runtime crash (exit code 3) on Windows
-        system_cli = shutil.which("claude")
+        # On Windows, shutil.which("claude") returns a Unix shell script that cannot be
+        # executed as a subprocess (WinError 193). Pass None so the SDK uses its bundled
+        # claude.exe instead. On other platforms, use the system CLI to avoid bundled Bun crash.
+        system_cli = None if sys.platform == "win32" else shutil.which("claude")
 
         # Build environment overrides for API configuration
         from registry import DEFAULT_MODEL, get_effective_sdk_env

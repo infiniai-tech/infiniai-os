@@ -9,7 +9,7 @@
  */
 
 import { useState } from 'react'
-import { ArrowRight, ArrowLeft, Loader2, CheckCircle2, Folder, Code2, Server, Database, Palette, Scroll } from 'lucide-react'
+import { ArrowRight, ArrowLeft, Loader2, CheckCircle2, Folder, Code2, Server, Database, Palette, Scroll, FolderOpen, Figma, Layers, FileText, Globe } from 'lucide-react'
 import { useCreateProject } from '../hooks/useProjects'
 import { FolderBrowser } from './FolderBrowser'
 import {
@@ -355,6 +355,71 @@ export function NewProjectModal({
               <p className="text-sm text-muted-foreground">
                 Use letters, numbers, hyphens, and underscores only.
               </p>
+            </div>
+
+            {/* Supported input types */}
+            <div
+              style={{
+                background: '#FAFAF2',
+                border: '1px solid #DDEC90',
+                borderRadius: '8px',
+                padding: '14px 16px',
+              }}
+            >
+              <div style={{
+                fontSize: '10px', fontWeight: 700, letterSpacing: '1.5px',
+                textTransform: 'uppercase', color: '#7A8A00', marginBottom: '10px',
+              }}>
+                Supported Inputs
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                {[
+                  { icon: FolderOpen, label: 'Code Folder', desc: 'Existing codebase directory' },
+                  { icon: Figma, label: 'Figma File', desc: 'Design files & mockups' },
+                  { icon: Layers, label: 'Prototype', desc: 'Interactive prototypes' },
+                  { icon: FileText, label: 'Spec Document', desc: 'PRDs, requirements, docs' },
+                  { icon: Globe, label: 'URL / API', desc: 'Live site or API endpoint' },
+                  { icon: Code2, label: 'Git Repository', desc: 'Clone from remote repo' },
+                ].map(item => {
+                  const Icon = item.icon
+                  return (
+                    <div
+                      key={item.label}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '10px',
+                        padding: '8px 10px', borderRadius: '6px',
+                        background: '#FFFFFF', border: '1px solid #F5F8D0',
+                        transition: 'border-color 0.12s',
+                      }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = '#DDEC90' }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = '#F5F8D0' }}
+                    >
+                      <div style={{
+                        width: '30px', height: '30px', borderRadius: '6px',
+                        background: '#F5F8D0', border: '1px solid #DDEC90',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        flexShrink: 0,
+                      }}>
+                        <Icon size={14} style={{ color: '#7A8A00' }} />
+                      </div>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontSize: '12px', fontWeight: 700, color: '#1A1A00' }}>
+                          {item.label}
+                        </div>
+                        <div style={{ fontSize: '10px', color: '#6A6A20', lineHeight: 1.3 }}>
+                          {item.desc}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+              <div style={{
+                marginTop: '10px', fontSize: '11px', color: '#7A8A00', fontWeight: 600,
+                textAlign: 'center',
+              }}>
+                Mix multiple input types in a single project
+              </div>
             </div>
 
             {error && (

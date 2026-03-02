@@ -55,7 +55,7 @@ export function KanbanColumn({
   const displayTitle = title || colConfig.label
 
   return (
-    <div style={{ fontFamily: 'Arial, sans-serif' }}>
+    <div style={{ fontFamily: "'Inter', sans-serif" }}>
       {/* Column header */}
       <div
         style={{
@@ -72,7 +72,7 @@ export function KanbanColumn({
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <span
             style={{
-              fontSize: '9px',
+              fontSize: '12px',
               fontWeight: 700,
               letterSpacing: '2px',
               textTransform: 'uppercase',
@@ -81,7 +81,7 @@ export function KanbanColumn({
           >
             {displayTitle}
           </span>
-          <span style={{ fontSize: '11px', fontWeight: 700, color: colConfig.color }}>{count}</span>
+          <span style={{ fontSize: '13px', fontWeight: 700, color: colConfig.color }}>{count}</span>
         </div>
 
         {/* Action buttons in pending column */}
@@ -156,7 +156,7 @@ export function KanbanColumn({
         {specReviewContent}
 
         {features.length === 0 && !specReviewContent ? (
-          <div style={{ textAlign: 'center', padding: '32px 8px', color: '#6A6A20', fontSize: '11px' }}>
+          <div style={{ textAlign: 'center', padding: '32px 8px', color: '#6A6A20', fontSize: '13px' }}>
             {showCreateSpec && onCreateSpec ? (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
                 <p>No spec created yet</p>
@@ -170,7 +170,7 @@ export function KanbanColumn({
                     borderRadius: '4px',
                     background: '#BBCB64',
                     color: '#1A1A00',
-                    fontSize: '11px',
+                    fontSize: '13px',
                     fontWeight: 700,
                     border: 'none',
                     cursor: 'pointer',

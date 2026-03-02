@@ -80,7 +80,7 @@ export function AnalyticsView({ projectCount = 12 }: AnalyticsViewProps) {
   void projectCount
 
   return (
-    <div style={{ fontFamily: 'Arial, sans-serif' }}>
+    <div style={{ fontFamily: "'Inter', sans-serif" }}>
       {/* Page Header */}
       <div style={{ marginBottom: '20px' }}>
         <div style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: '#7A8A00', marginBottom: '3px' }}>

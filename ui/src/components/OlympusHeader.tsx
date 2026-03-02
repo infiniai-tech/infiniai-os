@@ -15,7 +15,7 @@ export function OlympusHeader({ projectName, rightContent }: OlympusHeaderProps)
       style={{
         background: '#FFFFFF',
         borderBottom: '1px solid #DDEC90',
-        fontFamily: 'Arial, sans-serif',
+        fontFamily: "'Inter', sans-serif",
       }}
     >
       <div className="max-w-7xl mx-auto px-4 py-3">
@@ -25,14 +25,14 @@ export function OlympusHeader({ projectName, rightContent }: OlympusHeaderProps)
             <Link
               to="/"
               style={{
-                fontSize: '10px',
+                fontSize: '13px',
                 fontWeight: 700,
                 letterSpacing: '1px',
                 textTransform: 'uppercase',
                 color: '#7A8A00',
                 border: '1px solid #DDEC90',
                 borderRadius: '4px',
-                padding: '5px 10px',
+                padding: '6px 12px',
                 textDecoration: 'none',
                 transition: 'background 0.12s',
                 flexShrink: 0,
@@ -46,7 +46,7 @@ export function OlympusHeader({ projectName, rightContent }: OlympusHeaderProps)
 
           {/* Project name */}
           {isProjectPage && projectName && (
-            <h1 style={{ fontSize: '20px', fontWeight: 700, color: '#1A1A00', margin: 0, marginLeft: '4px' }}>
+            <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#1A1A00', margin: 0, marginLeft: '4px' }}>
               {projectName}
             </h1>
           )}
@@ -55,8 +55,7 @@ export function OlympusHeader({ projectName, rightContent }: OlympusHeaderProps)
           {!isProjectPage && (
             <Link to="/" style={{ textDecoration: 'none' }}>
               <span style={{ fontSize: '16px', fontWeight: 700, color: '#1A1A00' }}>
-                OlympusAI
-                <sup style={{ fontSize: '10px', color: '#BBCB64', marginLeft: '2px' }}>2.0</sup>
+                Infini<span style={{ color: '#BBCB64' }}>AI</span> <span style={{ fontSize: '10px', fontWeight: 600, color: '#9A9A60', letterSpacing: '1.5px', textTransform: 'uppercase' as const }}>OS</span>
               </span>
             </Link>
           )}

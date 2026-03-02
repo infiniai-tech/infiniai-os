@@ -61,21 +61,23 @@ export function HomePage() {
   const inputTypes = ['All', 'Folder', 'Figma', 'Prototype']
 
   return (
-    <div className="flex min-h-screen" style={{ background: '#FAFAF2' }}>
-      <DashboardSidebar
-        projects={projectList}
+    <div className="flex flex-col min-h-screen" style={{ background: '#FAFAF2' }}>
+      <DashboardHeader
+        projectCount={projectList.length}
         onNewProject={() => setShowNewProject(true)}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
       />
 
-      <div className="flex-1 flex flex-col min-w-0">
-        <DashboardHeader
-          projectCount={projectList.length}
+      <div className="flex flex-1 min-h-0">
+        <DashboardSidebar
+          projects={projectList}
           onNewProject={() => setShowNewProject(true)}
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
         />
 
-        <main className="flex-1 p-6 overflow-y-auto" style={{ fontFamily: 'Arial, sans-serif' }}>
+        <div className="flex-1 flex flex-col min-w-0">
+
+        <main className="flex-1 p-6 overflow-y-auto" style={{ fontFamily: "'Inter', sans-serif" }}>
           {activeTab === 'AGENTS' && <AgentsView />}
           {activeTab === 'ANALYTICS' && <AnalyticsView projectCount={projectList.length} />}
           {activeTab === 'CONFIG' && <ConfigView />}
@@ -280,6 +282,7 @@ export function HomePage() {
             </>
           )}
         </main>
+        </div>
       </div>
 
       {/* Modals */}

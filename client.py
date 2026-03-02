@@ -318,12 +318,19 @@ def create_client(
     print("   - Project settings enabled (skills, commands, CLAUDE.md)")
     print()
 
-    # Use system Claude CLI instead of bundled one (avoids Bun runtime crash on Windows)
-    system_cli = shutil.which("claude")
-    if system_cli:
-        print(f"   - Using system CLI: {system_cli}")
+    # On Windows, shutil.which("claude") returns a Unix shell script (no .cmd extension)
+    # that cannot be executed as a subprocess (WinError 193). Use None so the SDK
+    # falls back to its bundled claude.exe. On other platforms, prefer the system CLI
+    # to avoid the bundled Bun runtime crash (exit code 3).
+    if sys.platform == "win32":
+        system_cli = None
+        print("   - Windows: using bundled claude.exe (system claude is a shell script)")
     else:
-        print("   - Warning: System 'claude' CLI not found, using bundled CLI")
+        system_cli = shutil.which("claude")
+        if system_cli:
+            print(f"   - Using system CLI: {system_cli}")
+        else:
+            print("   - Warning: System 'claude' CLI not found, using bundled CLI")
 
     # Build MCP servers config - features is always included, playwright only in standard mode
     mcp_servers = {

@@ -205,7 +205,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               <button
                 id="dark-mode"
                 onClick={toggleDarkMode}
-                style={{ background: 'transparent', color: '#7A8A00', border: '1px solid #DDEC90', borderRadius: '6px', padding: '6px 12px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 500, fontFamily: 'Arial, sans-serif' }}
+                style={{ background: 'transparent', color: '#7A8A00', border: '1px solid #DDEC90', borderRadius: '6px', padding: '6px 12px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 500, fontFamily: "'Inter', sans-serif" }}
               >
                 {darkMode ? <Sun size={16} /> : <Moon size={16} />}
                 {darkMode ? 'Light' : 'Dark'}
@@ -249,7 +249,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                       <span>Configured</span>
                       <button
                         className="h-auto py-0.5 px-2 text-xs"
-                        style={{ background: 'transparent', border: 'none', color: '#7A8A00', cursor: 'pointer', textDecoration: 'underline', fontFamily: 'Arial, sans-serif' }}
+                        style={{ background: 'transparent', border: 'none', color: '#7A8A00', cursor: 'pointer', textDecoration: 'underline', fontFamily: "'Inter', sans-serif" }}
                         onClick={() => setAuthTokenInput(' ')}
                       >
                         Change
@@ -279,7 +279,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                       <button
                         onClick={handleSaveAuthToken}
                         disabled={!authTokenInput.trim() || isSaving}
-                        style={{ background: '#BBCB64', color: '#1A1A00', border: 'none', borderRadius: '6px', padding: '6px 12px', cursor: 'pointer', fontSize: '13px', fontWeight: 500, fontFamily: 'Arial, sans-serif', opacity: (!authTokenInput.trim() || isSaving) ? 0.5 : 1 }}
+                        style={{ background: '#BBCB64', color: '#1A1A00', border: 'none', borderRadius: '6px', padding: '6px 12px', cursor: 'pointer', fontSize: '13px', fontWeight: 500, fontFamily: "'Inter', sans-serif", opacity: (!authTokenInput.trim() || isSaving) ? 0.5 : 1 }}
                       >
                         Save
                       </button>
@@ -298,7 +298,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                       <span className="truncate">{settings.api_base_url}</span>
                       <button
                         className="h-auto py-0.5 px-2 text-xs shrink-0"
-                        style={{ background: 'transparent', border: 'none', color: '#7A8A00', cursor: 'pointer', textDecoration: 'underline', fontFamily: 'Arial, sans-serif' }}
+                        style={{ background: 'transparent', border: 'none', color: '#7A8A00', cursor: 'pointer', textDecoration: 'underline', fontFamily: "'Inter', sans-serif" }}
                         onClick={() => setCustomBaseUrlInput(settings.api_base_url || '')}
                       >
                         Change
@@ -318,7 +318,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                       <button
                         onClick={handleSaveCustomBaseUrl}
                         disabled={!customBaseUrlInput.trim() || isSaving}
-                        style={{ background: '#BBCB64', color: '#1A1A00', border: 'none', borderRadius: '6px', padding: '6px 12px', cursor: 'pointer', fontSize: '13px', fontWeight: 500, fontFamily: 'Arial, sans-serif', opacity: (!customBaseUrlInput.trim() || isSaving) ? 0.5 : 1 }}
+                        style={{ background: '#BBCB64', color: '#1A1A00', border: 'none', borderRadius: '6px', padding: '6px 12px', cursor: 'pointer', fontSize: '13px', fontWeight: 500, fontFamily: "'Inter', sans-serif", opacity: (!customBaseUrlInput.trim() || isSaving) ? 0.5 : 1 }}
                       >
                         Save
                       </button>
@@ -367,7 +367,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   <button
                     onClick={handleSaveCustomModel}
                     disabled={!customModelInput.trim() || isSaving}
-                    style={{ background: '#BBCB64', color: '#1A1A00', border: 'none', borderRadius: '6px', padding: '6px 12px', cursor: 'pointer', fontSize: '13px', fontWeight: 500, fontFamily: 'Arial, sans-serif', opacity: (!customModelInput.trim() || isSaving) ? 0.5 : 1 }}
+                    style={{ background: '#BBCB64', color: '#1A1A00', border: 'none', borderRadius: '6px', padding: '6px 12px', cursor: 'pointer', fontSize: '13px', fontWeight: 500, fontFamily: "'Inter', sans-serif", opacity: (!customModelInput.trim() || isSaving) ? 0.5 : 1 }}
                   >
                     Set
                   </button>

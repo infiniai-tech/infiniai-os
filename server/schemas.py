@@ -24,11 +24,20 @@ from registry import DEFAULT_MODEL, VALID_MODELS
 # Project Schemas
 # ============================================================================
 
+class TargetStack(BaseModel):
+    """Target tech stack for brownfield modernization."""
+    frontend: str | None = None
+    backend: str | None = None
+    database: str | None = None
+    styling: str | None = None
+
+
 class ProjectCreate(BaseModel):
     """Request schema for creating a new project."""
     name: str = Field(..., min_length=1, max_length=50, pattern=r'^[a-zA-Z0-9_-]+$')
     path: str = Field(..., min_length=1, description="Absolute path to project directory")
     spec_method: Literal["claude", "manual"] = "claude"
+    target_stack: TargetStack | None = None
 
 
 class ProjectStats(BaseModel):
@@ -46,6 +55,7 @@ class ProjectSummary(BaseModel):
     has_spec: bool
     stats: ProjectStats
     default_concurrency: int = 3
+    target_stack: TargetStack | None = None
 
 
 class ProjectDetail(BaseModel):
@@ -313,8 +323,8 @@ AgentState = Literal["idle", "thinking", "working", "testing", "success", "error
 # Agent type (coding vs testing)
 AgentType = Literal["coding", "testing"]
 
-# Agent mascot names assigned by index
-AGENT_MASCOTS = ["Spark", "Fizz", "Octo", "Hoot", "Buzz"]
+# Agent mascot names assigned by index (Greek gods)
+AGENT_MASCOTS = ["Zeus", "Athena", "Apollo", "Hermes", "Artemis", "Hephaestus", "Ares", "Poseidon", "Demeter", "Dionysus", "Hera", "Persephone", "Hades", "Aphrodite", "Hecate", "Nike", "Iris", "Helios", "Selene", "Eos"]
 
 
 class WSAgentUpdateMessage(BaseModel):

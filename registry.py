@@ -119,6 +119,7 @@ class Project(Base):
     path = Column(String, nullable=False)  # POSIX format for cross-platform
     created_at = Column(DateTime, nullable=False)
     default_concurrency = Column(Integer, nullable=False, default=3)
+    target_stack = Column(String, nullable=True)  # JSON-serialized TargetStack
 
 
 class Settings(Base):
@@ -184,6 +185,7 @@ def _get_engine():
                 )
                 Base.metadata.create_all(bind=_engine)
                 _migrate_add_default_concurrency(_engine)
+                _migrate_add_target_stack(_engine)
                 _SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=_engine)
                 logger.debug("Initialized registry database at: %s", db_path)
 
@@ -201,6 +203,19 @@ def _migrate_add_default_concurrency(engine) -> None:
             ))
             conn.commit()
             logger.info("Migrated projects table: added default_concurrency column")
+
+
+def _migrate_add_target_stack(engine) -> None:
+    """Add target_stack column if missing (for brownfield modernization support)."""
+    with engine.connect() as conn:
+        result = conn.execute(text("PRAGMA table_info(projects)"))
+        columns = [row[1] for row in result.fetchall()]
+        if "target_stack" not in columns:
+            conn.execute(text(
+                "ALTER TABLE projects ADD COLUMN target_stack TEXT"
+            ))
+            conn.commit()
+            logger.info("Migrated projects table: added target_stack column")
 
 
 @contextmanager
@@ -263,13 +278,14 @@ def _with_retry(func, *args, **kwargs):
 # Project CRUD Functions
 # =============================================================================
 
-def register_project(name: str, path: Path) -> None:
+def register_project(name: str, path: Path, target_stack: str | None = None) -> None:
     """
     Register a new project in the registry.
 
     Args:
         name: The project name (unique identifier).
         path: The absolute path to the project directory.
+        target_stack: Optional JSON-serialized target stack for brownfield modernization.
 
     Raises:
         ValueError: If project name is invalid or path is not absolute.
@@ -294,7 +310,8 @@ def register_project(name: str, path: Path) -> None:
         project = Project(
             name=name,
             path=path.as_posix(),
-            created_at=datetime.now()
+            created_at=datetime.now(),
+            target_stack=target_stack,
         )
         session.add(project)
 
@@ -359,7 +376,8 @@ def list_registered_projects() -> dict[str, dict[str, Any]]:
             p.name: {
                 "path": p.path,
                 "created_at": p.created_at.isoformat() if p.created_at else None,
-                "default_concurrency": getattr(p, 'default_concurrency', 3) or 3
+                "default_concurrency": getattr(p, 'default_concurrency', 3) or 3,
+                "target_stack": getattr(p, 'target_stack', None),
             }
             for p in projects
         }
@@ -386,7 +404,8 @@ def get_project_info(name: str) -> dict[str, Any] | None:
         return {
             "path": project.path,
             "created_at": project.created_at.isoformat() if project.created_at else None,
-            "default_concurrency": getattr(project, 'default_concurrency', 3) or 3
+            "default_concurrency": getattr(project, 'default_concurrency', 3) or 3,
+            "target_stack": getattr(project, 'target_stack', None),
         }
     finally:
         session.close()

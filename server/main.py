@@ -35,11 +35,13 @@ from .routers import (
     expand_project_router,
     features_router,
     filesystem_router,
+    github_router,
     projects_router,
     scaffold_router,
     schedules_router,
     settings_router,
     spec_creation_router,
+    spec_files_router,
     terminal_router,
 )
 from .schemas import SetupStatus
@@ -171,6 +173,8 @@ app.include_router(assistant_chat_router)
 app.include_router(settings_router)
 app.include_router(terminal_router)
 app.include_router(scaffold_router)
+app.include_router(github_router)
+app.include_router(spec_files_router)
 
 
 # ============================================================================

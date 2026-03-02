@@ -25,7 +25,7 @@ export function StatsCardRow({ projectCount }: StatsCardRowProps) {
   const deltaColor = { pos: '#7A8A00', neg: '#CF0F0F', muted: '#6A6A20' }
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '12px', fontFamily: 'Arial, sans-serif' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '12px', fontFamily: "'Inter', sans-serif" }}>
       {cards.map((card) => (
         <div
           key={card.label}

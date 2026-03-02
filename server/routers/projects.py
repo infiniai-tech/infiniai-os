@@ -22,6 +22,7 @@ from ..schemas import (
     ProjectSettingsUpdate,
     ProjectStats,
     ProjectSummary,
+    TargetStack,
 )
 
 # Lazy imports to avoid circular dependencies
@@ -134,12 +135,23 @@ async def list_projects():
         has_spec = _check_spec_exists(project_dir)
         stats = get_project_stats(project_dir)
 
+        # Parse target_stack if present
+        target_stack_parsed = None
+        target_stack_raw = info.get("target_stack")
+        if target_stack_raw:
+            import json as _json
+            try:
+                target_stack_parsed = TargetStack(**_json.loads(target_stack_raw))
+            except Exception:
+                pass
+
         result.append(ProjectSummary(
             name=name,
             path=info["path"],
             has_spec=has_spec,
             stats=stats,
             default_concurrency=info.get("default_concurrency", 3),
+            target_stack=target_stack_parsed,
         ))
 
     return result
@@ -208,9 +220,15 @@ async def create_project(project: ProjectCreate):
     # Scaffold prompts
     _scaffold_project_prompts(project_path)
 
+    # Serialize target_stack as JSON if present
+    target_stack_json = None
+    if project.target_stack:
+        import json as _json
+        target_stack_json = _json.dumps(project.target_stack.model_dump())
+
     # Register in registry
     try:
-        register_project(name, project_path)
+        register_project(name, project_path, target_stack=target_stack_json)
     except Exception as e:
         raise HTTPException(
             status_code=500,
@@ -220,9 +238,10 @@ async def create_project(project: ProjectCreate):
     return ProjectSummary(
         name=name,
         path=project_path.as_posix(),
-        has_spec=False,  # Just created, no spec yet
+        has_spec=False,
         stats=ProjectStats(passing=0, total=0, percentage=0.0),
         default_concurrency=3,
+        target_stack=project.target_stack,
     )
 
 
@@ -283,12 +302,18 @@ async def delete_project(name: str, delete_files: bool = False):
             detail="Cannot delete project while agent is running. Stop the agent first."
         )
 
-    # Optionally delete files
-    if delete_files and project_dir.exists():
-        try:
-            shutil.rmtree(project_dir)
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Failed to delete project files: {e}")
+    # Delete only the .autoforge/ metadata directory, never the user's source code.
+    # This cleans up features.db, specs, and prompts so future projects start fresh,
+    # while preserving the project directory and all source files.
+    if project_dir.exists():
+        autoforge_dir = project_dir / ".autoforge"
+        if autoforge_dir.exists():
+            try:
+                from api.database import dispose_engine
+                dispose_engine(project_dir)
+                shutil.rmtree(autoforge_dir)
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=f"Failed to delete AutoForge metadata: {e}")
 
     # Unregister from registry
     unregister_project(name)

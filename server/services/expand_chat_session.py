@@ -123,8 +123,11 @@ class ExpandChatSession:
             skill_content = skill_path.read_text(encoding="utf-8", errors="replace")
 
         # Find and validate Claude CLI before creating temp files
-        system_cli = shutil.which("claude")
-        if not system_cli:
+        # On Windows, shutil.which("claude") returns a Unix shell script that cannot be
+        # executed as a subprocess (WinError 193). Pass None so the SDK uses its bundled
+        # claude.exe instead.
+        system_cli = None if sys.platform == "win32" else shutil.which("claude")
+        if not system_cli and sys.platform != "win32":
             yield {
                 "type": "error",
                 "content": "Claude CLI not found. Please install it: npm install -g @anthropic-ai/claude-code"

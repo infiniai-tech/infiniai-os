@@ -266,8 +266,10 @@ class AssistantChatSession:
             f.write(system_prompt)
         logger.info(f"Wrote assistant system prompt to {claude_md_path}")
 
-        # Use system Claude CLI
-        system_cli = shutil.which("claude")
+        # On Windows, shutil.which("claude") returns a Unix shell script that cannot be
+        # executed as a subprocess (WinError 193). Pass None so the SDK uses its bundled
+        # claude.exe instead.
+        system_cli = None if sys.platform == "win32" else shutil.which("claude")
 
         # Build environment overrides for API configuration
         from registry import DEFAULT_MODEL, get_effective_sdk_env
