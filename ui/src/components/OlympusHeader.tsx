@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import {
   getProjectGitStatus,
   connectProjectRepo,
@@ -100,7 +101,7 @@ function GitRepoLink({ projectName }: { projectName: string }) {
             display: 'flex', alignItems: 'center', gap: '5px',
             fontSize: '12px', fontWeight: 600, color: '#6A6A20',
             background: '#F5F8D0', border: '1px solid #DDEC90',
-            borderRadius: '20px', padding: '4px 12px',
+            borderRadius: '9999px', padding: '4px 12px',
             textDecoration: 'none', transition: 'all 0.12s',
           }}
           onMouseEnter={(e) => { e.currentTarget.style.background = '#EAEDCE' }}
@@ -136,7 +137,7 @@ function GitRepoLink({ projectName }: { projectName: string }) {
           display: 'flex', alignItems: 'center', gap: '5px',
           fontSize: '12px', fontWeight: 600, color: '#6A6A20',
           background: 'transparent', border: '1px solid #DDEC90',
-          borderRadius: '20px', padding: '4px 12px',
+          borderRadius: '9999px', padding: '4px 12px',
           cursor: 'pointer', transition: 'all 0.12s',
         }}
         onMouseEnter={(e) => { e.currentTarget.style.background = '#F5F8D0' }}
@@ -198,7 +199,7 @@ function GitRepoLink({ projectName }: { projectName: string }) {
                   opacity: !repoUrl.trim() ? 0.5 : 1,
                 }}
               >
-                {loading ? 'Connecting…' : 'Connect'}
+                {loading ? 'Connecting...' : 'Connect'}
               </button>
             </div>
           ) : (
@@ -233,7 +234,7 @@ function GitRepoLink({ projectName }: { projectName: string }) {
                   borderRadius: '6px', cursor: loading ? 'wait' : 'pointer',
                 }}
               >
-                {loading ? 'Creating…' : 'Create & Link'}
+                {loading ? 'Creating...' : 'Create & Link'}
               </button>
             </div>
           )}
@@ -269,6 +270,7 @@ export function OlympusHeader({ projectName, rightContent }: OlympusHeaderProps)
       style={{
         background: '#FFFFFF',
         borderBottom: '1px solid #DDEC90',
+        boxShadow: '0 1px 0 #DDEC90, 0 2px 8px rgba(26,26,0,0.04)',
         fontFamily: "'Inter', sans-serif",
       }}
     >
@@ -276,31 +278,44 @@ export function OlympusHeader({ projectName, rightContent }: OlympusHeaderProps)
         <div className="flex items-center gap-3">
           {/* Back button on project pages */}
           {isProjectPage && (
-            <Link
-              to="/"
-              style={{
-                fontSize: '13px',
-                fontWeight: 700,
-                letterSpacing: '1px',
-                textTransform: 'uppercase',
-                color: '#7A8A00',
-                border: '1px solid #DDEC90',
-                borderRadius: '4px',
-                padding: '6px 12px',
-                textDecoration: 'none',
-                transition: 'background 0.12s',
-                flexShrink: 0,
-              }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#F5F8D0' }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
-            >
-              &larr; Dashboard
-            </Link>
+            <motion.div whileHover={{ scale: 1.02 }} style={{ flexShrink: 0 }}>
+              <Link
+                to="/"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  color: '#7A8A00',
+                  background: '#F5F8D0',
+                  border: '1px solid #DDEC90',
+                  borderRadius: '9999px',
+                  padding: '6px 14px',
+                  textDecoration: 'none',
+                  transition: 'background 0.15s ease',
+                }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#EAEDCE' }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = '#F5F8D0' }}
+              >
+                ← Dashboard
+              </Link>
+            </motion.div>
           )}
 
           {/* Project name */}
           {isProjectPage && projectName && (
-            <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#1A1A00', margin: 0, marginLeft: '4px' }}>
+            <h1
+              style={{
+                fontFamily: "'Geist', 'Inter', sans-serif",
+                fontSize: '22px',
+                fontWeight: 700,
+                color: '#1A1A00',
+                letterSpacing: '-0.02em',
+                margin: 0,
+                marginLeft: '4px',
+              }}
+            >
               {projectName}
             </h1>
           )}
@@ -313,8 +328,11 @@ export function OlympusHeader({ projectName, rightContent }: OlympusHeaderProps)
           {/* Logo when not on project page */}
           {!isProjectPage && (
             <Link to="/" style={{ textDecoration: 'none' }}>
-              <span style={{ fontSize: '16px', fontWeight: 700, color: '#1A1A00' }}>
-                Infini<span style={{ color: '#BBCB64' }}>AI</span> <span style={{ fontSize: '10px', fontWeight: 600, color: '#9A9A60', letterSpacing: '1.5px', textTransform: 'uppercase' as const }}>OS</span>
+              <span style={{ fontFamily: "'Geist', 'Inter', sans-serif", fontSize: '16px', fontWeight: 700, color: '#1A1A00' }}>
+                Infini<span style={{ color: '#BBCB64' }}>AI</span>{' '}
+                <span style={{ fontSize: '10px', fontWeight: 600, color: '#9A9A60', letterSpacing: '1.5px', textTransform: 'uppercase' as const }}>
+                  OS
+                </span>
               </span>
             </Link>
           )}

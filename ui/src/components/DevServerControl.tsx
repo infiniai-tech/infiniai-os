@@ -1,9 +1,9 @@
 import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Globe, Square, Loader2, ExternalLink, AlertTriangle, Settings2 } from 'lucide-react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type { DevServerStatus } from '../lib/types'
 import { startDevServer, stopDevServer } from '../lib/api'
-import { Button } from '@/components/ui/button'
 import { DevServerConfigDialog } from './DevServerConfigDialog'
 
 // Re-export DevServerStatus from lib/types for consumers that import from here
@@ -44,6 +44,54 @@ function useStopDevServer(projectName: string) {
 }
 
 // ============================================================================
+// Styles
+// ============================================================================
+
+const btnBase: React.CSSProperties = {
+  borderRadius: '8px',
+  padding: '6px 12px',
+  minHeight: '32px',
+  cursor: 'pointer',
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  fontFamily: "'Geist', 'Inter', sans-serif",
+  fontSize: '13px',
+  fontWeight: 700,
+  lineHeight: 1,
+  transition: 'all 0.15s',
+  border: 'none',
+}
+
+const btnOutline: React.CSSProperties = {
+  ...btnBase,
+  background: 'transparent',
+  color: '#7A8A00',
+  border: '1px solid #DDEC90',
+}
+
+const btnDestructive: React.CSSProperties = {
+  ...btnBase,
+  background: '#FFF0DC',
+  color: '#F79A19',
+  border: '1px solid #F0C880',
+}
+
+const btnRunning: React.CSSProperties = {
+  ...btnBase,
+  background: 'linear-gradient(135deg, #BBCB64, #7A8A00)',
+  color: '#FFFFFF',
+  boxShadow: '0 2px 8px rgba(187,203,100,0.3)',
+}
+
+const btnGhost: React.CSSProperties = {
+  ...btnBase,
+  background: 'transparent',
+  color: '#6A6A20',
+  border: 'none',
+}
+
+// ============================================================================
 // Component
 // ============================================================================
 
@@ -60,7 +108,7 @@ interface DevServerControlProps {
  * - Toggle button to start/stop the dev server
  * - Shows loading state during operations
  * - Displays clickable URL when server is running
- * - Uses neobrutalism design with cyan accent when running
+ * - Uses design system accent when running
  * - Config dialog for setting custom dev commands
  */
 export function DevServerControl({ projectName, status, url }: DevServerControlProps) {
@@ -113,78 +161,171 @@ export function DevServerControl({ projectName, status, url }: DevServerControlP
   const startError = startDevServerMutation.error
   const showInlineError = startError && !startError.message?.includes('No dev command available')
 
+  const disabledOpacity = isLoading ? 0.5 : 1
+
   return (
-    <div className="flex items-center gap-2">
-      {isStopped ? (
-        <>
-          <Button
-            onClick={handleStart}
-            disabled={isLoading}
-            variant={isCrashed ? "destructive" : "outline"}
-            size="sm"
-            title={isCrashed ? "Dev Server Crashed - Click to Restart" : "Start Dev Server"}
-            aria-label={isCrashed ? "Restart Dev Server (crashed)" : "Start Dev Server"}
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: '6px',
+      fontFamily: "'Inter', sans-serif",
+    }}>
+      <AnimatePresence mode="wait">
+        {isStopped ? (
+          <motion.div
+            key="stopped-controls"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
           >
-            {isLoading ? (
-              <Loader2 size={18} className="animate-spin" />
-            ) : isCrashed ? (
-              <AlertTriangle size={18} />
-            ) : (
-              <Globe size={18} />
+            <motion.button
+              onClick={handleStart}
+              disabled={isLoading}
+              style={{
+                ...(isCrashed ? btnDestructive : btnOutline),
+                opacity: disabledOpacity,
+              }}
+              title={isCrashed ? "Dev Server Crashed - Click to Restart" : "Start Dev Server"}
+              aria-label={isCrashed ? "Restart Dev Server (crashed)" : "Start Dev Server"}
+              whileHover={{ scale: 1.02, background: isCrashed ? '#FFF0DC' : '#F5F8D0' }}
+              whileTap={{ scale: 0.98 }}
+              transition={{ duration: 0.15 }}
+            >
+              {isLoading ? (
+                <Loader2 size={18} className="animate-spin" />
+              ) : isCrashed ? (
+                <AlertTriangle size={18} />
+              ) : (
+                <Globe size={18} />
+              )}
+            </motion.button>
+            <motion.button
+              onClick={handleOpenConfig}
+              style={btnGhost}
+              title="Configure Dev Server"
+              aria-label="Configure Dev Server"
+              whileHover={{ scale: 1.02, background: '#F5F8D0' }}
+              whileTap={{ scale: 0.98 }}
+              transition={{ duration: 0.15 }}
+            >
+              <Settings2 size={16} />
+            </motion.button>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="running-controls"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+          >
+            <motion.button
+              onClick={handleStop}
+              disabled={isLoading}
+              style={{ ...btnRunning, opacity: disabledOpacity }}
+              title="Stop Dev Server"
+              aria-label="Stop Dev Server"
+              whileHover={{ scale: 1.02, boxShadow: '0 4px 12px rgba(187,203,100,0.4)' }}
+              whileTap={{ scale: 0.98 }}
+              transition={{ duration: 0.15 }}
+            >
+              {isLoading ? (
+                <Loader2 size={18} className="animate-spin" />
+              ) : (
+                <Square size={18} />
+              )}
+            </motion.button>
+
+            {/* Running status dot */}
+            {isRunning && (
+              <>
+                <span style={{
+                  width: '6px',
+                  height: '6px',
+                  borderRadius: '9999px',
+                  background: 'linear-gradient(135deg, #BBCB64, #FFE52A)',
+                  boxShadow: '0 0 6px rgba(187,203,100,0.6)',
+                  animation: 'statusPulse 2s ease-in-out infinite',
+                  flexShrink: 0,
+                }} />
+                <style>{`
+                  @keyframes statusPulse {
+                    0%, 100% { opacity: 1; transform: scale(1); }
+                    50% { opacity: 0.6; transform: scale(0.85); }
+                  }
+                `}</style>
+              </>
             )}
-          </Button>
-          <Button
-            onClick={handleOpenConfig}
-            variant="ghost"
-            size="sm"
-            title="Configure Dev Server"
-            aria-label="Configure Dev Server"
-          >
-            <Settings2 size={16} />
-          </Button>
-        </>
-      ) : (
-        <Button
-          onClick={handleStop}
-          disabled={isLoading}
-          size="sm"
-          className="bg-primary text-primary-foreground hover:bg-primary/90"
-          title="Stop Dev Server"
-          aria-label="Stop Dev Server"
-        >
-          {isLoading ? (
-            <Loader2 size={18} className="animate-spin" />
-          ) : (
-            <Square size={18} />
-          )}
-        </Button>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Show URL as clickable link when server is running */}
-      {isRunning && url && (
-        <Button
-          asChild
-          size="sm"
-          className="bg-primary text-primary-foreground hover:bg-primary/90 gap-1"
-        >
-          <a
+      <AnimatePresence>
+        {isRunning && url && (
+          <motion.a
+            initial={{ opacity: 0, x: -8 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -8 }}
+            transition={{ duration: 0.15 }}
             href={url}
             target="_blank"
             rel="noopener noreferrer"
             title={`Open ${url} in new tab`}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+              padding: '4px 10px',
+              borderRadius: '9999px',
+              background: '#F5F8D0',
+              border: '1px solid #DDEC90',
+              color: '#7A8A00',
+              fontSize: '12px',
+              fontFamily: 'monospace',
+              fontWeight: 600,
+              textDecoration: 'none',
+              transition: 'all 0.15s',
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLElement).style.background = '#DDEC90'
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.background = '#F5F8D0'
+            }}
           >
-            <span className="font-mono text-xs">{url}</span>
-            <ExternalLink size={14} />
-          </a>
-        </Button>
-      )}
+            <span>{url}</span>
+            <ExternalLink size={12} />
+          </motion.a>
+        )}
+      </AnimatePresence>
 
       {/* Error display (hide "no dev command" error when config dialog handles it) */}
-      {(showInlineError || stopDevServerMutation.error) && (
-        <span className="text-xs font-mono text-destructive ml-2">
-          {String((showInlineError ? startError : stopDevServerMutation.error)?.message || 'Operation failed')}
-        </span>
-      )}
+      <AnimatePresence>
+        {(showInlineError || stopDevServerMutation.error) && (
+          <motion.span
+            initial={{ opacity: 0, x: -4 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -4 }}
+            transition={{ duration: 0.15 }}
+            style={{
+              fontSize: '12px',
+              fontFamily: 'monospace',
+              color: '#F79A19',
+              marginLeft: '4px',
+              padding: '2px 8px',
+              borderRadius: '8px',
+              background: '#FFF0DC',
+              border: '1px solid #F0C880',
+            }}
+          >
+            {String((showInlineError ? startError : stopDevServerMutation.error)?.message || 'Operation failed')}
+          </motion.span>
+        )}
+      </AnimatePresence>
 
       {/* Dev Server Config Dialog */}
       <DevServerConfigDialog

@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Wifi, WifiOff, Brain, Sparkles } from 'lucide-react'
 import type { AgentStatus } from '../lib/types'
 
@@ -74,37 +75,65 @@ export function ProgressDashboard({
   const isRunning = agentStatus === 'running'
 
   return (
-    <div style={{
-      background: '#FFFFFF', border: '1px solid #DDEC90', borderRadius: '8px',
-      padding: '16px 20px', fontFamily: "'Inter', sans-serif",
-    }}>
+    <motion.div
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25, ease: 'easeOut' }}
+      style={{
+        background: '#FFFFFF',
+        border: '1px solid #DDEC90',
+        borderRadius: '12px',
+        padding: '16px 20px',
+        fontFamily: "'Inter', sans-serif",
+        boxShadow: '0 1px 3px rgba(26,26,0,0.06), 0 1px 2px rgba(26,26,0,0.04)',
+      }}
+    >
       {/* Header row */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <span style={{
             fontSize: '18px', fontWeight: 700, letterSpacing: '2px',
             textTransform: 'uppercase', color: '#1A1A00',
+            fontFamily: "'Geist', 'Inter', sans-serif",
           }}>
             Odyssey Progress
           </span>
-          <span style={{
-            fontSize: '12px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase',
-            display: 'inline-flex', alignItems: 'center', gap: '4px',
-            padding: '3px 8px', borderRadius: '20px',
-            background: isConnected ? '#F5F8D0' : '#FFE5E5',
-            color: isConnected ? '#7A8A00' : '#CF0F0F',
-            border: `1px solid ${isConnected ? '#DDEC90' : '#CF0F0F'}`,
-          }}>
+          <motion.span
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.15 }}
+            style={{
+              fontSize: '11px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase',
+              display: 'inline-flex', alignItems: 'center', gap: '4px',
+              padding: '3px 10px', borderRadius: '9999px',
+              background: isConnected ? '#F5F8D0' : '#FFE5E5',
+              color: isConnected ? '#7A8A00' : '#CF0F0F',
+              border: `1px solid ${isConnected ? '#DDEC90' : '#CF0F0F'}`,
+              fontFamily: "'Geist', 'Inter', sans-serif",
+            }}
+          >
             {isConnected ? <Wifi size={12} /> : <WifiOff size={12} />}
             {isConnected ? 'Live' : 'Offline'}
-          </span>
+          </motion.span>
         </div>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
-          <span style={{ fontFamily: 'monospace', fontSize: '22px', fontWeight: 700, color: '#7A8A00' }}>
+          <motion.span
+            key={passing}
+            initial={{ opacity: 0.6, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2 }}
+            style={{
+              fontFamily: "'Geist', 'Inter', sans-serif",
+              fontSize: '24px', fontWeight: 700, color: '#7A8A00',
+            }}
+          >
             {passing}
-          </span>
-          <span style={{ fontSize: '16px', color: '#6A6A20' }}>/</span>
-          <span style={{ fontFamily: 'monospace', fontSize: '22px', fontWeight: 700, color: '#1A1A00' }}>
+          </motion.span>
+          <span style={{ fontSize: '16px', color: '#6A6A20', fontFamily: "'Geist', 'Inter', sans-serif" }}>/</span>
+          <span style={{
+            fontFamily: "'Geist', 'Inter', sans-serif",
+            fontSize: '24px', fontWeight: 700, color: '#1A1A00',
+          }}>
             {total}
           </span>
         </div>
@@ -113,49 +142,61 @@ export function ProgressDashboard({
       {/* Progress Bar */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
         <div style={{
-          flex: 1, height: '10px', background: '#F5F8D0',
-          borderRadius: '10px', overflow: 'hidden',
+          flex: 1, height: '4px', background: '#F5F8D0',
+          borderRadius: '9999px', overflow: 'hidden',
         }}>
-          <div style={{
-            height: '100%', borderRadius: '10px',
-            background: 'linear-gradient(90deg, #BBCB64, #7A8A00)',
-            width: `${percentage}%`,
-            transition: 'width 0.5s ease-out',
-          }} />
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${percentage}%` }}
+            transition={{ duration: 0.5, ease: 'easeOut' }}
+            style={{
+              height: '100%', borderRadius: '9999px',
+              background: 'linear-gradient(to right, #BBCB64, #FFE52A)',
+            }}
+          />
         </div>
         <span style={{
-          fontSize: '16px', fontWeight: 700, color: '#6A6A20',
+          fontSize: '14px', fontWeight: 700, color: '#6A6A20',
           fontVariantNumeric: 'tabular-nums', width: '48px', textAlign: 'right',
+          fontFamily: "'Geist', 'Inter', sans-serif",
         }}>
           {percentage.toFixed(1)}%
         </span>
       </div>
 
       {/* Agent Thought */}
-      {showThought && displayedThought && (
-        <div style={{
-          marginTop: '12px', display: 'flex', alignItems: 'center', gap: '8px',
-          transition: 'opacity 0.3s ease',
-        }}>
-          <div style={{ position: 'relative', flexShrink: 0 }}>
-            <Brain size={16} style={{ color: '#7A8A00' }} strokeWidth={2.5} />
-            {isRunning && (
-              <Sparkles size={8} className="animate-pulse" style={{
-                position: 'absolute', top: '-4px', right: '-4px', color: '#F79A19',
-              }} />
-            )}
-          </div>
-          <p style={{
-            fontFamily: 'monospace', fontSize: '13px', color: '#6A6A20',
-            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0,
-            opacity: textVisible ? 1 : 0,
-            transform: textVisible ? 'translateY(0)' : 'translateY(-4px)',
-            transition: 'all 0.15s ease-out',
-          }}>
-            {displayedThought?.replace(/:$/, '')}
-          </p>
-        </div>
-      )}
-    </div>
+      <AnimatePresence mode="wait">
+        {showThought && displayedThought && (
+          <motion.div
+            key={displayedThought}
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.15 }}
+            style={{
+              marginTop: '12px', display: 'flex', alignItems: 'center', gap: '8px',
+            }}
+          >
+            <div style={{ position: 'relative', flexShrink: 0 }}>
+              <Brain size={16} style={{ color: '#7A8A00' }} strokeWidth={2.5} />
+              {isRunning && (
+                <Sparkles size={8} className="animate-pulse" style={{
+                  position: 'absolute', top: '-4px', right: '-4px', color: '#F79A19',
+                }} />
+              )}
+            </div>
+            <p style={{
+              fontFamily: 'monospace', fontSize: '13px', color: '#6A6A20',
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0,
+              opacity: textVisible ? 1 : 0,
+              transform: textVisible ? 'translateY(0)' : 'translateY(-4px)',
+              transition: 'all 0.15s ease-out',
+            }}>
+              {displayedThought?.replace(/:$/, '')}
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   )
 }

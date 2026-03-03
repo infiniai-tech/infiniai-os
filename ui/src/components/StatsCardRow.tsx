@@ -1,3 +1,5 @@
+import { motion } from 'framer-motion'
+
 interface StatsCardRowProps {
   projectCount: number
   totalFeatures?: number
@@ -27,26 +29,52 @@ export function StatsCardRow({ projectCount }: StatsCardRowProps) {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '12px', fontFamily: "'Inter', sans-serif" }}>
       {cards.map((card) => (
-        <div
+        <motion.div
           key={card.label}
+          whileHover={{
+            y: -2,
+            boxShadow: '0 6px 20px rgba(26,26,0,0.09), 0 2px 6px rgba(26,26,0,0.05)',
+          }}
+          transition={{ duration: 0.15 }}
           style={{
             background: '#FFFFFF',
             border: '1px solid #DDEC90',
-            borderRadius: '8px',
-            padding: '14px 14px 12px 18px',
+            borderRadius: '12px',
+            padding: '18px 16px 16px 20px',
             borderLeft: `4px solid ${card.borderColor}`,
+            boxShadow: '0 1px 3px rgba(26,26,0,0.06), 0 1px 2px rgba(26,26,0,0.04)',
+            overflow: 'hidden',
           }}
         >
-          <div style={{ fontSize: '34px', fontWeight: 700, color: card.valueColor, lineHeight: 1 }}>
+          <div style={{
+            fontFamily: "'Geist', 'Inter', sans-serif",
+            fontSize: '36px',
+            fontWeight: 700,
+            color: card.valueColor,
+            lineHeight: 1,
+            letterSpacing: '-0.02em',
+          }}>
             {card.value}
           </div>
-          <div style={{ fontSize: '13px', color: '#6A6A20', marginTop: '4px', lineHeight: 1.3, whiteSpace: 'pre-line' }}>
+          <div style={{
+            fontSize: '12px',
+            color: '#6A6A20',
+            fontWeight: 500,
+            lineHeight: 1.4,
+            marginTop: '6px',
+            whiteSpace: 'pre-line',
+          }}>
             {card.label}
           </div>
-          <div style={{ fontSize: '12px', fontWeight: 700, color: deltaColor[card.deltaType], marginTop: '3px' }}>
+          <div style={{
+            fontSize: '12px',
+            fontWeight: 600,
+            color: deltaColor[card.deltaType],
+            marginTop: '4px',
+          }}>
             {card.delta}
           </div>
-        </div>
+        </motion.div>
       ))}
     </div>
   )

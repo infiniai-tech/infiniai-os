@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Play, Square, Loader2, GitBranch, Clock, Pause, PlayCircle } from 'lucide-react'
 import {
   useStartAgent,
@@ -14,34 +15,55 @@ import { ScheduleModal } from './ScheduleModal'
 import type { AgentStatus } from '../lib/types'
 
 const btnBase: React.CSSProperties = {
-  borderRadius: '6px',
-  padding: '6px 10px',
+  borderRadius: '8px',
+  padding: '8px 16px',
+  minHeight: '36px',
   cursor: 'pointer',
   display: 'inline-flex',
   alignItems: 'center',
   justifyContent: 'center',
-  fontFamily: "'Inter', sans-serif",
+  fontFamily: "'Geist', 'Inter', sans-serif",
   fontSize: '13px',
-  fontWeight: 500,
+  fontWeight: 700,
   lineHeight: 1,
+  transition: 'all 0.15s',
+  border: 'none',
 }
 
-const btnStart: React.CSSProperties = { ...btnBase, background: '#BBCB64', color: '#1A1A00', border: 'none' }
-const btnStop: React.CSSProperties = { ...btnBase, background: '#CF0F0F', color: '#FFFFFF', border: 'none' }
-const btnOutline: React.CSSProperties = { ...btnBase, background: 'transparent', color: '#7A8A00', border: '1px solid #DDEC90' }
+const btnStart: React.CSSProperties = {
+  ...btnBase,
+  background: 'linear-gradient(135deg, #BBCB64, #7A8A00)',
+  color: '#FFFFFF',
+  boxShadow: '0 2px 8px rgba(187,203,100,0.3)',
+}
+
+const btnStop: React.CSSProperties = {
+  ...btnBase,
+  background: '#CF0F0F',
+  color: '#FFFFFF',
+  boxShadow: '0 2px 8px rgba(207,15,15,0.2)',
+}
+
+const btnOutline: React.CSSProperties = {
+  ...btnBase,
+  background: 'transparent',
+  color: '#7A8A00',
+  border: '1px solid #DDEC90',
+}
 
 const badgeStyle: React.CSSProperties = {
   background: '#F5F8D0',
   color: '#7A8A00',
   border: '1px solid #DDEC90',
-  borderRadius: '20px',
-  padding: '3px 10px',
+  borderRadius: '9999px',
+  padding: '4px 12px',
   fontSize: '11px',
   fontWeight: 700,
   display: 'inline-flex',
   alignItems: 'center',
-  gap: '4px',
-  fontFamily: "'Inter', sans-serif",
+  gap: '5px',
+  fontFamily: "'Geist', 'Inter', sans-serif",
+  letterSpacing: '0.02em',
 }
 
 interface AgentControlProps {
@@ -110,7 +132,46 @@ export function AgentControl({ projectName, status, defaultConcurrency = 3 }: Ag
 
   return (
     <>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontFamily: "'Inter', sans-serif" }}>
+      <motion.div
+        initial={{ opacity: 0, y: 4 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.2 }}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          fontFamily: "'Inter', sans-serif",
+          padding: '6px 10px',
+          borderRadius: '12px',
+          background: isRunning ? 'rgba(245,248,208,0.4)' : 'transparent',
+          boxShadow: isRunning ? '0 1px 3px rgba(26,26,0,0.06), 0 1px 2px rgba(26,26,0,0.04)' : 'none',
+          border: isRunning ? '1px solid #DDEC90' : '1px solid transparent',
+          transition: 'all 0.2s',
+        }}
+      >
+        {/* Running status dot */}
+        {status === 'running' && (
+          <span style={{
+            width: '8px',
+            height: '8px',
+            borderRadius: '9999px',
+            background: 'linear-gradient(135deg, #BBCB64, #FFE52A)',
+            boxShadow: '0 0 8px rgba(187,203,100,0.6)',
+            animation: 'statusPulse 2s ease-in-out infinite',
+            flexShrink: 0,
+          }} />
+        )}
+
+        {/* Inline keyframes for statusPulse */}
+        {status === 'running' && (
+          <style>{`
+            @keyframes statusPulse {
+              0%, 100% { opacity: 1; transform: scale(1); }
+              50% { opacity: 0.6; transform: scale(0.85); }
+            }
+          `}</style>
+        )}
+
         {/* Concurrency slider - visible when stopped */}
         {isStopped && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -126,7 +187,14 @@ export function AgentControl({ projectName, status, defaultConcurrency = 3 }: Ag
               title={`${concurrency} concurrent agent${concurrency > 1 ? 's' : ''}`}
               aria-label="Set number of concurrent agents"
             />
-            <span style={{ fontSize: '12px', fontWeight: 600, minWidth: '1.5rem', textAlign: 'center', color: '#1A1A00' }}>
+            <span style={{
+              fontSize: '12px',
+              fontWeight: 700,
+              minWidth: '1.5rem',
+              textAlign: 'center',
+              color: '#1A1A00',
+              fontFamily: "'Geist', 'Inter', sans-serif",
+            }}>
               {concurrency}x
             </span>
           </div>
@@ -134,117 +202,173 @@ export function AgentControl({ projectName, status, defaultConcurrency = 3 }: Ag
 
         {/* Show concurrency indicator when running with multiple agents */}
         {isRunning && isParallel && (
-          <span style={badgeStyle}>
+          <motion.span
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.15 }}
+            style={badgeStyle}
+          >
             <GitBranch size={14} />
             {concurrency}x
-          </span>
+          </motion.span>
         )}
 
         {/* Schedule status display */}
-        {nextRun?.is_currently_running && nextRun.next_end && (
-          <span style={badgeStyle}>
-            <Clock size={14} />
-            Running until {formatEndTime(nextRun.next_end)}
-          </span>
-        )}
+        <AnimatePresence mode="wait">
+          {nextRun?.is_currently_running && nextRun.next_end && (
+            <motion.span
+              key="running-until"
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 8 }}
+              transition={{ duration: 0.15 }}
+              style={badgeStyle}
+            >
+              <Clock size={14} />
+              Running until {formatEndTime(nextRun.next_end)}
+            </motion.span>
+          )}
 
-        {!nextRun?.is_currently_running && nextRun?.next_start && (
-          <span style={badgeStyle}>
-            <Clock size={14} />
-            Next: {formatNextRun(nextRun.next_start)}
-          </span>
-        )}
+          {!nextRun?.is_currently_running && nextRun?.next_start && (
+            <motion.span
+              key="next-start"
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 8 }}
+              transition={{ duration: 0.15 }}
+              style={badgeStyle}
+            >
+              <Clock size={14} />
+              Next: {formatNextRun(nextRun.next_start)}
+            </motion.span>
+          )}
+        </AnimatePresence>
 
         {/* Start/Stop/Pause/Resume buttons */}
         {isLoadingStatus ? (
-          <button disabled style={{ ...btnOutline, opacity: 0.5, cursor: 'not-allowed' }}>
+          <motion.button
+            disabled
+            style={{ ...btnOutline, opacity: 0.5, cursor: 'not-allowed' }}
+            whileHover={{ scale: 1 }}
+          >
             <Loader2 size={18} className="animate-spin" />
-          </button>
+          </motion.button>
         ) : isStopped ? (
-          <button
+          <motion.button
             onClick={handleStart}
             disabled={isLoading}
             style={{ ...btnStart, opacity: disabledOpacity }}
             title={yoloMode ? 'Summon the Gods (YOLO Mode)' : 'Summon the Gods'}
+            whileHover={{ scale: 1.02, boxShadow: '0 4px 12px rgba(187,203,100,0.4)' }}
+            whileTap={{ scale: 0.98 }}
+            transition={{ duration: 0.15 }}
           >
             {isLoading ? (
               <Loader2 size={18} className="animate-spin" />
             ) : (
               <Play size={18} />
             )}
-          </button>
+          </motion.button>
         ) : (
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             {/* Pausing indicator */}
-            {status === 'pausing' && (
-              <span style={{ ...badgeStyle, animation: 'pulse 2s infinite' }}>
-                <Loader2 size={12} className="animate-spin" />
-                Pausing...
-              </span>
-            )}
+            <AnimatePresence>
+              {status === 'pausing' && (
+                <motion.span
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  style={{ ...badgeStyle, animation: 'pulse 2s infinite' }}
+                >
+                  <Loader2 size={12} className="animate-spin" />
+                  Pausing...
+                </motion.span>
+              )}
+            </AnimatePresence>
 
             {/* Paused indicator + Resume button */}
             {status === 'paused_graceful' && (
               <>
-                <span style={{ ...badgeStyle, background: 'transparent', color: '#7A8A00' }}>
+                <motion.span
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  style={{
+                    ...badgeStyle,
+                    background: 'transparent',
+                    color: '#7A8A00',
+                    border: '1px solid #DDEC90',
+                  }}
+                >
                   Paused
-                </span>
-                <button
+                </motion.span>
+                <motion.button
                   onClick={() => gracefulResume.mutate()}
                   disabled={isLoading}
                   style={{ ...btnStart, opacity: disabledOpacity }}
                   title="Awaken the gods"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ duration: 0.15 }}
                 >
                   {gracefulResume.isPending ? (
                     <Loader2 size={18} className="animate-spin" />
                   ) : (
                     <PlayCircle size={18} />
                   )}
-                </button>
+                </motion.button>
               </>
             )}
 
             {/* Graceful pause button (only when running normally) */}
             {status === 'running' && (
-              <button
+              <motion.button
                 onClick={() => gracefulPause.mutate()}
                 disabled={isLoading}
                 style={{ ...btnOutline, opacity: disabledOpacity }}
                 title="Rest the gods (finish current work first)"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ duration: 0.15 }}
               >
                 {gracefulPause.isPending ? (
                   <Loader2 size={18} className="animate-spin" />
                 ) : (
                   <Pause size={18} />
                 )}
-              </button>
+              </motion.button>
             )}
 
             {/* Stop button (always available) */}
-            <button
+            <motion.button
               onClick={handleStop}
               disabled={isLoading}
               style={{ ...btnStop, opacity: disabledOpacity }}
               title="Silence the Gods (immediate)"
+              whileHover={{ scale: 1.02, boxShadow: '0 4px 12px rgba(207,15,15,0.3)' }}
+              whileTap={{ scale: 0.98 }}
+              transition={{ duration: 0.15 }}
             >
               {stopAgent.isPending ? (
                 <Loader2 size={18} className="animate-spin" />
               ) : (
                 <Square size={18} />
               )}
-            </button>
+            </motion.button>
           </div>
         )}
 
         {/* Clock button to open schedule modal */}
-        <button
+        <motion.button
           onClick={() => setShowScheduleModal(true)}
           style={btnOutline}
           title="Manage schedules"
+          whileHover={{ scale: 1.02, background: '#F5F8D0' }}
+          whileTap={{ scale: 0.98 }}
+          transition={{ duration: 0.15 }}
         >
           <Clock size={18} />
-        </button>
-      </div>
+        </motion.button>
+      </motion.div>
 
       {/* Schedule Modal */}
       <ScheduleModal

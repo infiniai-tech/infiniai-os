@@ -2,16 +2,16 @@
  * Assistant Panel Component
  *
  * Slide-in panel container for the project assistant chat.
- * Slides in from the right side of the screen.
+ * Slides in from the right side of the screen with framer-motion.
  * Manages conversation state with localStorage persistence.
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { X, Bot } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { AssistantChat } from './AssistantChat'
 import { useConversation } from '../hooks/useConversations'
 import type { ChatMessage } from '../lib/types'
-import { Button } from '@/components/ui/button'
 
 interface AssistantPanelProps {
   projectName: string
@@ -150,75 +150,166 @@ export function AssistantPanel({ projectName, isOpen, onClose }: AssistantPanelP
   return (
     <>
       {/* Backdrop - click to close */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 bg-black/20 z-40 transition-opacity duration-300"
-          onClick={onClose}
-          aria-hidden="true"
-        />
-      )}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(26, 26, 0, 0.15)',
+              zIndex: 40,
+            }}
+            onClick={onClose}
+            aria-hidden="true"
+          />
+        )}
+      </AnimatePresence>
 
       {/* Panel */}
-      <div
-        className={`
-          fixed right-0 top-0 bottom-0 z-50
-          bg-card
-          border-l border-border
-          transform transition-transform duration-300 ease-out
-          flex flex-col shadow-xl
-          ${isOpen ? 'translate-x-0' : 'translate-x-full'}
-        `}
-        style={{ width: `${panelWidth}px`, maxWidth: `${MAX_WIDTH_VW}vw` }}
-        role="dialog"
-        aria-label="Oracle Assistant"
-        aria-hidden={!isOpen}
-      >
-        {/* Resize handle */}
-        <div
-          className="absolute left-0 top-0 bottom-0 w-1.5 cursor-col-resize z-10 group"
-          onMouseDown={handleMouseDown}
-        >
-          <div className="absolute inset-y-0 left-0 w-0.5 bg-border group-hover:bg-primary transition-colors" />
-        </div>
-
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-primary text-primary-foreground">
-          <div className="flex items-center gap-2">
-            <div className="bg-card text-foreground border border-border p-1.5 rounded">
-              <Bot size={18} />
-            </div>
-            <div>
-              <h2 className="font-semibold">Oracle</h2>
-              <p className="text-xs opacity-80 font-mono">{projectName}</p>
-            </div>
-          </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-            className="text-primary-foreground hover:bg-primary-foreground/20"
-            title="Close Oracle (Press A)"
-            aria-label="Close Oracle"
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+            style={{
+              position: 'fixed',
+              right: 0,
+              top: 0,
+              bottom: 0,
+              zIndex: 50,
+              width: `${panelWidth}px`,
+              maxWidth: `${MAX_WIDTH_VW}vw`,
+              background: '#FFFFFF',
+              borderLeft: '1px solid #DDEC90',
+              display: 'flex',
+              flexDirection: 'column',
+              boxShadow: '0 16px 48px rgba(26, 26, 0, 0.12), 0 4px 12px rgba(26, 26, 0, 0.08)',
+            }}
+            role="dialog"
+            aria-label="Oracle Assistant"
           >
-            <X size={18} />
-          </Button>
-        </div>
+            {/* Resize handle */}
+            <div
+              style={{
+                position: 'absolute',
+                left: 0,
+                top: 0,
+                bottom: 0,
+                width: '6px',
+                cursor: 'col-resize',
+                zIndex: 10,
+              }}
+              onMouseDown={handleMouseDown}
+            >
+              <div
+                style={{
+                  position: 'absolute',
+                  inset: '0',
+                  left: 0,
+                  width: '2px',
+                  background: '#DDEC90',
+                  transition: 'background 150ms',
+                }}
+              />
+            </div>
 
-        {/* Chat area */}
-        <div className="flex-1 overflow-hidden">
-          {isOpen && (
-            <AssistantChat
-              projectName={projectName}
-              conversationId={conversationId}
-              initialMessages={initialMessages}
-              isLoadingConversation={isLoadingConversation}
-              onNewChat={handleNewChat}
-              onSelectConversation={handleSelectConversation}
-              onConversationCreated={handleConversationCreated}
-            />
-          )}
-        </div>
-      </div>
+            {/* Header */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '12px 16px',
+                borderBottom: '1px solid #DDEC90',
+                background: 'linear-gradient(to bottom, #FAFAF2, #FFFFFF)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div
+                  style={{
+                    background: 'linear-gradient(135deg, #BBCB64, #FFE52A)',
+                    padding: '6px',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Bot size={18} style={{ color: '#1A1A00' }} />
+                </div>
+                <div>
+                  <h2
+                    style={{
+                      fontFamily: "'Geist', 'Inter', sans-serif",
+                      fontWeight: 600,
+                      fontSize: '15px',
+                      color: '#1A1A00',
+                      margin: 0,
+                      lineHeight: 1.3,
+                    }}
+                  >
+                    Oracle
+                  </h2>
+                  <p
+                    style={{
+                      fontFamily: "'Inter', sans-serif",
+                      fontSize: '12px',
+                      color: '#6A6A20',
+                      margin: 0,
+                      lineHeight: 1.3,
+                    }}
+                  >
+                    {projectName}
+                  </p>
+                </div>
+              </div>
+              <motion.button
+                whileHover={{ scale: 1.08 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={onClose}
+                title="Close Oracle (Press A)"
+                aria-label="Close Oracle"
+                style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '8px',
+                  border: '1px solid #DDEC90',
+                  background: 'transparent',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#6A6A20',
+                  transition: 'background 150ms',
+                }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = '#F5F8D0' }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
+              >
+                <X size={16} />
+              </motion.button>
+            </div>
+
+            {/* Chat area */}
+            <div style={{ flex: 1, overflow: 'hidden' }}>
+              <AssistantChat
+                projectName={projectName}
+                conversationId={conversationId}
+                initialMessages={initialMessages}
+                isLoadingConversation={isLoadingConversation}
+                onNewChat={handleNewChat}
+                onSelectConversation={handleSelectConversation}
+                onConversationCreated={handleConversationCreated}
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   )
 }

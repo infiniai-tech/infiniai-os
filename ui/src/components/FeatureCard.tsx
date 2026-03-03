@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { motion } from 'framer-motion'
 import { AgentAvatar, resolveAgentName } from './AgentAvatar'
 import type { Feature, ActiveAgent } from '../lib/types'
 
@@ -24,178 +24,178 @@ function getStatusLabel(feature: Feature, isInProgress?: boolean): string {
   return 'Pending'
 }
 
+/** Whether the status dot should pulse (active/in-progress states) */
+function shouldPulse(feature: Feature, isInProgress?: boolean): boolean {
+  return !!(feature.needs_human_input || isInProgress || feature.in_progress) && !feature.passes
+}
+
 export function FeatureCard({ feature, onClick, isInProgress, activeAgent }: FeatureCardProps) {
-  const [hovered, setHovered] = useState(false)
   const isHITL = feature.needs_human_input
   const isDone = feature.passes
 
   return (
-    <div
+    <motion.div
       onClick={onClick}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      whileHover={{
+        y: -2,
+        boxShadow: '0 6px 20px rgba(26,26,0,0.09), 0 2px 6px rgba(26,26,0,0.05)',
+        borderColor: isHITL ? '#F79A19' : '#BBCB64',
+      }}
+      transition={{ duration: 0.15, ease: 'easeOut' }}
       style={{
         background: '#FFFFFF',
         border: isHITL ? '1.5px solid #F79A19' : '1px solid #DDEC90',
-        borderRadius: '8px',
-        padding: '10px',
+        borderRadius: '12px',
+        overflow: 'hidden',
         cursor: 'pointer',
         position: 'relative',
-        opacity: isDone ? 0.7 : 1,
-        borderColor: hovered && !isHITL ? '#BBCB64' : undefined,
-        boxShadow: hovered ? '0 2px 8px rgba(187,203,100,0.15)' : 'none',
-        transform: hovered ? 'translateY(-1px)' : 'none',
-        transition: 'all 0.15s ease',
-        fontFamily: "'Inter', sans-serif",
+        opacity: isDone ? 0.65 : 1,
+        fontFamily: "'Geist', 'Inter', sans-serif",
       }}
     >
-      {/* HITL banner */}
+      {/* HITL banner - full width at top of card */}
       {isHITL && (
         <div
           style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            background: '#F79A19',
+            background: 'linear-gradient(to right, #F79A19, #F5A832)',
             color: '#FFFFFF',
-          fontSize: '10px',
-          fontWeight: 700,
-          letterSpacing: '1px',
-          textTransform: 'uppercase',
-          textAlign: 'center',
-          padding: '3px 0',
-          borderRadius: '4px 4px 0 0',
+            fontSize: '10px',
+            fontWeight: 700,
+            letterSpacing: '1px',
+            textTransform: 'uppercase',
+            textAlign: 'center',
+            padding: '4px 0',
+            borderRadius: '0',
           }}
         >
           &#9889; AWAITING INPUT
         </div>
       )}
 
-      {/* Feature name */}
-      <div
-        style={{
-          fontSize: '14px',
-          fontWeight: 700,
-          color: '#1A1A00',
-          lineHeight: 1.35,
-          marginBottom: '6px',
-          marginTop: isHITL ? '14px' : 0,
-        }}
-      >
-        {feature.name}
-      </div>
-
-      {/* Agent + status row */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: '#6A6A20' }}>
-        <span
-          style={{
-            width: '7px',
-            height: '7px',
-            borderRadius: '50%',
-            background: getStatusDotColor(feature, isInProgress),
-            flexShrink: 0,
-          }}
-        />
-        <span>{getStatusLabel(feature, isInProgress)}</span>
-        {activeAgent && (
-          <>
-            <span style={{ color: '#DDEC90' }}>|</span>
-            <AgentAvatar name={activeAgent.agentName} state={activeAgent.state} size="xs" />
-            <span style={{ fontWeight: 600 }}>{resolveAgentName(activeAgent.agentName)}</span>
-          </>
-        )}
-      </div>
-
-      {/* HITL question preview */}
-      {isHITL && feature.human_input_request?.prompt && (
+      {/* Card body */}
+      <div style={{ padding: '12px' }}>
+        {/* Feature name */}
         <div
           style={{
-            marginTop: '6px',
-            padding: '6px 8px',
-            background: '#FFF0DC',
-            border: '1px solid #F0C880',
-            borderRadius: '4px',
-            fontSize: '11px',
-            color: '#A05A00',
-            lineHeight: 1.4,
-          }}
-        >
-          {feature.human_input_request.prompt.length > 120
-            ? feature.human_input_request.prompt.slice(0, 120) + '...'
-            : feature.human_input_request.prompt}
-        </div>
-      )}
-
-      {/* Tags row */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '7px' }}>
-        {/* Token estimate tag */}
-        <span
-          style={{
-            fontSize: '10px',
+            fontFamily: "'Geist', 'Inter', sans-serif",
+            fontSize: '14px',
             fontWeight: 700,
-            letterSpacing: '0.3px',
-            padding: '2px 7px',
-            borderRadius: '10px',
-            background: '#F5F8D0',
-            color: '#7A8A00',
-            border: '1px solid #DDEC90',
+            color: '#1A1A00',
+            lineHeight: 1.4,
+            marginBottom: '6px',
           }}
         >
-          ~{feature.priority}k tokens
-        </span>
+          {feature.name}
+        </div>
 
-        {/* Auto/HITL tag */}
-        {isHITL ? (
+        {/* Agent + status row */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#6A6A20' }}>
           <span
             style={{
-              fontSize: '10px',
-              fontWeight: 700,
-              letterSpacing: '0.3px',
-              padding: '2px 7px',
-              borderRadius: '10px',
-              background: '#FFF0DC',
-              color: '#A05A00',
+              width: '7px',
+              height: '7px',
+              borderRadius: '50%',
+              background: getStatusDotColor(feature, isInProgress),
+              flexShrink: 0,
+              ...(shouldPulse(feature, isInProgress) ? { animation: 'status-pulse 2s ease-in-out infinite' } : {}),
+            }}
+          />
+          <span>{getStatusLabel(feature, isInProgress)}</span>
+          {activeAgent && (
+            <>
+              <span style={{ color: '#DDEC90' }}>|</span>
+              <AgentAvatar name={activeAgent.agentName} state={activeAgent.state} size="xs" />
+              <span style={{ fontWeight: 600 }}>{resolveAgentName(activeAgent.agentName)}</span>
+            </>
+          )}
+        </div>
+
+        {/* HITL question preview */}
+        {isHITL && feature.human_input_request?.prompt && (
+          <div
+            style={{
+              marginTop: '6px',
+              padding: '6px 8px',
+              background: 'linear-gradient(135deg, #FFF0DC, #FFF8EC)',
               border: '1px solid #F0C880',
+              borderRadius: '8px',
+              fontSize: '12px',
+              color: '#A05A00',
+              lineHeight: 1.4,
             }}
           >
-            HITL
-          </span>
-        ) : (
-          <span
-            style={{
-              fontSize: '10px',
-              fontWeight: 700,
-              letterSpacing: '0.3px',
-              padding: '2px 7px',
-              borderRadius: '10px',
-              background: '#F5F8D0',
-              color: '#7A8A00',
-              border: '1px solid #DDEC90',
-            }}
-          >
-            Auto
-          </span>
+            {feature.human_input_request.prompt.length > 120
+              ? feature.human_input_request.prompt.slice(0, 120) + '...'
+              : feature.human_input_request.prompt}
+          </div>
         )}
 
-        {/* Category tag */}
-        {feature.category && (
+        {/* Tags row */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginTop: '10px' }}>
+          {/* Token estimate tag */}
           <span
             style={{
               fontSize: '10px',
-              fontWeight: 700,
-              letterSpacing: '0.3px',
-              padding: '2px 7px',
-              borderRadius: '10px',
+              fontWeight: 600,
+              padding: '3px 9px',
+              borderRadius: '9999px',
               background: '#F5F8D0',
               color: '#7A8A00',
               border: '1px solid #DDEC90',
             }}
           >
-            {feature.category}
+            ~{feature.priority}k tokens
           </span>
-        )}
+
+          {/* Auto/HITL tag */}
+          {isHITL ? (
+            <span
+              style={{
+                fontSize: '10px',
+                fontWeight: 600,
+                padding: '3px 9px',
+                borderRadius: '9999px',
+                background: '#FFF0DC',
+                color: '#A05A00',
+                border: '1px solid #F0C880',
+              }}
+            >
+              HITL
+            </span>
+          ) : (
+            <span
+              style={{
+                fontSize: '10px',
+                fontWeight: 600,
+                padding: '3px 9px',
+                borderRadius: '9999px',
+                background: '#F5F8D0',
+                color: '#7A8A00',
+                border: '1px solid #DDEC90',
+              }}
+            >
+              Auto
+            </span>
+          )}
+
+          {/* Category tag */}
+          {feature.category && (
+            <span
+              style={{
+                fontSize: '10px',
+                fontWeight: 600,
+                padding: '3px 9px',
+                borderRadius: '9999px',
+                background: isHITL ? '#FFF0DC' : '#F5F8D0',
+                color: isHITL ? '#A05A00' : '#7A8A00',
+                border: `1px solid ${isHITL ? '#F0C880' : '#DDEC90'}`,
+              }}
+            >
+              {feature.category}
+            </span>
+          )}
+        </div>
       </div>
-    </div>
+    </motion.div>
   )
 }

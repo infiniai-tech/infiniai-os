@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion'
 import {
   FolderOpen,
   Search,
@@ -29,67 +30,137 @@ const PIPELINE: PipelineNode[] = [
   { icon: ShieldCheck, label: 'Verify', color: '#BBCB64' },
 ]
 
-function hexToRgb(hex: string): string {
+function hexToRgba(hex: string, alpha: number): string {
   const r = parseInt(hex.slice(1, 3), 16)
   const g = parseInt(hex.slice(3, 5), 16)
   const b = parseInt(hex.slice(5, 7), 16)
-  return `${r} ${g} ${b}`
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }
 
 export function LiveOrchestration({ projectName }: LiveOrchestrationProps) {
   return (
-    <div
-      className="rounded-lg border border-[#DDEC90] bg-white dark:bg-[#1a1c14] p-6"
-      style={{ fontFamily: "'Inter', sans-serif" }}
+    <motion.div
+      whileHover={{ y: -1, boxShadow: '0 4px 16px rgba(26,26,0,0.08)' }}
+      transition={{ duration: 0.2 }}
+      style={{
+        borderRadius: '12px',
+        border: '1px solid #DDEC90',
+        background: '#FFFFFF',
+        boxShadow: '0 1px 3px rgba(26,26,0,0.06), 0 1px 2px rgba(26,26,0,0.04)',
+        padding: '24px',
+        fontFamily: "'Inter', sans-serif",
+      }}
     >
       {/* Header */}
-      <div className="flex flex-wrap items-center gap-3 mb-6">
-        <h2 className="text-base font-bold tracking-wider uppercase text-[#2a2f1a] dark:text-[#e8eada]">
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+        <h2
+          style={{
+            fontFamily: "'Geist', 'Inter', sans-serif",
+            fontWeight: 700,
+            fontSize: '13px',
+            color: '#1A1A00',
+            letterSpacing: '1.5px',
+            textTransform: 'uppercase',
+            margin: 0,
+          }}
+        >
           Live Orchestration — {projectName || 'ALPHA REWRITE'}
         </h2>
-        <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#BBCB64]/15 px-3 py-0.5 text-sm font-semibold text-[#BBCB64]">
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#BBCB64] opacity-75" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-[#BBCB64]" />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              borderRadius: '9999px',
+              background: hexToRgba('#BBCB64', 0.15),
+              padding: '3px 12px',
+              fontSize: '12px',
+              fontWeight: 700,
+              color: '#7A8A00',
+            }}
+          >
+            <span style={{ position: 'relative', display: 'inline-flex', width: '8px', height: '8px' }}>
+              <span
+                style={{
+                  position: 'absolute',
+                  display: 'inline-flex',
+                  width: '100%',
+                  height: '100%',
+                  borderRadius: '9999px',
+                  background: '#BBCB64',
+                  opacity: 0.75,
+                  animation: 'ping 1s cubic-bezier(0, 0, 0.2, 1) infinite',
+                }}
+              />
+              <span
+                style={{
+                  position: 'relative',
+                  display: 'inline-flex',
+                  width: '8px',
+                  height: '8px',
+                  borderRadius: '9999px',
+                  background: '#BBCB64',
+                }}
+              />
             </span>
             RUNNING
           </span>
-          <span className="rounded-full bg-[#BBCB64]/15 px-3 py-0.5 text-sm font-semibold text-[#BBCB64]">
+          <span
+            style={{
+              borderRadius: '9999px',
+              background: hexToRgba('#BBCB64', 0.15),
+              padding: '3px 12px',
+              fontSize: '12px',
+              fontWeight: 700,
+              color: '#7A8A00',
+            }}
+          >
             6 AGENTS ACTIVE
           </span>
         </div>
       </div>
 
       {/* Pipeline */}
-      <div className="overflow-x-auto">
-        <div className="flex items-center justify-center gap-0 min-w-max py-2">
+      <div style={{ overflowX: 'auto' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0, minWidth: 'max-content', padding: '8px 0' }}>
           {PIPELINE.map((node, idx) => {
             const Icon = node.icon
-            const rgb = hexToRgb(node.color)
 
             return (
-              <div key={node.label} className="flex items-center">
+              <div key={node.label} style={{ display: 'flex', alignItems: 'center' }}>
                 {/* Node */}
-                <div className="flex flex-col items-center gap-2">
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: idx * 0.07 }}
+                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}
+                >
                   <div
-                    className="flex h-12 w-12 items-center justify-center rounded-xl"
-                    style={{ backgroundColor: `rgb(${rgb} / 0.1)` }}
+                    style={{
+                      display: 'flex',
+                      width: '48px',
+                      height: '48px',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderRadius: '12px',
+                      backgroundColor: hexToRgba(node.color, 0.1),
+                    }}
                   >
-                    <Icon className="h-5 w-5" style={{ color: node.color }} />
+                    <Icon size={20} style={{ color: node.color }} />
                   </div>
-                  <span className="text-sm text-[#2a2f1a]/50 dark:text-[#e8eada]/50 text-center">{node.label}</span>
-                </div>
+                  <span style={{ fontSize: '12px', color: '#6A6A20', textAlign: 'center' }}>{node.label}</span>
+                </motion.div>
 
                 {/* Arrow connector */}
                 {idx < PIPELINE.length - 1 && (
-                  <div className="mx-1 mb-6 h-0.5 w-8 bg-[#BBCB64]/30" />
+                  <div style={{ margin: '0 4px', marginBottom: '24px', height: '2px', width: '32px', background: hexToRgba('#BBCB64', 0.3) }} />
                 )}
               </div>
             )
           })}
         </div>
       </div>
-    </div>
+    </motion.div>
   )
 }

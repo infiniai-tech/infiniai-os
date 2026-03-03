@@ -1,12 +1,6 @@
 import { useEffect, useCallback } from 'react'
 import { Keyboard } from 'lucide-react'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import { Badge } from '@/components/ui/badge'
+import { motion, AnimatePresence } from 'framer-motion'
 
 interface Shortcut {
   key: string
@@ -50,42 +44,190 @@ export function KeyboardShortcutsHelp({ isOpen, onClose }: KeyboardShortcutsHelp
   }, [isOpen, handleKeyDown])
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Keyboard size={20} className="text-primary" />
-            Keyboard Shortcuts
-          </DialogTitle>
-        </DialogHeader>
-
-        {/* Shortcuts list */}
-        <ul className="space-y-1">
-          {shortcuts.map((shortcut) => (
-            <li
-              key={shortcut.key}
-              className="flex items-center justify-between py-2 border-b border-border/50 last:border-0"
-            >
-              <div className="flex items-center gap-3">
-                <kbd className="px-2 py-1 text-xs font-mono bg-muted rounded border border-border min-w-[2rem] text-center">
-                  {shortcut.key}
-                </kbd>
-                <span className="text-sm">{shortcut.description}</span>
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(26,26,0,0.45)',
+            backdropFilter: 'blur(4px)',
+            zIndex: 50,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+          onClick={onClose}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.97, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.97, y: 4 }}
+            transition={{ duration: 0.18, ease: 'easeOut' }}
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: '#FFFFFF',
+              borderRadius: '16px',
+              border: '1px solid #DDEC90',
+              boxShadow:
+                '0 20px 60px rgba(26,26,0,0.15), 0 8px 24px rgba(26,26,0,0.08)',
+              width: '440px',
+              maxWidth: '90vw',
+              padding: '28px',
+              fontFamily: "'Inter', sans-serif",
+            }}
+          >
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div
+                style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '8px',
+                  background: '#F5F8D0',
+                  border: '1px solid #DDEC90',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
+              >
+                <Keyboard size={18} style={{ color: '#7A8A00' }} />
               </div>
-              {shortcut.context && (
-                <Badge variant="secondary" className="text-xs">
-                  {shortcut.context}
-                </Badge>
-              )}
-            </li>
-          ))}
-        </ul>
+              <h2
+                style={{
+                  fontFamily: "'Geist', 'Inter', sans-serif",
+                  fontSize: '20px',
+                  fontWeight: 700,
+                  letterSpacing: '-0.02em',
+                  color: '#1A1A00',
+                  margin: 0,
+                }}
+              >
+                Keyboard Shortcuts
+              </h2>
+            </div>
 
-        {/* Footer */}
-        <p className="text-xs text-muted-foreground text-center pt-2">
-          Press ? or Esc to close
-        </p>
-      </DialogContent>
-    </Dialog>
+            {/* Divider */}
+            <hr
+              style={{
+                border: 'none',
+                borderTop: '1px solid #DDEC90',
+                margin: '20px 0',
+              }}
+            />
+
+            {/* Shortcuts list */}
+            <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+              {shortcuts.map((shortcut) => (
+                <li
+                  key={shortcut.key}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '10px 0',
+                    borderBottom: '1px solid rgba(221,236,144,0.5)',
+                  }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                    }}
+                  >
+                    <kbd
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        minWidth: '28px',
+                        padding: '2px 8px',
+                        fontFamily: 'JetBrains Mono, monospace',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        color: '#1A1A00',
+                        background: '#F5F8D0',
+                        border: '1px solid #DDEC90',
+                        borderRadius: '6px',
+                      }}
+                    >
+                      {shortcut.key}
+                    </kbd>
+                    <span
+                      style={{
+                        fontSize: '14px',
+                        color: '#1A1A00',
+                      }}
+                    >
+                      {shortcut.description}
+                    </span>
+                  </div>
+                  {shortcut.context && (
+                    <span
+                      style={{
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        color: '#7A8A00',
+                        background: '#F5F8D0',
+                        border: '1px solid #DDEC90',
+                        borderRadius: '9999px',
+                        padding: '2px 10px',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {shortcut.context}
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+
+            {/* Footer hint */}
+            <p
+              style={{
+                textAlign: 'center',
+                fontSize: '12px',
+                color: '#6A6A20',
+                marginTop: '16px',
+                marginBottom: 0,
+              }}
+            >
+              Press{' '}
+              <kbd
+                style={{
+                  padding: '1px 6px',
+                  fontFamily: 'JetBrains Mono, monospace',
+                  fontSize: '11px',
+                  background: '#F5F8D0',
+                  border: '1px solid #DDEC90',
+                  borderRadius: '4px',
+                }}
+              >
+                ?
+              </kbd>{' '}
+              or{' '}
+              <kbd
+                style={{
+                  padding: '1px 6px',
+                  fontFamily: 'JetBrains Mono, monospace',
+                  fontSize: '11px',
+                  background: '#F5F8D0',
+                  border: '1px solid #DDEC90',
+                  borderRadius: '4px',
+                }}
+              >
+                Esc
+              </kbd>{' '}
+              to close
+            </p>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   )
 }
