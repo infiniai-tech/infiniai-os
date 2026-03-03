@@ -15,7 +15,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, BackgroundTasks, HTTPException
 from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
@@ -258,8 +258,64 @@ async def write_spec_file(project_name: str, filename: str, body: SpecWriteReque
     )
 
 
+async def _auto_push_specs_to_github(project_name: str, project_dir: Path) -> None:
+    """Push all approved spec files to the linked GitHub repo (fire-and-forget)."""
+    try:
+        from registry import get_project_git_repo
+        from ..services.github_auth_store import get_auth
+        from ..services.github_service import push_files
+
+        git_info = get_project_git_repo(project_name)
+        if not git_info:
+            logger.debug("No GitHub repo linked for '%s' — skipping auto-push", project_name)
+            return
+
+        auth = get_auth()
+        if not auth or not auth.get("token"):
+            logger.warning("GitHub auth not available — skipping auto-push for '%s'", project_name)
+            return
+
+        specs_dir = _get_specs_dir(project_dir)
+        prompts_dir = project_dir / ".autoforge" / "prompts"
+
+        files_to_push: list[dict[str, str]] = []
+        for filename in SPEC_FILES:
+            file_path = specs_dir / filename
+            if file_path.exists():
+                files_to_push.append({
+                    "path": f".autoforge/specs/{filename}",
+                    "content": file_path.read_text(encoding="utf-8"),
+                })
+
+        app_spec_path = prompts_dir / "app_spec.txt"
+        if app_spec_path.exists():
+            files_to_push.append({
+                "path": ".autoforge/prompts/app_spec.txt",
+                "content": app_spec_path.read_text(encoding="utf-8"),
+            })
+
+        if not files_to_push:
+            logger.warning("No spec files found to push for '%s'", project_name)
+            return
+
+        result = await push_files(
+            owner=git_info["owner"],
+            repo_name=git_info["repo"],
+            token=auth["token"],
+            branch=git_info.get("branch", "main"),
+            files=files_to_push,
+            commit_message="Auto-push: all specs approved",
+        )
+        logger.info(
+            "Auto-pushed %d spec files to GitHub for '%s': %s",
+            len(files_to_push), project_name, result.get("commitUrl", ""),
+        )
+    except Exception:
+        logger.exception("Failed to auto-push specs to GitHub for '%s'", project_name)
+
+
 @router.post("/{filename}/approve", response_model=SpecApproveResponse)
-async def approve_spec_file(project_name: str, filename: str):
+async def approve_spec_file(project_name: str, filename: str, background_tasks: BackgroundTasks):
     """Approve a spec file for use by the coding agents."""
     project_dir = _get_project_dir(project_name)
 
@@ -288,6 +344,9 @@ async def approve_spec_file(project_name: str, filename: str):
     _write_review_status(project_dir, review_status)
 
     logger.info(f"Spec file '{filename}' approved for project '{project_name}' (all_approved={all_approved})")
+
+    if all_approved:
+        background_tasks.add_task(_auto_push_specs_to_github, project_name, project_dir)
 
     return SpecApproveResponse(
         filename=filename,

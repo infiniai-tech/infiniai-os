@@ -120,6 +120,7 @@ class Project(Base):
     created_at = Column(DateTime, nullable=False)
     default_concurrency = Column(Integer, nullable=False, default=3)
     target_stack = Column(String, nullable=True)  # JSON-serialized TargetStack
+    git_repo = Column(String, nullable=True)  # JSON: {"owner","repo","branch"}
 
 
 class Settings(Base):
@@ -186,6 +187,7 @@ def _get_engine():
                 Base.metadata.create_all(bind=_engine)
                 _migrate_add_default_concurrency(_engine)
                 _migrate_add_target_stack(_engine)
+                _migrate_add_git_repo(_engine)
                 _SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=_engine)
                 logger.debug("Initialized registry database at: %s", db_path)
 
@@ -216,6 +218,19 @@ def _migrate_add_target_stack(engine) -> None:
             ))
             conn.commit()
             logger.info("Migrated projects table: added target_stack column")
+
+
+def _migrate_add_git_repo(engine) -> None:
+    """Add git_repo column if missing (for GitHub integration)."""
+    with engine.connect() as conn:
+        result = conn.execute(text("PRAGMA table_info(projects)"))
+        columns = [row[1] for row in result.fetchall()]
+        if "git_repo" not in columns:
+            conn.execute(text(
+                "ALTER TABLE projects ADD COLUMN git_repo TEXT"
+            ))
+            conn.commit()
+            logger.info("Migrated projects table: added git_repo column")
 
 
 @contextmanager
@@ -378,6 +393,7 @@ def list_registered_projects() -> dict[str, dict[str, Any]]:
                 "created_at": p.created_at.isoformat() if p.created_at else None,
                 "default_concurrency": getattr(p, 'default_concurrency', 3) or 3,
                 "target_stack": getattr(p, 'target_stack', None),
+                "git_repo": getattr(p, 'git_repo', None),
             }
             for p in projects
         }
@@ -406,6 +422,7 @@ def get_project_info(name: str) -> dict[str, Any] | None:
             "created_at": project.created_at.isoformat() if project.created_at else None,
             "default_concurrency": getattr(project, 'default_concurrency', 3) or 3,
             "target_stack": getattr(project, 'target_stack', None),
+            "git_repo": getattr(project, 'git_repo', None),
         }
     finally:
         session.close()
@@ -481,6 +498,67 @@ def set_project_concurrency(name: str, concurrency: int) -> bool:
 
     logger.info("Set project '%s' default_concurrency to %d", name, concurrency)
     return True
+
+
+def update_project_git_repo(name: str, owner: str | None, repo: str | None, branch: str = "main") -> bool:
+    """
+    Set or clear a project's linked GitHub repository.
+
+    Pass owner=None to clear the link.
+
+    Args:
+        name: The project name.
+        owner: GitHub repository owner (or None to clear).
+        repo: GitHub repository name.
+        branch: Branch name (default "main").
+
+    Returns:
+        True if updated, False if project wasn't found.
+    """
+    import json
+
+    git_repo_json: str | None = None
+    if owner and repo:
+        git_repo_json = json.dumps({"owner": owner, "repo": repo, "branch": branch})
+
+    with _get_session() as session:
+        project = session.query(Project).filter(Project.name == name).first()
+        if not project:
+            return False
+
+        project.git_repo = git_repo_json
+
+    action = f"linked to {owner}/{repo} ({branch})" if git_repo_json else "cleared"
+    logger.info("Project '%s' git_repo %s", name, action)
+    return True
+
+
+def get_project_git_repo(name: str) -> dict[str, str] | None:
+    """
+    Get a project's linked GitHub repository info.
+
+    Args:
+        name: The project name.
+
+    Returns:
+        Dict with owner, repo, branch keys, or None if not linked.
+    """
+    import json
+
+    _, SessionLocal = _get_engine()
+    session = SessionLocal()
+    try:
+        project = session.query(Project).filter(Project.name == name).first()
+        if project is None:
+            return None
+        raw = getattr(project, 'git_repo', None)
+        if not raw:
+            return None
+        return json.loads(raw)
+    except (json.JSONDecodeError, Exception):
+        return None
+    finally:
+        session.close()
 
 
 # =============================================================================

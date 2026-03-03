@@ -1,4 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import {
+  getGitHubAuthStatus,
+  startGitHubDeviceFlow,
+  pollGitHubDeviceFlow,
+  disconnectGitHub,
+} from '../lib/api'
+import type { GitHubAuthStatus } from '../lib/types'
 
 // ---------------------------------------------------------------------------
 // Toggle component
@@ -133,8 +140,7 @@ interface ConnectorDef {
 
 const CONNECTORS: ConnectorDef[] = [
   { id: 'figma', name: 'Figma', description: 'Import designs, components, and design tokens directly from Figma files', icon: '✦', color: '#A259FF', connected: false, category: 'design' },
-  { id: 'slack', name: 'Slack', description: 'Send notifications, HITL prompts, and agent updates to Slack channels', icon: '⊞', color: '#E01E5A', connected: true, category: 'communication' },
-  { id: 'github', name: 'GitHub', description: 'Auto-create PRs, manage issues, and sync repository activity', icon: '⊛', color: '#24292F', connected: true, category: 'devops' },
+  { id: 'slack', name: 'Slack', description: 'Send notifications, HITL prompts, and agent updates to Slack channels', icon: '⊞', color: '#E01E5A', connected: false, category: 'communication' },
   { id: 'linear', name: 'Linear', description: 'Sync features with Linear issues and track sprint progress', icon: '◇', color: '#5E6AD2', connected: false, category: 'devops' },
   { id: 'notion', name: 'Notion', description: 'Pull requirements from Notion docs and sync project documentation', icon: '▣', color: '#000000', connected: false, category: 'storage' },
   { id: 'discord', name: 'Discord', description: 'Real-time agent updates and team notifications via Discord webhooks', icon: '⬡', color: '#5865F2', connected: false, category: 'communication' },
@@ -143,6 +149,189 @@ const CONNECTORS: ConnectorDef[] = [
   { id: 'jira', name: 'Jira', description: 'Bi-directional sync between features and Jira tickets', icon: '◆', color: '#0052CC', connected: false, category: 'devops' },
   { id: 'sentry', name: 'Sentry', description: 'Auto-create features from error reports and track resolution', icon: '◎', color: '#362D59', connected: false, category: 'devops' },
 ]
+
+
+// ---------------------------------------------------------------------------
+// GitHub Connector Card (real OAuth device flow)
+// ---------------------------------------------------------------------------
+
+function GitHubConnectorCard({ authStatus, onConnect, onDisconnect, isPolling }: {
+  authStatus: GitHubAuthStatus | null
+  onConnect: () => void
+  onDisconnect: () => void
+  isPolling: boolean
+}) {
+  const [hovered, setHovered] = useState(false)
+  const connected = authStatus?.connected ?? false
+
+  return (
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        background: '#FFFFFF',
+        border: connected ? '1px solid #BBCB64' : '1px solid #DDEC90',
+        borderRadius: '10px',
+        padding: '18px',
+        display: 'flex', flexDirection: 'column', gap: '12px',
+        transition: 'all 0.15s',
+        boxShadow: hovered ? '0 2px 12px rgba(0,0,0,0.06)' : 'none',
+        transform: hovered ? 'translateY(-1px)' : 'none',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{
+          width: '40px', height: '40px', borderRadius: '10px',
+          background: connected ? '#24292F18' : '#FAFAF2',
+          border: `1px solid ${connected ? '#24292F40' : '#DDEC90'}`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: '18px', color: '#24292F', flexShrink: 0,
+        }}>
+          ⊛
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: '16px', fontWeight: 700, color: '#1A1A00' }}>GitHub</div>
+          {connected && authStatus?.username && (
+            <div style={{ fontSize: '12px', color: '#6A6A20', marginTop: '2px' }}>
+              @{authStatus.username}
+            </div>
+          )}
+        </div>
+        {connected && (
+          <span style={{
+            fontSize: '10px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase',
+            background: '#F5F8D0', color: '#7A8A00', border: '1px solid #DDEC90',
+            borderRadius: '20px', padding: '3px 10px', flexShrink: 0,
+          }}>
+            Connected
+          </span>
+        )}
+        {isPolling && (
+          <span style={{
+            fontSize: '10px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase',
+            background: '#FFF4D6', color: '#8A6D00', border: '1px solid #E8D48A',
+            borderRadius: '20px', padding: '3px 10px', flexShrink: 0,
+          }}>
+            Waiting…
+          </span>
+        )}
+      </div>
+
+      <div style={{ fontSize: '13px', color: '#6A6A20', lineHeight: 1.5 }}>
+        Push spec files to GitHub when all specs are approved. Connect repos per-project.
+      </div>
+
+      <button
+        onClick={connected ? onDisconnect : onConnect}
+        disabled={isPolling}
+        style={{
+          fontSize: '13px', fontWeight: 700,
+          color: connected ? '#7A8A00' : '#1A1A00',
+          background: connected ? 'transparent' : isPolling ? '#E5E5D8' : '#BBCB64',
+          border: connected ? '1px solid #DDEC90' : 'none',
+          borderRadius: '6px', padding: '8px 14px',
+          cursor: isPolling ? 'not-allowed' : 'pointer',
+          transition: 'all 0.12s',
+          alignSelf: 'flex-start',
+          opacity: isPolling ? 0.6 : 1,
+        }}
+      >
+        {isPolling ? 'Authorizing…' : connected ? 'Disconnect' : 'Connect'}
+      </button>
+    </div>
+  )
+}
+
+
+// ---------------------------------------------------------------------------
+// GitHub Device Flow Modal
+// ---------------------------------------------------------------------------
+
+function DeviceFlowModal({ userCode, verificationUri, onClose }: {
+  userCode: string
+  verificationUri: string
+  onClose: () => void
+}) {
+  const [copied, setCopied] = useState(false)
+
+  const copyCode = useCallback(() => {
+    navigator.clipboard.writeText(userCode).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }, [userCode])
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0,
+      background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(4px)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      zIndex: 9999,
+    }} onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} style={{
+        background: '#FFFFFF', border: '2px solid #DDEC90', borderRadius: '14px',
+        padding: '32px', maxWidth: '420px', width: '90%',
+        boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
+      }}>
+        <div style={{ fontSize: '20px', fontWeight: 700, color: '#1A1A00', marginBottom: '8px' }}>
+          Connect GitHub
+        </div>
+        <div style={{ fontSize: '14px', color: '#6A6A20', marginBottom: '20px', lineHeight: 1.5 }}>
+          Copy the code below, then click the button to open GitHub and paste it.
+        </div>
+
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: '12px',
+          background: '#FAFAF2', border: '2px solid #DDEC90', borderRadius: '10px',
+          padding: '16px', marginBottom: '20px',
+        }}>
+          <code style={{
+            fontSize: '28px', fontWeight: 700, fontFamily: "'JetBrains Mono', monospace",
+            color: '#1A1A00', letterSpacing: '3px', flex: 1, textAlign: 'center',
+          }}>
+            {userCode}
+          </code>
+          <button
+            onClick={copyCode}
+            style={{
+              fontSize: '12px', fontWeight: 700,
+              background: copied ? '#D4EDDA' : '#BBCB64',
+              color: copied ? '#155724' : '#1A1A00',
+              border: 'none', borderRadius: '6px', padding: '8px 14px',
+              cursor: 'pointer', transition: 'all 0.12s', flexShrink: 0,
+            }}
+          >
+            {copied ? 'Copied!' : 'Copy'}
+          </button>
+        </div>
+
+        <a
+          href={verificationUri}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: 'block', textAlign: 'center',
+            fontSize: '15px', fontWeight: 700,
+            background: '#24292F', color: '#FFFFFF',
+            borderRadius: '8px', padding: '12px 24px',
+            textDecoration: 'none', transition: 'opacity 0.12s',
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.9')}
+          onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
+        >
+          Open GitHub →
+        </a>
+
+        <div style={{
+          fontSize: '12px', color: '#6A6A20', textAlign: 'center',
+          marginTop: '16px', lineHeight: 1.5,
+        }}>
+          Waiting for authorization… This dialog will close automatically.
+        </div>
+      </div>
+    </div>
+  )
+}
 
 
 function ConnectorCard({ connector, onToggle }: { connector: ConnectorDef; onToggle: () => void }) {
@@ -307,6 +496,63 @@ export function ConfigView() {
   const [regressionAgents, setRegressionAgents] = useState('1')
   const [featuresPerAgent, setFeaturesPerAgent] = useState('3')
 
+  // GitHub auth state
+  const [ghAuth, setGhAuth] = useState<GitHubAuthStatus | null>(null)
+  const [ghDeviceFlow, setGhDeviceFlow] = useState<{ userCode: string; verificationUri: string } | null>(null)
+  const [ghPolling, setGhPolling] = useState(false)
+  const [ghError, setGhError] = useState<string | null>(null)
+
+  useEffect(() => {
+    getGitHubAuthStatus()
+      .then(setGhAuth)
+      .catch(() => setGhAuth({ connected: false }))
+  }, [])
+
+  const handleGhConnect = useCallback(async () => {
+    setGhError(null)
+    try {
+      const flow = await startGitHubDeviceFlow()
+      setGhDeviceFlow({ userCode: flow.userCode, verificationUri: flow.verificationUri })
+      setGhPolling(true)
+
+      const interval = (flow.interval || 5) * 1000
+      const poll = async () => {
+        try {
+          const status = await pollGitHubDeviceFlow()
+          if (status.status === 'authorized') {
+            setGhAuth({ connected: true, username: status.username })
+            setGhDeviceFlow(null)
+            setGhPolling(false)
+            return
+          }
+          if (status.status === 'expired' || status.status === 'error') {
+            setGhError(status.error || 'Authorization expired. Please try again.')
+            setGhDeviceFlow(null)
+            setGhPolling(false)
+            return
+          }
+          setTimeout(poll, status.interval ? status.interval * 1000 : interval)
+        } catch {
+          setGhError('Polling failed. Please try again.')
+          setGhDeviceFlow(null)
+          setGhPolling(false)
+        }
+      }
+      setTimeout(poll, interval)
+    } catch (e) {
+      setGhError(e instanceof Error ? e.message : 'Failed to start device flow')
+    }
+  }, [])
+
+  const handleGhDisconnect = useCallback(async () => {
+    try {
+      await disconnectGitHub()
+      setGhAuth({ connected: false })
+    } catch {
+      setGhError('Failed to disconnect')
+    }
+  }, [])
+
   const toggle = (key: keyof ToggleState) => {
     setToggles((prev) => ({ ...prev, [key]: !prev[key] }))
   }
@@ -317,13 +563,20 @@ export function ConfigView() {
     )
   }
 
+  const ghIsConnected = ghAuth?.connected ?? false
+
   const filteredConnectors = connectorFilter === 'all'
     ? connectors
     : connectorFilter === 'connected'
       ? connectors.filter((c) => c.connected)
       : connectors.filter((c) => c.category === connectorFilter)
 
-  const connectedCount = connectors.filter((c) => c.connected).length
+  const showGitHubInFilter =
+    connectorFilter === 'all' ||
+    connectorFilter === 'devops' ||
+    (connectorFilter === 'connected' && ghIsConnected)
+
+  const connectedCount = connectors.filter((c) => c.connected).length + (ghIsConnected ? 1 : 0)
 
   const panelStyle: React.CSSProperties = {
     background: '#FFFFFF', border: '1px solid #DDEC90', borderRadius: '10px',
@@ -590,8 +843,33 @@ export function ConfigView() {
             </div>
           </div>
 
+          {/* Error banner */}
+          {ghError && (
+            <div style={{
+              background: '#FFF0DC', border: '1px solid #E8C48A', borderRadius: '8px',
+              padding: '10px 16px', fontSize: '13px', color: '#8A5D00',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            }}>
+              <span>{ghError}</span>
+              <button
+                onClick={() => setGhError(null)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px', color: '#8A5D00' }}
+              >
+                ×
+              </button>
+            </div>
+          )}
+
           {/* Connector grid */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px' }}>
+            {showGitHubInFilter && (
+              <GitHubConnectorCard
+                authStatus={ghAuth}
+                onConnect={handleGhConnect}
+                onDisconnect={handleGhDisconnect}
+                isPolling={ghPolling}
+              />
+            )}
             {filteredConnectors.map((connector) => (
               <ConnectorCard
                 key={connector.id}
@@ -601,7 +879,7 @@ export function ConfigView() {
             ))}
           </div>
 
-          {filteredConnectors.length === 0 && (
+          {filteredConnectors.length === 0 && !showGitHubInFilter && (
             <div style={{
               textAlign: 'center', padding: '40px', color: '#6A6A20',
               background: '#FAFAF2', borderRadius: '10px', border: '1px solid #DDEC90',
@@ -610,6 +888,17 @@ export function ConfigView() {
             </div>
           )}
         </div>
+      )}
+
+      {/* GitHub Device Flow Modal */}
+      {ghDeviceFlow && (
+        <DeviceFlowModal
+          userCode={ghDeviceFlow.userCode}
+          verificationUri={ghDeviceFlow.verificationUri}
+          onClose={() => {
+            setGhDeviceFlow(null)
+          }}
+        />
       )}
     </div>
   )

@@ -360,6 +360,47 @@ export type WSMessage =
   | WSOrchestratorUpdateMessage
 
 // ============================================================================
+// GitHub Integration Types
+// ============================================================================
+
+export interface GitHubDeviceFlowResponse {
+  userCode: string
+  verificationUri: string
+  expiresIn: number
+  interval: number
+}
+
+export interface GitHubDeviceFlowStatus {
+  status: 'pending' | 'authorized' | 'expired' | 'error'
+  username?: string
+  error?: string
+  interval?: number
+}
+
+export interface GitHubAuthStatus {
+  connected: boolean
+  username?: string
+  connectedAt?: string
+}
+
+export interface GitRepoInfo {
+  linked: boolean
+  owner?: string
+  repo?: string
+  branch?: string
+  url?: string
+}
+
+export interface GitRepoResponse {
+  gitRepo: {
+    url: string
+    owner: string
+    repoName: string
+    branch: string
+  }
+}
+
+// ============================================================================
 // Spec Chat Types
 // ============================================================================
 

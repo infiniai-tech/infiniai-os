@@ -33,6 +33,11 @@ import type {
   ScheduleUpdate,
   ScheduleListResponse,
   NextRunResponse,
+  GitHubDeviceFlowResponse,
+  GitHubDeviceFlowStatus,
+  GitHubAuthStatus,
+  GitRepoInfo,
+  GitRepoResponse,
 } from './types'
 
 const API_BASE = '/api'
@@ -636,4 +641,55 @@ export async function startModernizeAnalysis(projectName: string): Promise<{ sta
 
 export async function getModernizeStatus(projectName: string): Promise<ModernizeStatusResponse> {
   return fetchJSON(`/projects/${encodeURIComponent(projectName)}/specs/modernize/status`)
+}
+
+// ============================================================================
+// GitHub Integration API
+// ============================================================================
+
+export async function startGitHubDeviceFlow(): Promise<GitHubDeviceFlowResponse> {
+  return fetchJSON('/auth/github/device/start', { method: 'POST' })
+}
+
+export async function pollGitHubDeviceFlow(): Promise<GitHubDeviceFlowStatus> {
+  return fetchJSON('/auth/github/device/status')
+}
+
+export async function getGitHubAuthStatus(): Promise<GitHubAuthStatus> {
+  return fetchJSON('/auth/github/status')
+}
+
+export async function disconnectGitHub(): Promise<void> {
+  await fetchJSON('/auth/github', { method: 'DELETE' })
+}
+
+export async function connectProjectRepo(
+  projectName: string,
+  repoUrl: string
+): Promise<GitRepoResponse> {
+  return fetchJSON(`/projects/${encodeURIComponent(projectName)}/git/connect`, {
+    method: 'POST',
+    body: JSON.stringify({ repoUrl }),
+  })
+}
+
+export async function createProjectRepo(
+  projectName: string,
+  repoName?: string,
+  isPrivate: boolean = false
+): Promise<GitRepoResponse> {
+  return fetchJSON(`/projects/${encodeURIComponent(projectName)}/git/create`, {
+    method: 'POST',
+    body: JSON.stringify({ repoName, isPrivate }),
+  })
+}
+
+export async function getProjectGitStatus(projectName: string): Promise<GitRepoInfo> {
+  return fetchJSON(`/projects/${encodeURIComponent(projectName)}/git/status`)
+}
+
+export async function disconnectProjectRepo(projectName: string): Promise<void> {
+  await fetchJSON(`/projects/${encodeURIComponent(projectName)}/git/disconnect`, {
+    method: 'DELETE',
+  })
 }

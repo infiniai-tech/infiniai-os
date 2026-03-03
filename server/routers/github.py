@@ -17,6 +17,8 @@ import httpx
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
+from registry import get_project_git_repo, update_project_git_repo
+
 from ..services.github_auth_store import clear_auth, get_auth, set_auth
 from ..services.github_service import (
     create_repo,
@@ -209,6 +211,8 @@ async def git_connect(project_name: str, body: GitConnectRequest):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+    update_project_git_repo(project_name, result["owner"], result["repoName"], result["defaultBranch"])
+
     git_repo = GitRepoResponse(
         url=f"https://github.com/{result['owner']}/{result['repoName']}",
         owner=result["owner"],
@@ -233,6 +237,8 @@ async def git_create(project_name: str, body: GitCreateRequest):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+    update_project_git_repo(project_name, result["owner"], result["repoName"], "main")
+
     git_repo = GitRepoResponse(
         url=result["url"],
         owner=result["owner"],
@@ -240,3 +246,31 @@ async def git_create(project_name: str, body: GitCreateRequest):
         branch="main",
     )
     return GitResponse(gitRepo=git_repo)
+
+
+class GitStatusResponse(BaseModel):
+    linked: bool
+    owner: Optional[str] = None
+    repo: Optional[str] = None
+    branch: Optional[str] = None
+    url: Optional[str] = None
+
+
+@router.get("/api/projects/{project_name}/git/status", response_model=GitStatusResponse)
+async def git_status(project_name: str):
+    info = get_project_git_repo(project_name)
+    if not info:
+        return GitStatusResponse(linked=False)
+    return GitStatusResponse(
+        linked=True,
+        owner=info["owner"],
+        repo=info["repo"],
+        branch=info.get("branch", "main"),
+        url=f"https://github.com/{info['owner']}/{info['repo']}",
+    )
+
+
+@router.delete("/api/projects/{project_name}/git/disconnect", status_code=204)
+async def git_disconnect(project_name: str):
+    update_project_git_repo(project_name, None, None)
+    return None
