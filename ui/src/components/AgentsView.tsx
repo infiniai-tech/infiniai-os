@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { DEFAULT_PROMPTS, QUICK_INSERT_ITEMS } from './agentPrompts'
+import { DEFAULT_PROMPTS, QUICK_INSERT_ITEMS } from './agentPrompts/index'
 import { AGENT_AVATAR_IMAGES } from './AgentAvatar'
 
 type RoleBadge = 'LEAD' | 'INT' | 'SPC'

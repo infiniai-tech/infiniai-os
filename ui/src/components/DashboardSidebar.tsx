@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import type { ProjectSummary } from '../lib/types'
 import React, { useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { DEFAULT_PROMPTS, QUICK_INSERT_ITEMS } from './agentPrompts'
+import { DEFAULT_PROMPTS, QUICK_INSERT_ITEMS } from './agentPrompts/index'
 import { AGENT_AVATAR_IMAGES } from './AgentAvatar'
 
 interface DashboardSidebarProps {
