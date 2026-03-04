@@ -11,7 +11,7 @@ interface ExpandProjectModalProps {
   isOpen: boolean
   projectName: string
   onClose: () => void
-  onFeaturesAdded: () => void  // Called to refresh feature list
+  onFeaturesAdded: () => void
 }
 
 export function ExpandProjectModal({
@@ -23,14 +23,16 @@ export function ExpandProjectModal({
   if (!isOpen) return null
 
   const handleComplete = (featuresAdded: number) => {
-    if (featuresAdded > 0) {
-      onFeaturesAdded()
-    }
+    if (featuresAdded > 0) onFeaturesAdded()
     onClose()
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-background">
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 50,
+      background: '#FAFAF2',
+      fontFamily: "'Inter', sans-serif",
+    }}>
       <ExpandProjectChat
         projectName={projectName}
         onComplete={handleComplete}

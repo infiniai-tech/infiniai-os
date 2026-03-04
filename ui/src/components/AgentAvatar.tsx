@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion'
+import { motion, type TargetAndTransition } from 'framer-motion'
 import { type AgentMascot, type AgentState } from '../lib/types'
 import {
   AVATAR_COLORS,
@@ -53,8 +53,8 @@ const SIZES = {
  * Replaces CSS-only animation classes with richer motion effects.
  */
 function getStateMotion(state: AgentState): {
-  animate: Record<string, unknown>
-  transition: Record<string, unknown>
+  animate: TargetAndTransition
+  transition: object
 } {
   switch (state) {
     case 'idle':

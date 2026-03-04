@@ -1,15 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import {
-  FileText,
-  CheckCircle2,
-  Clock,
-  Loader2,
-  Play,
-  ScrollText,
-  AlertTriangle,
-  Sparkles,
-} from 'lucide-react'
+import { FileText, CheckCircle2, Clock, Loader2, Play, ScrollText, AlertTriangle, Sparkles } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   listSpecFiles,
   getModernizeStatus,
@@ -19,32 +11,13 @@ import {
   type SpecFileInfo,
 } from '../lib/api'
 import { SpecEditorModal } from './SpecEditorModal'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Alert, AlertDescription } from '@/components/ui/alert'
 
 const FILE_DESCRIPTIONS: Record<string, { label: string; description: string }> = {
-  'constitution.md': {
-    label: 'Constitution',
-    description: 'Governance principles and migration boundaries',
-  },
-  'spec.md': {
-    label: 'Specification',
-    description: 'Detailed technical architecture and data models',
-  },
-  'plan.md': {
-    label: 'Plan',
-    description: 'Phased migration execution plan',
-  },
-  'tasks.md': {
-    label: 'Tasks',
-    description: 'Detailed task breakdown for coding agents',
-  },
-  'app_spec.txt': {
-    label: 'App Spec',
-    description: 'Machine-readable spec for the initializer agent',
-  },
+  'constitution.md': { label: 'Constitution', description: 'Governance principles and migration boundaries' },
+  'spec.md': { label: 'Specification', description: 'Detailed technical architecture and data models' },
+  'plan.md': { label: 'Plan', description: 'Phased migration execution plan' },
+  'tasks.md': { label: 'Tasks', description: 'Detailed task breakdown for coding agents' },
+  'app_spec.txt': { label: 'App Spec', description: 'Machine-readable spec for the initializer agent' },
 }
 
 interface SpecReviewPanelProps {
@@ -59,7 +32,6 @@ export function SpecReviewPanel({ projectName, onComplete }: SpecReviewPanelProp
   const [startError, setStartError] = useState<string | null>(null)
   const [analysisStartError, setAnalysisStartError] = useState<string | null>(null)
 
-  // Poll modernize status — always fetch fresh on mount to avoid stale cache from previous project runs
   const { data: modernizeStatus } = useQuery({
     queryKey: ['modernize-status', projectName],
     queryFn: () => getModernizeStatus(projectName),
@@ -71,7 +43,6 @@ export function SpecReviewPanel({ projectName, onComplete }: SpecReviewPanelProp
     },
   })
 
-  // Poll spec files list while analysis is running or complete
   const { data: specList, refetch: refetchSpecs } = useQuery({
     queryKey: ['spec-files', projectName],
     queryFn: () => listSpecFiles(projectName),
@@ -82,45 +53,27 @@ export function SpecReviewPanel({ projectName, onComplete }: SpecReviewPanelProp
     enabled: !!projectName,
   })
 
-  // Auto-start analysis when not started, or when cached status is stale
-  // (e.g. modernizeStatus says 'complete' from a previous run but specList shows 'not_started')
-  const staleCache =
-    modernizeStatus?.status === 'complete' && specList?.analysis_status === 'not_started'
+  const staleCache = modernizeStatus?.status === 'complete' && specList?.analysis_status === 'not_started'
 
   useEffect(() => {
-    const needsStart =
-      modernizeStatus?.status === 'not_started' ||
-      modernizeStatus?.status === 'idle' ||
-      staleCache
+    const needsStart = modernizeStatus?.status === 'not_started' || modernizeStatus?.status === 'idle' || staleCache
     if (!needsStart) return
-
     setAnalysisStartError(null)
     startModernizeAnalysis(projectName)
       .then(() => {
         queryClient.invalidateQueries({ queryKey: ['modernize-status', projectName] })
         queryClient.invalidateQueries({ queryKey: ['spec-files', projectName] })
       })
-      .catch((err) => {
-        const msg = err instanceof Error ? err.message : String(err)
-        setAnalysisStartError(msg)
-      })
+      .catch((err) => setAnalysisStartError(err instanceof Error ? err.message : String(err)))
   }, [modernizeStatus?.status, staleCache, projectName, queryClient])
 
-  const handleEditorClose = useCallback(() => {
-    setSelectedFile(null)
-    refetchSpecs()
-  }, [refetchSpecs])
-
-  const handleApproved = useCallback(() => {
-    refetchSpecs()
-  }, [refetchSpecs])
+  const handleEditorClose = useCallback(() => { setSelectedFile(null); refetchSpecs() }, [refetchSpecs])
+  const handleApproved = useCallback(() => { refetchSpecs() }, [refetchSpecs])
 
   const handleApproveAll = async () => {
     if (!specList) return
     const pending = specList.files.filter(f => f.status !== 'approved')
-    for (const file of pending) {
-      await approveSpecFile(projectName, file.filename)
-    }
+    for (const file of pending) { await approveSpecFile(projectName, file.filename) }
     refetchSpecs()
   }
 
@@ -147,208 +100,234 @@ export function SpecReviewPanel({ projectName, onComplete }: SpecReviewPanelProp
   const approvedCount = specList?.files.filter(f => f.status === 'approved').length ?? 0
 
   return (
-    <div className="w-full max-w-4xl mx-auto space-y-6">
+    <div style={{ width: '100%', maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '20px', fontFamily: "'Inter', sans-serif" }}>
       {/* Header */}
-      <div className="text-center space-y-2">
-        <div className="flex items-center justify-center gap-2">
-          <ScrollText size={28} className="text-primary" />
-          <h2 className="text-2xl font-display font-bold text-foreground">
+      <div style={{ textAlign: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginBottom: '8px' }}>
+          <ScrollText size={28} style={{ color: '#7A8A00' }} />
+          <h2 style={{ fontWeight: 700, fontSize: '24px', color: '#1A1A00', fontFamily: "'Geist', 'Inter', sans-serif", margin: 0 }}>
             Modernization Specs
           </h2>
         </div>
-        <p className="text-muted-foreground text-sm max-w-lg mx-auto">
+        <p style={{ fontSize: '14px', color: '#6A6A20', maxWidth: '480px', margin: '0 auto' }}>
           Zeus has analyzed your codebase and generated spec files.
           Review, edit, and approve each spec before the coding agents begin.
         </p>
       </div>
 
-      {/* Starting / queued state */}
+      {/* Not started / queuing */}
       {isNotStarted && !analysisStartError && (
-        <Card className="border-primary/30 bg-primary/5">
-          <CardContent className="flex items-center gap-4 p-6">
-            <Loader2 size={32} className="animate-spin text-primary" />
-            <div className="flex-1">
-              <h3 className="font-semibold text-foreground">Summoning Zeus...</h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                Starting codebase analysis, please wait.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: '16px',
+          padding: '20px 24px',
+          background: '#F5F8D0', border: '1px solid #DDEC90',
+          borderRadius: '12px',
+        }}>
+          <Loader2 size={28} style={{ color: '#7A8A00', animation: 'spin 1s linear infinite', flexShrink: 0 }} />
+          <div>
+            <h3 style={{ fontWeight: 700, color: '#1A1A00', fontSize: '15px', margin: '0 0 4px' }}>Summoning Zeus...</h3>
+            <p style={{ fontSize: '13px', color: '#6A6A20', margin: 0 }}>Starting codebase analysis, please wait.</p>
+          </div>
+        </div>
       )}
 
       {/* Analysis start error */}
-      {analysisStartError && (
-        <Alert variant="destructive">
-          <AlertTriangle size={16} />
-          <AlertDescription>
-            Failed to start analysis: {analysisStartError}
-            <Button
-              variant="outline"
-              size="sm"
-              className="ml-4"
-              onClick={() => {
-                setAnalysisStartError(null)
-                startModernizeAnalysis(projectName).catch((err) => {
-                  setAnalysisStartError(err instanceof Error ? err.message : String(err))
-                })
-              }}
+      <AnimatePresence>
+        {analysisStartError && (
+          <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '8px',
+              padding: '12px 16px',
+              background: '#FFF0DC', border: '1px solid #F0C880',
+              borderLeft: '4px solid #F79A19', borderRadius: '8px',
+              fontSize: '13px', color: '#A05A00',
+            }}
+          >
+            <AlertTriangle size={14} style={{ flexShrink: 0 }} />
+            <span style={{ flex: 1 }}>Failed to start analysis: {analysisStartError}</span>
+            <button
+              onClick={() => { setAnalysisStartError(null); startModernizeAnalysis(projectName).catch(err => setAnalysisStartError(err instanceof Error ? err.message : String(err))) }}
+              style={{ padding: '4px 12px', borderRadius: '6px', border: '1px solid #F0C880', background: '#FFFFFF', color: '#A05A00', fontWeight: 600, fontSize: '12px', cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}
             >
               Retry
-            </Button>
-          </AlertDescription>
-        </Alert>
-      )}
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {/* Analysis Progress */}
+      {/* Analyzing progress */}
       {isAnalyzing && (
-        <Card className="border-primary/30 bg-primary/5">
-          <CardContent className="flex items-center gap-4 p-6">
-            <div className="relative">
-              <Loader2 size={32} className="animate-spin text-primary" />
-              <Sparkles
-                size={14}
-                className="absolute -top-1 -right-1 text-primary animate-pulse"
-              />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-semibold text-foreground">Zeus is analyzing your codebase...</h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                {modernizeStatus?.progress_messages?.slice(-1)[0] ||
-                  'Scanning files, understanding architecture, and generating specs'}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: '16px',
+          padding: '20px 24px',
+          background: '#F5F8D0', border: '1px solid #DDEC90',
+          borderRadius: '12px',
+        }}>
+          <div style={{ position: 'relative', flexShrink: 0 }}>
+            <Loader2 size={28} style={{ color: '#7A8A00', animation: 'spin 1s linear infinite' }} />
+            <Sparkles size={12} className="animate-pulse" style={{ position: 'absolute', top: '-4px', right: '-4px', color: '#F79A19' }} />
+          </div>
+          <div>
+            <h3 style={{ fontWeight: 700, color: '#1A1A00', fontSize: '15px', margin: '0 0 4px' }}>Zeus is analyzing your codebase...</h3>
+            <p style={{ fontSize: '13px', color: '#6A6A20', margin: 0 }}>
+              {modernizeStatus?.progress_messages?.slice(-1)[0] || 'Scanning files, understanding architecture, and generating specs'}
+            </p>
+          </div>
+        </div>
       )}
 
-      {/* Error State */}
+      {/* Error state */}
       {isError && (
-        <Alert variant="destructive">
-          <AlertTriangle size={16} />
-          <AlertDescription>
-            Analysis failed: {modernizeStatus?.error || 'Unknown error'}
-            <Button
-              variant="outline"
-              size="sm"
-              className="ml-4"
-              onClick={() => {
-                startModernizeAnalysis(projectName).then(() => {
-                  queryClient.invalidateQueries({ queryKey: ['modernize-status', projectName] })
-                  queryClient.invalidateQueries({ queryKey: ['spec-files', projectName] })
-                }).catch(console.error)
-              }}
-            >
-              Retry
-            </Button>
-          </AlertDescription>
-        </Alert>
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: '8px',
+          padding: '12px 16px',
+          background: '#FFF0DC', border: '1px solid #F0C880',
+          borderLeft: '4px solid #F79A19', borderRadius: '8px',
+          fontSize: '13px', color: '#A05A00',
+        }}>
+          <AlertTriangle size={14} style={{ flexShrink: 0 }} />
+          <span style={{ flex: 1 }}>Analysis failed: {modernizeStatus?.error || 'Unknown error'}</span>
+          <button
+            onClick={() => { startModernizeAnalysis(projectName).then(() => { queryClient.invalidateQueries({ queryKey: ['modernize-status', projectName] }); queryClient.invalidateQueries({ queryKey: ['spec-files', projectName] }) }).catch(console.error) }}
+            style={{ padding: '4px 12px', borderRadius: '6px', border: '1px solid #F0C880', background: '#FFFFFF', color: '#A05A00', fontWeight: 600, fontSize: '12px', cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}
+          >
+            Retry
+          </button>
+        </div>
       )}
 
-      {/* Spec Files List — only show once analysis is done to avoid stale data */}
+      {/* Spec files list */}
       {isComplete && specList && specList.files.length > 0 && (
         <>
-          <div className="flex items-center justify-between">
-            <div className="text-sm text-muted-foreground">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: '13px', color: '#6A6A20' }}>
               {approvedCount} of {totalFiles} approved
-            </div>
+            </span>
             {!allApproved && totalFiles > 0 && approvedCount < totalFiles && (
-              <Button variant="outline" size="sm" onClick={handleApproveAll}>
+              <button
+                onClick={handleApproveAll}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '6px',
+                  padding: '6px 14px', borderRadius: '8px',
+                  border: '1px solid #DDEC90', background: 'transparent',
+                  color: '#6A6A20', fontWeight: 600, fontSize: '13px',
+                  cursor: 'pointer', fontFamily: "'Inter', sans-serif",
+                  transition: 'all 0.15s',
+                }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#F5F8D0' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+              >
                 <CheckCircle2 size={14} />
                 Approve All
-              </Button>
+              </button>
             )}
           </div>
 
-          <div className="grid gap-3">
-            {specList?.files.map((file: SpecFileInfo) => {
-              const meta = FILE_DESCRIPTIONS[file.filename] || {
-                label: file.filename,
-                description: 'Spec file',
-              }
-              const isApproved = file.status === 'approved'
-
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {specList.files.map((file: SpecFileInfo) => {
+              const meta = FILE_DESCRIPTIONS[file.filename] || { label: file.filename, description: 'Spec file' }
+              const fileApproved = file.status === 'approved'
               return (
-                <Card
+                <motion.div
                   key={file.filename}
-                  className={`cursor-pointer transition-all hover:border-primary/50 ${
-                    isApproved ? 'border-primary/30 bg-primary/5' : ''
-                  }`}
+                  whileHover={{ y: -1, boxShadow: '0 4px 12px rgba(26,26,0,0.08)' }}
+                  transition={{ duration: 0.15 }}
                   onClick={() => setSelectedFile(file.filename)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '14px',
+                    padding: '14px 16px',
+                    background: fileApproved ? '#F5F8D0' : '#FFFFFF',
+                    border: fileApproved ? '1px solid #BBCB64' : '1px solid #DDEC90',
+                    borderRadius: '10px',
+                    cursor: 'pointer',
+                    transition: 'border-color 0.15s',
+                  }}
                 >
-                  <CardContent className="flex items-center gap-4 p-4">
-                    <div
-                      className={`rounded-lg p-2 ${
-                        isApproved ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground'
-                      }`}
-                    >
-                      <FileText size={20} />
+                  <div style={{
+                    width: '40px', height: '40px', borderRadius: '8px', flexShrink: 0,
+                    background: fileApproved ? 'linear-gradient(135deg, #BBCB64, #7A8A00)' : '#F5F8D0',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <FileText size={20} style={{ color: fileApproved ? '#FFFFFF' : '#7A8A00' }} />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
+                      <span style={{ fontWeight: 700, fontSize: '14px', color: '#1A1A00' }}>{meta.label}</span>
+                      <span style={{ fontSize: '11px', color: '#9A9A60', fontFamily: 'monospace' }}>{file.filename}</span>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-foreground">{meta.label}</span>
-                        <span className="text-xs text-muted-foreground font-mono">
-                          {file.filename}
-                        </span>
-                      </div>
-                      <p className="text-sm text-muted-foreground mt-0.5">{meta.description}</p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-xs text-muted-foreground">
-                        {(file.size / 1024).toFixed(1)} KB
-                      </span>
-                      <Badge variant={isApproved ? 'default' : 'secondary'}>
-                        {isApproved ? (
-                          <span className="flex items-center gap-1">
-                            <CheckCircle2 size={12} /> Approved
-                          </span>
-                        ) : (
-                          <span className="flex items-center gap-1">
-                            <Clock size={12} /> Pending
-                          </span>
-                        )}
-                      </Badge>
-                    </div>
-                  </CardContent>
-                </Card>
+                    <p style={{ fontSize: '13px', color: '#6A6A20', margin: 0 }}>{meta.description}</p>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+                    <span style={{ fontSize: '11px', color: '#9A9A60', fontFamily: 'monospace' }}>
+                      {(file.size / 1024).toFixed(1)} KB
+                    </span>
+                    <span style={{
+                      display: 'inline-flex', alignItems: 'center', gap: '4px',
+                      fontSize: '11px', fontWeight: 700,
+                      padding: '3px 10px', borderRadius: '9999px',
+                      background: fileApproved ? '#BBCB64' : 'transparent',
+                      color: fileApproved ? '#1A1A00' : '#6A6A20',
+                      border: fileApproved ? '1px solid #7A8A00' : '1px solid #DDEC90',
+                    }}>
+                      {fileApproved ? <><CheckCircle2 size={11} /> Approved</> : <><Clock size={11} /> Pending</>}
+                    </span>
+                  </div>
+                </motion.div>
               )
             })}
           </div>
         </>
       )}
 
-      {/* Begin Coding Button */}
+      {/* Begin coding CTA */}
       {allApproved && totalFiles > 0 && (
-        <Card className="border-primary bg-gradient-to-r from-primary/10 to-primary/5">
-          <CardHeader className="text-center pb-2">
-            <CardTitle className="font-display text-lg">
-              All Specs Approved
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-center space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Your modernization plan is ready. Start the coding agents to begin transforming the codebase.
-            </p>
-            {startError && (
-              <Alert variant="destructive" className="text-left">
-                <AlertDescription>{startError}</AlertDescription>
-              </Alert>
-            )}
-            <Button
-              size="lg"
-              onClick={handleBeginCoding}
-              disabled={startingAgent}
-              className="font-display"
-            >
-              {startingAgent ? (
-                <Loader2 size={18} className="animate-spin" />
-              ) : (
-                <Play size={18} />
-              )}
-              Begin the Odyssey
-            </Button>
-          </CardContent>
-        </Card>
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          style={{
+            background: 'linear-gradient(135deg, #F5F8D0, #FFFFFF)',
+            border: '1px solid #BBCB64',
+            borderRadius: '12px',
+            padding: '28px 24px',
+            textAlign: 'center',
+          }}
+        >
+          <h3 style={{ fontWeight: 700, fontSize: '18px', color: '#1A1A00', marginBottom: '8px', fontFamily: "'Geist', 'Inter', sans-serif" }}>
+            All Specs Approved
+          </h3>
+          <p style={{ fontSize: '14px', color: '#6A6A20', marginBottom: '20px' }}>
+            Your modernization plan is ready. Start the coding agents to begin transforming the codebase.
+          </p>
+          {startError && (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: '8px',
+              padding: '10px 14px', marginBottom: '16px',
+              background: '#FFF0DC', border: '1px solid #F0C880',
+              borderLeft: '4px solid #F79A19', borderRadius: '8px',
+              fontSize: '13px', color: '#A05A00', textAlign: 'left',
+            }}>
+              <AlertTriangle size={14} style={{ flexShrink: 0 }} />
+              {startError}
+            </div>
+          )}
+          <button
+            onClick={handleBeginCoding}
+            disabled={startingAgent}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: '8px',
+              padding: '12px 28px', borderRadius: '10px', border: 'none',
+              background: 'linear-gradient(135deg, #BBCB64, #7A8A00)',
+              color: '#FFFFFF', fontWeight: 700, fontSize: '16px',
+              cursor: startingAgent ? 'not-allowed' : 'pointer',
+              opacity: startingAgent ? 0.7 : 1,
+              fontFamily: "'Geist', 'Inter', sans-serif",
+              transition: 'opacity 0.15s',
+            }}
+          >
+            {startingAgent ? <Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} /> : <Play size={18} />}
+            Begin the Odyssey
+          </button>
+        </motion.div>
       )}
 
       {/* Spec Editor Modal */}

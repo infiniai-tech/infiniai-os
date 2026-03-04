@@ -1,4 +1,4 @@
-import { Crown, ChevronDown, ChevronUp, Users, Activity } from 'lucide-react'
+import { Crown, ChevronDown, Users, Activity } from 'lucide-react'
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { AgentCard, AgentLogModal } from './AgentCard'

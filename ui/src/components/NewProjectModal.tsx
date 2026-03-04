@@ -12,7 +12,7 @@ import { useState } from 'react'
 import { ArrowRight, ArrowLeft, Loader2, CheckCircle2, Folder, Code2, Server, Database, Palette, Scroll, FolderOpen, Figma, Layers, FileText, Globe } from 'lucide-react'
 import { useCreateProject } from '../hooks/useProjects'
 import { FolderBrowser } from './FolderBrowser'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 
 type Step = 'name' | 'folder' | 'stack' | 'complete'
 

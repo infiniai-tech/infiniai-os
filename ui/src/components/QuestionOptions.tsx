@@ -8,10 +8,6 @@
 import { useState } from 'react'
 import { Check } from 'lucide-react'
 import type { SpecQuestion } from '../lib/types'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 
 interface QuestionOptionsProps {
   questions: SpecQuestion[]
@@ -24,7 +20,6 @@ export function QuestionOptions({
   onSubmit,
   disabled = false,
 }: QuestionOptionsProps) {
-  // Track selected answers for each question
   const [answers, setAnswers] = useState<Record<string, string | string[]>>({})
   const [customInputs, setCustomInputs] = useState<Record<string, string>>({})
   const [showCustomInput, setShowCustomInput] = useState<Record<string, boolean>>({})
@@ -60,9 +55,7 @@ export function QuestionOptions({
   }
 
   const handleSubmit = () => {
-    // Ensure all questions have answers
     const finalAnswers: Record<string, string | string[]> = {}
-
     questions.forEach((_, idx) => {
       const key = String(idx)
       if (showCustomInput[key] && customInputs[key]) {
@@ -71,17 +64,13 @@ export function QuestionOptions({
         finalAnswers[key] = answers[key]
       }
     })
-
     onSubmit(finalAnswers)
   }
 
   const isOptionSelected = (questionIdx: number, optionLabel: string, multiSelect: boolean) => {
     const key = String(questionIdx)
     const answer = answers[key]
-
-    if (multiSelect) {
-      return Array.isArray(answer) && answer.includes(optionLabel)
-    }
+    if (multiSelect) return Array.isArray(answer) && answer.includes(optionLabel)
     return answer === optionLabel
   }
 
@@ -93,128 +82,201 @@ export function QuestionOptions({
   const allQuestionsAnswered = questions.every((_, idx) => hasAnswer(idx))
 
   return (
-    <div className="space-y-6 p-4">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', padding: '16px', fontFamily: "'Inter', sans-serif" }}>
       {questions.map((q, questionIdx) => (
-        <Card key={questionIdx}>
-          <CardContent className="p-4">
-            {/* Question header */}
-            <div className="flex items-center gap-3 mb-4">
-              <Badge>{q.header}</Badge>
-              <span className="font-bold text-foreground">
+        <div
+          key={questionIdx}
+          style={{
+            background: '#FFFFFF',
+            border: '1px solid #DDEC90',
+            borderRadius: '12px',
+            overflow: 'hidden',
+            boxShadow: '0 1px 3px rgba(26,26,0,0.06)',
+          }}
+        >
+          {/* Question header */}
+          <div style={{ padding: '14px 16px 12px', borderBottom: '1px solid #DDEC90', background: 'linear-gradient(to bottom, #FAFAF2, #FFFFFF)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+              <span style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                fontSize: '10px',
+                fontWeight: 700,
+                padding: '2px 10px',
+                borderRadius: '9999px',
+                background: '#F5F8D0',
+                color: '#7A8A00',
+                border: '1px solid #DDEC90',
+                letterSpacing: '0.04em',
+                textTransform: 'uppercase',
+              }}>
+                {q.header}
+              </span>
+              <span style={{ fontWeight: 700, color: '#1A1A00', fontSize: '14px', flex: 1 }}>
                 {q.question}
               </span>
               {q.multiSelect && (
-                <span className="text-xs text-muted-foreground font-mono">
+                <span style={{ fontSize: '11px', color: '#6A6A20', fontFamily: 'monospace' }}>
                   (select multiple)
                 </span>
               )}
             </div>
+          </div>
 
-            {/* Options grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {q.options.map((opt, optIdx) => {
-                const isSelected = isOptionSelected(questionIdx, opt.label, q.multiSelect)
-
-                return (
-                  <button
-                    key={optIdx}
-                    onClick={() => handleOptionClick(questionIdx, opt.label, q.multiSelect)}
-                    disabled={disabled}
-                    className={`
-                      text-left p-4 rounded-lg border-2 transition-all duration-150
-                      ${
-                        isSelected
-                          ? 'bg-primary/10 border-primary'
-                          : 'bg-card border-border hover:border-primary/50 hover:bg-muted'
-                      }
-                      disabled:opacity-50 disabled:cursor-not-allowed
-                    `}
-                  >
-                    <div className="flex items-start gap-2">
-                      {/* Checkbox/Radio indicator */}
-                      <div
-                        className={`
-                          w-5 h-5 flex-shrink-0 mt-0.5 border-2 flex items-center justify-center
-                          ${q.multiSelect ? 'rounded' : 'rounded-full'}
-                          ${isSelected ? 'bg-primary border-primary text-primary-foreground' : 'border-border bg-background'}
-                        `}
-                      >
-                        {isSelected && <Check size={12} strokeWidth={3} />}
+          {/* Options grid */}
+          <div style={{ padding: '14px 16px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '10px' }}>
+            {q.options.map((opt, optIdx) => {
+              const isSelected = isOptionSelected(questionIdx, opt.label, q.multiSelect)
+              return (
+                <button
+                  key={optIdx}
+                  onClick={() => handleOptionClick(questionIdx, opt.label, q.multiSelect)}
+                  disabled={disabled}
+                  style={{
+                    textAlign: 'left',
+                    padding: '12px 14px',
+                    borderRadius: '8px',
+                    border: isSelected ? '1px solid #BBCB64' : '1px solid #DDEC90',
+                    background: isSelected ? '#F5F8D0' : '#FFFFFF',
+                    cursor: disabled ? 'not-allowed' : 'pointer',
+                    opacity: disabled ? 0.5 : 1,
+                    transition: 'all 0.15s',
+                    fontFamily: "'Inter', sans-serif",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!disabled && !isSelected) {
+                      e.currentTarget.style.borderColor = '#BBCB64'
+                      e.currentTarget.style.background = '#FAFAF2'
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!disabled && !isSelected) {
+                      e.currentTarget.style.borderColor = '#DDEC90'
+                      e.currentTarget.style.background = '#FFFFFF'
+                    }
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                    <div style={{
+                      width: '18px',
+                      height: '18px',
+                      flexShrink: 0,
+                      marginTop: '1px',
+                      borderRadius: q.multiSelect ? '4px' : '9999px',
+                      border: isSelected ? '2px solid #BBCB64' : '2px solid #DDEC90',
+                      background: isSelected ? '#BBCB64' : '#FFFFFF',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transition: 'all 0.15s',
+                    }}>
+                      {isSelected && <Check size={11} strokeWidth={3} style={{ color: '#1A1A00' }} />}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 700, fontSize: '13px', color: '#1A1A00', marginBottom: '3px' }}>
+                        {opt.label}
                       </div>
-
-                      <div className="flex-1">
-                        <div className="font-bold text-foreground">
-                          {opt.label}
-                        </div>
-                        <div className="text-sm text-muted-foreground mt-1">
+                      {opt.description && (
+                        <div style={{ fontSize: '12px', color: '#6A6A20', lineHeight: 1.4 }}>
                           {opt.description}
                         </div>
-                      </div>
-                    </div>
-                  </button>
-                )
-              })}
-
-              {/* "Other" option */}
-              <button
-                onClick={() => handleOptionClick(questionIdx, 'Other', q.multiSelect)}
-                disabled={disabled}
-                className={`
-                  text-left p-4 rounded-lg border-2 transition-all duration-150
-                  ${
-                    showCustomInput[String(questionIdx)]
-                      ? 'bg-primary/10 border-primary'
-                      : 'bg-card border-border hover:border-primary/50 hover:bg-muted'
-                  }
-                  disabled:opacity-50 disabled:cursor-not-allowed
-                `}
-              >
-                <div className="flex items-start gap-2">
-                  <div
-                    className={`
-                      w-5 h-5 flex-shrink-0 mt-0.5 border-2 flex items-center justify-center
-                      ${q.multiSelect ? 'rounded' : 'rounded-full'}
-                      ${showCustomInput[String(questionIdx)] ? 'bg-primary border-primary text-primary-foreground' : 'border-border bg-background'}
-                    `}
-                  >
-                    {showCustomInput[String(questionIdx)] && <Check size={12} strokeWidth={3} />}
-                  </div>
-
-                  <div className="flex-1">
-                    <div className="font-bold text-foreground">Other</div>
-                    <div className="text-sm text-muted-foreground mt-1">
-                      Provide a custom answer
+                      )}
                     </div>
                   </div>
+                </button>
+              )
+            })}
+
+            {/* "Other" option */}
+            <button
+              onClick={() => handleOptionClick(questionIdx, 'Other', q.multiSelect)}
+              disabled={disabled}
+              style={{
+                textAlign: 'left',
+                padding: '12px 14px',
+                borderRadius: '8px',
+                border: showCustomInput[String(questionIdx)] ? '1px solid #BBCB64' : '1px solid #DDEC90',
+                background: showCustomInput[String(questionIdx)] ? '#F5F8D0' : '#FFFFFF',
+                cursor: disabled ? 'not-allowed' : 'pointer',
+                opacity: disabled ? 0.5 : 1,
+                transition: 'all 0.15s',
+                fontFamily: "'Inter', sans-serif",
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                <div style={{
+                  width: '18px',
+                  height: '18px',
+                  flexShrink: 0,
+                  marginTop: '1px',
+                  borderRadius: q.multiSelect ? '4px' : '9999px',
+                  border: showCustomInput[String(questionIdx)] ? '2px solid #BBCB64' : '2px solid #DDEC90',
+                  background: showCustomInput[String(questionIdx)] ? '#BBCB64' : '#FFFFFF',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.15s',
+                }}>
+                  {showCustomInput[String(questionIdx)] && <Check size={11} strokeWidth={3} style={{ color: '#1A1A00' }} />}
                 </div>
-              </button>
-            </div>
-
-            {/* Custom input field */}
-            {showCustomInput[String(questionIdx)] && (
-              <div className="mt-4">
-                <Input
-                  type="text"
-                  value={customInputs[String(questionIdx)] || ''}
-                  onChange={(e) => handleCustomInputChange(questionIdx, e.target.value)}
-                  placeholder="Type your answer..."
-                  autoFocus
-                  disabled={disabled}
-                />
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: '13px', color: '#1A1A00', marginBottom: '3px' }}>Other</div>
+                  <div style={{ fontSize: '12px', color: '#6A6A20' }}>Provide a custom answer</div>
+                </div>
               </div>
-            )}
-          </CardContent>
-        </Card>
+            </button>
+          </div>
+
+          {/* Custom input field */}
+          {showCustomInput[String(questionIdx)] && (
+            <div style={{ padding: '0 16px 14px' }}>
+              <input
+                type="text"
+                value={customInputs[String(questionIdx)] || ''}
+                onChange={(e) => handleCustomInputChange(questionIdx, e.target.value)}
+                placeholder="Type your answer..."
+                autoFocus
+                disabled={disabled}
+                style={{
+                  width: '100%',
+                  padding: '9px 12px',
+                  borderRadius: '8px',
+                  border: '1px solid #BBCB64',
+                  fontSize: '14px',
+                  fontFamily: "'Inter', sans-serif",
+                  color: '#1A1A00',
+                  background: '#FFFFFF',
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                  boxShadow: '0 0 0 3px rgba(187,203,100,0.12)',
+                }}
+              />
+            </div>
+          )}
+        </div>
       ))}
 
       {/* Submit button */}
-      <div className="flex justify-end">
-        <Button
+      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <button
           onClick={handleSubmit}
           disabled={disabled || !allQuestionsAnswered}
+          style={{
+            background: '#BBCB64',
+            color: '#1A1A00',
+            border: '1px solid #BBCB64',
+            fontWeight: 700,
+            fontSize: '14px',
+            borderRadius: '8px',
+            padding: '10px 24px',
+            cursor: disabled || !allQuestionsAnswered ? 'not-allowed' : 'pointer',
+            opacity: disabled || !allQuestionsAnswered ? 0.5 : 1,
+            fontFamily: "'Inter', sans-serif",
+            transition: 'opacity 0.15s',
+          }}
         >
           Continue
-        </Button>
+        </button>
       </div>
     </div>
   )

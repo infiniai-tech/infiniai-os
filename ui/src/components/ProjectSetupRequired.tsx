@@ -1,7 +1,5 @@
 import { motion } from 'framer-motion'
 import { Sparkles, FileEdit, FolderOpen } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 interface ProjectSetupRequiredProps {
   projectName: string
@@ -23,7 +21,7 @@ export function ProjectSetupRequired({
       transition={{ duration: 0.3, ease: 'easeOut' }}
       style={{ maxWidth: '640px', margin: '32px auto 0' }}
     >
-      <Card style={{
+      <div style={{
         border: '1px solid #DDEC90',
         borderRadius: '12px',
         background: '#FFFFFF',
@@ -39,28 +37,30 @@ export function ProjectSetupRequired({
           marginTop: '20px',
         }} />
 
-        <CardHeader style={{
+        {/* Header */}
+        <div style={{
           textAlign: 'center',
           padding: '20px 24px 8px',
           background: 'linear-gradient(to bottom, #FAFAF2, #FFFFFF)',
         }}>
-          <CardTitle style={{
+          <h2 style={{
             fontSize: '22px',
             fontWeight: 700,
             color: '#1A1A00',
             fontFamily: "'Geist', 'Inter', sans-serif",
             lineHeight: 1.3,
+            margin: '0 0 4px',
           }}>
             The Oracle Awaits Your Vision
-          </CardTitle>
-          <CardDescription style={{
+          </h2>
+          <p style={{
             fontSize: '14px',
             color: '#6A6A20',
             fontFamily: "'Inter', sans-serif",
-            marginTop: '4px',
+            margin: '0',
           }}>
             <span style={{ fontWeight: 600, color: '#1A1A00' }}>{projectName}</span> needs a modernization specification to begin the odyssey
-          </CardDescription>
+          </p>
           {projectPath && (
             <div style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -77,9 +77,10 @@ export function ProjectSetupRequired({
               </code>
             </div>
           )}
-        </CardHeader>
+        </div>
 
-        <CardContent style={{ padding: '12px 24px 24px' }}>
+        {/* Content */}
+        <div style={{ padding: '12px 24px 24px' }}>
           <p style={{
             textAlign: 'center', color: '#6A6A20', fontSize: '13px',
             fontFamily: "'Inter', sans-serif", marginBottom: '20px',
@@ -130,9 +131,12 @@ export function ProjectSetupRequired({
               }}>
                 The oracle will analyze your codebase and craft a modernization plan
               </p>
-              <Button
+              <button
+                onClick={(e) => { e.stopPropagation(); onCreateWithClaude() }}
                 style={{
                   width: '100%',
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                  padding: '8px 16px',
                   background: 'linear-gradient(135deg, #BBCB64, #7A8A00)',
                   color: '#FFFFFF',
                   border: 'none',
@@ -141,11 +145,14 @@ export function ProjectSetupRequired({
                   fontFamily: "'Geist', 'Inter', sans-serif",
                   fontSize: '13px',
                   cursor: 'pointer',
+                  transition: 'opacity 0.15s',
                 }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.9' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}
               >
-                <Sparkles size={16} style={{ marginRight: '6px' }} />
+                <Sparkles size={16} />
                 Start Chat
-              </Button>
+              </button>
             </motion.div>
 
             {/* Edit Manually Option */}
@@ -187,10 +194,12 @@ export function ProjectSetupRequired({
               }}>
                 Create the prompts directory and inscribe the sacred templates yourself
               </p>
-              <Button
-                variant="outline"
+              <button
+                onClick={(e) => { e.stopPropagation(); onEditManually() }}
                 style={{
                   width: '100%',
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                  padding: '8px 16px',
                   background: 'transparent',
                   color: '#7A8A00',
                   border: '1px solid #DDEC90',
@@ -199,11 +208,14 @@ export function ProjectSetupRequired({
                   fontFamily: "'Geist', 'Inter', sans-serif",
                   fontSize: '13px',
                   cursor: 'pointer',
+                  transition: 'all 0.15s',
                 }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#F5F8D0' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
               >
-                <FileEdit size={16} style={{ marginRight: '6px' }} />
+                <FileEdit size={16} />
                 View Templates
-              </Button>
+              </button>
             </motion.div>
           </div>
 
@@ -215,8 +227,8 @@ export function ProjectSetupRequired({
             The modernization specification guides the gods in transforming your legacy codebase.
             It includes the analysis, target stack, migration strategy, and feature requirements.
           </p>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </motion.div>
   )
 }

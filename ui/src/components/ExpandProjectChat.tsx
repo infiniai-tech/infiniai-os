@@ -12,13 +12,8 @@ import { ChatMessage } from './ChatMessage'
 import { TypingIndicator } from './TypingIndicator'
 import type { ImageAttachment } from '../lib/types'
 import { isSubmitEnter } from '../lib/keyboard'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Card, CardContent } from '@/components/ui/card'
-import { Alert, AlertDescription } from '@/components/ui/alert'
 
-// Image upload validation constants
-const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5 MB
+const MAX_FILE_SIZE = 5 * 1024 * 1024
 const ALLOWED_TYPES = ['image/jpeg', 'image/png']
 
 interface ExpandProjectChatProps {
@@ -27,11 +22,7 @@ interface ExpandProjectChatProps {
   onCancel: () => void
 }
 
-export function ExpandProjectChat({
-  projectName,
-  onComplete,
-  onCancel,
-}: ExpandProjectChatProps) {
+export function ExpandProjectChat({ projectName, onComplete, onCancel }: ExpandProjectChatProps) {
   const [input, setInput] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [pendingAttachments, setPendingAttachments] = useState<ImageAttachment[]>([])
@@ -39,99 +30,52 @@ export function ExpandProjectChat({
   const inputRef = useRef<HTMLInputElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // Memoize error handler to keep hook dependencies stable
   const handleError = useCallback((err: string) => setError(err), [])
 
-  const {
-    messages,
-    isLoading,
-    isComplete,
-    connectionStatus,
-    featuresCreated,
-    start,
-    sendMessage,
-    disconnect,
-  } = useExpandChat({
-    projectName,
-    onComplete,
-    onError: handleError,
-  })
+  const { messages, isLoading, isComplete, connectionStatus, featuresCreated, start, sendMessage, disconnect } =
+    useExpandChat({ projectName, onComplete, onError: handleError })
 
-  // Start the chat session when component mounts
   useEffect(() => {
     start()
-
-    return () => {
-      disconnect()
-    }
+    return () => { disconnect() }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, isLoading])
 
-  // Focus input when not loading
   useEffect(() => {
-    if (!isLoading && inputRef.current) {
-      inputRef.current.focus()
-    }
+    if (!isLoading && inputRef.current) inputRef.current.focus()
   }, [isLoading])
 
   const handleSendMessage = () => {
     const trimmed = input.trim()
-    // Allow sending if there's text OR attachments
     if ((!trimmed && pendingAttachments.length === 0) || isLoading) return
-
     sendMessage(trimmed, pendingAttachments.length > 0 ? pendingAttachments : undefined)
     setInput('')
-    setPendingAttachments([]) // Clear attachments after sending
+    setPendingAttachments([])
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (isSubmitEnter(e)) {
-      e.preventDefault()
-      handleSendMessage()
-    }
+    if (isSubmitEnter(e)) { e.preventDefault(); handleSendMessage() }
   }
 
-  // File handling for image attachments
   const handleFileSelect = useCallback((files: FileList | null) => {
     if (!files) return
-
     Array.from(files).forEach((file) => {
-      // Validate file type
-      if (!ALLOWED_TYPES.includes(file.type)) {
-        setError(`Invalid file type: ${file.name}. Only JPEG and PNG are supported.`)
-        return
-      }
-
-      // Validate file size
-      if (file.size > MAX_FILE_SIZE) {
-        setError(`File too large: ${file.name}. Maximum size is 5 MB.`)
-        return
-      }
-
-      // Read and convert to base64
+      if (!ALLOWED_TYPES.includes(file.type)) { setError(`Invalid file type: ${file.name}. Only JPEG and PNG supported.`); return }
+      if (file.size > MAX_FILE_SIZE) { setError(`File too large: ${file.name}. Max 5 MB.`); return }
       const reader = new FileReader()
       reader.onload = (e) => {
         const dataUrl = e.target?.result as string
-        const base64Data = dataUrl.split(',')[1]
-
         const attachment: ImageAttachment = {
           id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
-          filename: file.name,
-          mimeType: file.type as 'image/jpeg' | 'image/png',
-          base64Data,
-          previewUrl: dataUrl,
-          size: file.size,
+          filename: file.name, mimeType: file.type as 'image/jpeg' | 'image/png',
+          base64Data: dataUrl.split(',')[1], previewUrl: dataUrl, size: file.size,
         }
-
         setPendingAttachments((prev) => [...prev, attachment])
       }
-      reader.onerror = () => {
-        setError(`Failed to read file: ${file.name}`)
-      }
+      reader.onerror = () => setError(`Failed to read file: ${file.name}`)
       reader.readAsDataURL(file)
     })
   }, [])
@@ -140,180 +84,210 @@ export function ExpandProjectChat({
     setPendingAttachments((prev) => prev.filter((a) => a.id !== id))
   }, [])
 
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault()
-      handleFileSelect(e.dataTransfer.files)
-    },
-    [handleFileSelect]
-  )
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault(); handleFileSelect(e.dataTransfer.files)
+  }, [handleFileSelect])
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-  }, [])
+  const handleDragOver = useCallback((e: React.DragEvent) => { e.preventDefault() }, [])
 
-  // Connection status indicator
-  const ConnectionIndicator = () => {
-    switch (connectionStatus) {
-      case 'connected':
-        return (
-          <span className="flex items-center gap-1 text-xs text-green-500">
-            <Wifi size={12} />
-            Connected
-          </span>
-        )
-      case 'connecting':
-        return (
-          <span className="flex items-center gap-1 text-xs text-yellow-500">
-            <Wifi size={12} className="animate-pulse" />
-            Connecting...
-          </span>
-        )
-      case 'error':
-        return (
-          <span className="flex items-center gap-1 text-xs text-destructive">
-            <WifiOff size={12} />
-            Error
-          </span>
-        )
-      default:
-        return (
-          <span className="flex items-center gap-1 text-xs text-muted-foreground">
-            <WifiOff size={12} />
-            Disconnected
-          </span>
-        )
-    }
+  const getConnectionColor = () => {
+    if (connectionStatus === 'connected') return '#7A8A00'
+    if (connectionStatus === 'connecting') return '#A05A00'
+    if (connectionStatus === 'error') return '#CF0F0F'
+    return '#9A9A60'
+  }
+
+  const getConnectionLabel = () => {
+    if (connectionStatus === 'connected') return 'Connected'
+    if (connectionStatus === 'connecting') return 'Connecting...'
+    if (connectionStatus === 'error') return 'Error'
+    return 'Disconnected'
   }
 
   return (
-    <div className="flex flex-col h-full bg-background">
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#FAFAF2' }}>
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b-2 border-border bg-card">
-        <div className="flex items-center gap-3">
-          <h2 className="font-display font-bold text-lg text-foreground">
-            Expand Odyssey: {projectName}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '14px 20px',
+        borderBottom: '1px solid #DDEC90',
+        background: '#FFFFFF',
+        flexShrink: 0,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <h2 style={{
+            fontWeight: 700, fontSize: '17px', color: '#1A1A00', margin: 0,
+            fontFamily: "'Geist', 'Inter', sans-serif",
+          }}>
+            Expand: {projectName}
           </h2>
-          <ConnectionIndicator />
+          {/* Connection badge */}
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', gap: '4px',
+            fontSize: '11px', fontWeight: 700,
+            padding: '2px 10px', borderRadius: '9999px',
+            background: connectionStatus === 'connected' ? '#F5F8D0' : '#FFF0DC',
+            color: getConnectionColor(),
+            border: `1px solid ${connectionStatus === 'connected' ? '#DDEC90' : '#F0C880'}`,
+          }}>
+            {connectionStatus === 'connected' ? <Wifi size={11} /> : <WifiOff size={11} />}
+            {getConnectionLabel()}
+          </span>
           {featuresCreated > 0 && (
-            <span className="flex items-center gap-1 text-sm text-green-500 font-bold">
-              <Plus size={14} />
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: '4px',
+              fontSize: '12px', fontWeight: 700, color: '#7A8A00',
+            }}>
+              <Plus size={13} />
               {featuresCreated} added
             </span>
           )}
         </div>
-
-        <div className="flex items-center gap-2">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           {isComplete && (
-            <span className="flex items-center gap-1 text-sm text-green-500 font-bold">
-              <CheckCircle2 size={16} />
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '13px', fontWeight: 700, color: '#7A8A00' }}>
+              <CheckCircle2 size={15} />
               Complete
             </span>
           )}
-
-          <Button
+          <button
             onClick={onCancel}
-            variant="ghost"
-            size="icon"
             title="Close"
+            style={{
+              width: '32px', height: '32px', borderRadius: '8px',
+              border: '1px solid #DDEC90', background: 'transparent',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', color: '#6A6A20', transition: 'all 0.15s',
+            }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#F5F8D0' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
           >
-            <X size={20} />
-          </Button>
+            <X size={16} />
+          </button>
         </div>
       </div>
 
       {/* Error banner */}
       {error && (
-        <Alert variant="destructive" className="rounded-none border-x-0 border-t-0">
-          <AlertCircle size={16} />
-          <AlertDescription className="flex-1">{error}</AlertDescription>
-          <Button
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: '8px',
+          padding: '10px 20px',
+          background: '#FFF0DC', borderBottom: '1px solid #F0C880',
+          fontSize: '13px', color: '#A05A00', flexShrink: 0,
+        }}>
+          <AlertCircle size={14} style={{ flexShrink: 0 }} />
+          <span style={{ flex: 1 }}>{error}</span>
+          <button
             onClick={() => setError(null)}
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6"
+            style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#A05A00', padding: '2px' }}
           >
             <X size={14} />
-          </Button>
-        </Alert>
+          </button>
+        </div>
       )}
 
-      {/* Messages area */}
-      <div className="flex-1 overflow-y-auto py-4">
+      {/* Messages */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '16px 0' }}>
         {messages.length === 0 && !isLoading && (
-          <div className="flex flex-col items-center justify-center h-full text-center p-8">
-            <Card className="p-6 max-w-md">
-              <CardContent className="p-0">
-                <h3 className="font-display font-bold text-lg mb-2">
-                  Starting Project Expansion
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  Connecting to Claude to help you add new features to your project...
-                </p>
-                {connectionStatus === 'error' && (
-                  <Button
-                    onClick={start}
-                    className="mt-4"
-                    size="sm"
-                  >
-                    <RotateCcw size={14} />
-                    Retry Connection
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', padding: '32px' }}>
+            <div style={{
+              background: '#FFFFFF', border: '1px solid #DDEC90',
+              borderRadius: '12px', padding: '28px 32px', maxWidth: '420px',
+              textAlign: 'center',
+            }}>
+              <h3 style={{ fontWeight: 700, fontSize: '16px', color: '#1A1A00', marginBottom: '8px', fontFamily: "'Geist', 'Inter', sans-serif" }}>
+                Starting Project Expansion
+              </h3>
+              <p style={{ fontSize: '14px', color: '#6A6A20', margin: 0 }}>
+                Connecting to Claude to help you add new features to your project...
+              </p>
+              {connectionStatus === 'error' && (
+                <button
+                  onClick={start}
+                  style={{
+                    marginTop: '16px',
+                    display: 'inline-flex', alignItems: 'center', gap: '6px',
+                    padding: '8px 16px', borderRadius: '8px',
+                    background: '#BBCB64', border: 'none', color: '#1A1A00',
+                    fontWeight: 700, fontSize: '13px', cursor: 'pointer',
+                    fontFamily: "'Inter', sans-serif",
+                  }}
+                >
+                  <RotateCcw size={14} />
+                  Retry Connection
+                </button>
+              )}
+            </div>
           </div>
         )}
 
         {messages.map((message) => (
           <ChatMessage key={message.id} message={message} />
         ))}
-
-        {/* Typing indicator */}
         {isLoading && <TypingIndicator />}
-
-        {/* Scroll anchor */}
         <div ref={messagesEndRef} />
       </div>
 
       {/* Input area */}
       {!isComplete && (
         <div
-          className="p-4 border-t-2 border-border bg-card"
+          style={{
+            padding: '14px 20px',
+            borderTop: '1px solid #DDEC90',
+            background: '#FFFFFF',
+            flexShrink: 0,
+          }}
           onDrop={handleDrop}
           onDragOver={handleDragOver}
         >
           {/* Attachment previews */}
           {pendingAttachments.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-3">
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '10px' }}>
               {pendingAttachments.map((attachment) => (
                 <div
                   key={attachment.id}
-                  className="relative group border-2 border-border p-1 bg-card rounded shadow-sm"
+                  style={{
+                    position: 'relative',
+                    border: '1px solid #DDEC90',
+                    padding: '4px',
+                    background: '#FAFAF2',
+                    borderRadius: '8px',
+                  }}
                 >
                   <img
                     src={attachment.previewUrl}
                     alt={attachment.filename}
-                    className="w-16 h-16 object-cover rounded"
+                    style={{ width: '64px', height: '64px', objectFit: 'cover', borderRadius: '6px', display: 'block' }}
                   />
                   <button
                     onClick={() => handleRemoveAttachment(attachment.id)}
-                    className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-0.5 border-2 border-border hover:scale-110 transition-transform"
-                    title="Remove attachment"
+                    title="Remove"
+                    style={{
+                      position: 'absolute', top: '-6px', right: '-6px',
+                      width: '18px', height: '18px',
+                      background: '#A05A00', color: '#FFFFFF',
+                      border: '2px solid #FFFFFF',
+                      borderRadius: '9999px', cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0,
+                    }}
                   >
-                    <X size={12} />
+                    <X size={10} />
                   </button>
-                  <span className="text-xs truncate block max-w-16 mt-1 text-center text-muted-foreground">
-                    {attachment.filename.length > 10
-                      ? `${attachment.filename.substring(0, 7)}...`
-                      : attachment.filename}
+                  <span style={{
+                    display: 'block', fontSize: '10px', color: '#6A6A20',
+                    maxWidth: '64px', overflow: 'hidden', textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap', textAlign: 'center', marginTop: '2px',
+                  }}>
+                    {attachment.filename.length > 10 ? `${attachment.filename.substring(0, 7)}...` : attachment.filename}
                   </span>
                 </div>
               ))}
             </div>
           )}
 
-          <div className="flex gap-3">
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
             {/* Hidden file input */}
             <input
               ref={fileInputRef}
@@ -321,70 +295,104 @@ export function ExpandProjectChat({
               accept="image/jpeg,image/png"
               multiple
               onChange={(e) => handleFileSelect(e.target.files)}
-              className="hidden"
+              style={{ display: 'none' }}
             />
 
-            {/* Attach button */}
-            <Button
+            {/* Attach */}
+            <button
               onClick={() => fileInputRef.current?.click()}
               disabled={connectionStatus !== 'connected'}
-              variant="ghost"
-              size="icon"
               title="Attach image (JPEG, PNG - max 5MB)"
+              style={{
+                width: '36px', height: '36px', borderRadius: '8px',
+                border: '1px solid #DDEC90', background: 'transparent',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: connectionStatus !== 'connected' ? 'not-allowed' : 'pointer',
+                color: '#7A8A00', transition: 'all 0.15s',
+                flexShrink: 0,
+              }}
+              onMouseEnter={e => { if (connectionStatus === 'connected') (e.currentTarget as HTMLElement).style.background = '#F5F8D0' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
             >
-              <Paperclip size={18} />
-            </Button>
+              <Paperclip size={16} />
+            </button>
 
-            <Input
+            {/* Text input */}
+            <input
               ref={inputRef}
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={
-                pendingAttachments.length > 0
-                  ? 'Add a message with your image(s)...'
-                  : 'Describe the features you want to add...'
-              }
-              className="flex-1"
+              placeholder={pendingAttachments.length > 0 ? 'Add a message with your image(s)...' : 'Describe the features you want to add...'}
               disabled={isLoading || connectionStatus !== 'connected'}
+              style={{
+                flex: 1,
+                padding: '9px 12px',
+                borderRadius: '8px',
+                border: '1px solid #DDEC90',
+                fontSize: '14px',
+                fontFamily: "'Inter', sans-serif",
+                color: '#1A1A00',
+                background: '#FFFFFF',
+                outline: 'none',
+                transition: 'border-color 0.15s, box-shadow 0.15s',
+                opacity: (isLoading || connectionStatus !== 'connected') ? 0.6 : 1,
+              }}
+              onFocus={e => { e.currentTarget.style.borderColor = '#BBCB64'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(187,203,100,0.12)' }}
+              onBlur={e => { e.currentTarget.style.borderColor = '#DDEC90'; e.currentTarget.style.boxShadow = 'none' }}
             />
-            <Button
+
+            {/* Send */}
+            <button
               onClick={handleSendMessage}
-              disabled={
-                (!input.trim() && pendingAttachments.length === 0) ||
-                isLoading ||
-                connectionStatus !== 'connected'
-              }
-              className="px-6"
+              disabled={(!input.trim() && pendingAttachments.length === 0) || isLoading || connectionStatus !== 'connected'}
+              style={{
+                width: '36px', height: '36px', borderRadius: '8px',
+                border: 'none',
+                background: '#BBCB64',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: ((!input.trim() && pendingAttachments.length === 0) || isLoading || connectionStatus !== 'connected') ? 'not-allowed' : 'pointer',
+                opacity: ((!input.trim() && pendingAttachments.length === 0) || isLoading || connectionStatus !== 'connected') ? 0.4 : 1,
+                color: '#1A1A00',
+                transition: 'opacity 0.15s',
+                flexShrink: 0,
+              }}
             >
-              <Send size={18} />
-            </Button>
+              <Send size={16} />
+            </button>
           </div>
 
-          {/* Help text */}
-          <p className="text-xs text-muted-foreground mt-2">
-            Press Enter to send. Drag & drop or click <Paperclip size={12} className="inline" /> to attach images.
+          <p style={{ fontSize: '11px', color: '#9A9A60', marginTop: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+            Press Enter to send. Drag & drop or click <Paperclip size={11} style={{ display: 'inline' }} /> to attach images.
           </p>
         </div>
       )}
 
       {/* Completion footer */}
       {isComplete && (
-        <div className="p-4 border-t-2 border-border bg-green-500 text-white">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 size={20} />
-              <span className="font-bold">
-                Added {featuresCreated} new feature{featuresCreated !== 1 ? 's' : ''}!
-              </span>
+        <div style={{
+          padding: '14px 20px',
+          borderTop: '1px solid #DDEC90',
+          background: '#F5F8D0',
+          flexShrink: 0,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700, color: '#7A8A00' }}>
+              <CheckCircle2 size={18} />
+              Added {featuresCreated} new feature{featuresCreated !== 1 ? 's' : ''}!
             </div>
-            <Button
+            <button
               onClick={() => onComplete(featuresCreated)}
-              variant="secondary"
+              style={{
+                padding: '8px 20px', borderRadius: '8px',
+                background: '#BBCB64', border: 'none', color: '#1A1A00',
+                fontWeight: 700, fontSize: '14px', cursor: 'pointer',
+                fontFamily: "'Inter', sans-serif",
+              }}
             >
               Close
-            </Button>
+            </button>
           </div>
         </div>
       )}
