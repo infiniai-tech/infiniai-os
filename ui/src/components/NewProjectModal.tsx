@@ -9,7 +9,7 @@
  */
 
 import { useState } from 'react'
-import { ArrowRight, ArrowLeft, Loader2, CheckCircle2, Folder, Code2, FolderOpen, Figma, Layers, FileText, Globe, Github } from 'lucide-react'
+import { ArrowRight, Loader2, CheckCircle2, Folder, Code2, FolderOpen, Figma, Layers, FileText, Globe, Github } from 'lucide-react'
 import { useCreateProject } from '../hooks/useProjects'
 import { FolderBrowser } from './FolderBrowser'
 import { motion } from 'framer-motion'
@@ -38,7 +38,7 @@ export function NewProjectModal({
 }: NewProjectModalProps) {
   const [step, setStep] = useState<Step>('name')
   const [projectName, setProjectName] = useState('')
-  const [projectPath, setProjectPath] = useState<string | null>(null)
+  const [, setProjectPath] = useState<string | null>(null)
   const [targetStack, setTargetStack] = useState<TargetStack>({
     frontend: null,
     backend: null,
@@ -108,13 +108,6 @@ export function NewProjectModal({
     setTargetStack({ frontend: null, backend: null, database: null, styling: null })
     setError(null)
     onClose()
-  }
-
-  const handleBack = () => {
-    if (step === 'folder') {
-      changeStep('name')
-      setProjectPath(null)
-    }
   }
 
   // Shared overlay styles

@@ -260,7 +260,7 @@ export function AgentAvatar({ name, state, size = 'md', showName = false }: Agen
   const resolvedName = resolved as AgentMascot
   const isUnknown = resolved === 'Unknown' || !(resolvedName in AVATAR_COLORS)
   const colors = isUnknown ? UNKNOWN_COLORS : AVATAR_COLORS[resolvedName]
-  const { svg: svgSize, font, radius } = SIZES[size]
+  const { svg: svgSize, font } = SIZES[size]
   const SvgComponent = isUnknown ? UnknownMascotSVG : (MASCOT_SVGS[resolvedName] || UnknownMascotSVG)
   const displayName = isUnknown ? name : resolvedName
   const stateDesc = getStateDescription(state)

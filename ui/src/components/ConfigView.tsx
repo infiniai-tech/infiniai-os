@@ -535,10 +535,6 @@ export function ConfigView() {
   const [toggles, setToggles] = useState<ToggleState>(DEFAULT_TOGGLES)
   const [connectors, setConnectors] = useState(CONNECTORS)
 
-  const [primaryModel, setPrimaryModel] = useState('Claude Opus 4.6')
-  const [secondaryModel, setSecondaryModel] = useState('Claude Haiku 4.5')
-  const [maxTokens, setMaxTokens] = useState('200K')
-  const [framework, setFramework] = useState('React + TypeScript (Vite)')
   const [stateManagement, setStateManagement] = useState('Zustand (recommended)')
   const [archPattern, setArchPattern] = useState('Feature-based monorepo')
   const [hitlMode, setHitlMode] = useState('Standard')
