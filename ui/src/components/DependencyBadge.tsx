@@ -1,6 +1,5 @@
 import { AlertTriangle, GitBranch, Check } from 'lucide-react'
 import type { Feature } from '../lib/types'
-import { Badge } from '@/components/ui/badge'
 
 interface DependencyBadgeProps {
   feature: Feature
@@ -37,19 +36,25 @@ export function DependencyBadge({ feature, allFeatures = [], compact = false }: 
   }
 
   if (compact) {
-    // Compact view for card displays
     return (
-      <Badge
-        variant="outline"
-        className={`gap-1 font-mono text-xs ${
-          isBlocked
-            ? 'bg-destructive/10 text-destructive border-destructive/30'
-            : 'bg-muted text-muted-foreground'
-        }`}
+      <span
         title={isBlocked
           ? `Blocked by ${blockingCount} ${blockingCount === 1 ? 'dependency' : 'dependencies'}`
           : `${satisfiedCount}/${dependencies.length} dependencies satisfied`
         }
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '4px',
+          fontSize: '11px',
+          fontFamily: 'monospace',
+          fontWeight: 700,
+          padding: '2px 8px',
+          borderRadius: '9999px',
+          border: isBlocked ? '1px solid #F0C880' : '1px solid #DDEC90',
+          background: isBlocked ? '#FFF0DC' : '#F5F8D0',
+          color: isBlocked ? '#A05A00' : '#7A8A00',
+        }}
       >
         {isBlocked ? (
           <>
@@ -62,23 +67,23 @@ export function DependencyBadge({ feature, allFeatures = [], compact = false }: 
             <span>{satisfiedCount}/{dependencies.length}</span>
           </>
         )}
-      </Badge>
+      </span>
     )
   }
 
   // Full view with more details
   return (
-    <div className="flex items-center gap-2">
+    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
       {isBlocked ? (
-        <div className="flex items-center gap-1.5 text-sm text-destructive">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', color: '#A05A00' }}>
           <AlertTriangle size={14} />
-          <span className="font-medium">
+          <span style={{ fontWeight: 600 }}>
             Blocked by {blockingCount} {blockingCount === 1 ? 'dependency' : 'dependencies'}
           </span>
         </div>
       ) : (
-        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-          <Check size={14} className="text-primary" />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', color: '#6A6A20' }}>
+          <Check size={14} style={{ color: '#7A8A00' }} />
           <span>
             All {dependencies.length} {dependencies.length === 1 ? 'dependency' : 'dependencies'} satisfied
           </span>
@@ -102,8 +107,18 @@ export function DependencyIndicator({ feature }: { feature: Feature }) {
   if (isBlocked) {
     return (
       <span
-        className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-destructive/10 text-destructive"
         title={`Blocked by ${feature.blocking_dependencies?.length || 0} dependencies`}
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '20px',
+          height: '20px',
+          borderRadius: '9999px',
+          background: '#FFF0DC',
+          color: '#A05A00',
+          border: '1px solid #F0C880',
+        }}
       >
         <AlertTriangle size={12} />
       </span>
@@ -112,8 +127,18 @@ export function DependencyIndicator({ feature }: { feature: Feature }) {
 
   return (
     <span
-      className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-muted text-muted-foreground"
       title={`${dependencies.length} dependencies (all satisfied)`}
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '20px',
+        height: '20px',
+        borderRadius: '9999px',
+        background: '#F5F8D0',
+        color: '#7A8A00',
+        border: '1px solid #DDEC90',
+      }}
     >
       <GitBranch size={12} />
     </span>

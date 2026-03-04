@@ -12,8 +12,6 @@ import { Terminal } from './Terminal'
 import { TerminalTabs } from './TerminalTabs'
 import { listTerminals, createTerminal, renameTerminal, deleteTerminal } from '@/lib/api'
 import type { TerminalInfo } from '@/lib/types'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 
 const MIN_HEIGHT = 150
 const MAX_HEIGHT = 600
@@ -275,18 +273,18 @@ export function DebugLogViewer({
     return 'info'
   }
 
-  // Get color class for log level
+  // Get inline style color for log level using design palette
   const getLogColor = (level: LogLevel): string => {
     switch (level) {
       case 'error':
-        return 'text-red-500'
+        return '#F79A19'
       case 'warn':
-        return 'text-yellow-500'
+        return '#FFE52A'
       case 'debug':
-        return 'text-blue-400'
+        return '#6A6A20'
       case 'info':
       default:
-        return 'text-foreground'
+        return '#BBCB64'
     }
   }
 
@@ -318,83 +316,193 @@ export function DebugLogViewer({
           className="absolute top-0 left-0 right-0 h-2 cursor-ns-resize group flex items-center justify-center -translate-y-1/2 z-50"
           onMouseDown={handleResizeStart}
         >
-          <div className="w-16 h-1.5 bg-border rounded-full group-hover:bg-muted-foreground transition-colors flex items-center justify-center">
-            <GripHorizontal size={12} className="text-muted-foreground group-hover:text-foreground" />
+          <div
+            className="flex items-center justify-center"
+            style={{
+              width: '64px',
+              height: '6px',
+              background: '#DDEC90',
+              borderRadius: '9999px',
+              transition: 'background 150ms ease',
+            }}
+          >
+            <GripHorizontal size={12} style={{ color: '#6A6A20' }} />
           </div>
         </div>
       )}
 
       {/* Header bar */}
       <div
-        className="flex items-center justify-between h-10 px-4 bg-muted border-t border-border"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          height: '40px',
+          padding: '0 16px',
+          background: '#1A1A00',
+          borderTop: '1px solid #DDEC90',
+        }}
       >
-        <div className="flex items-center gap-2">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           {/* Collapse/expand toggle */}
           <button
             onClick={onToggle}
-            className="flex items-center gap-2 hover:bg-accent px-2 py-1 rounded transition-colors cursor-pointer"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '4px 8px',
+              borderRadius: '8px',
+              border: 'none',
+              background: 'transparent',
+              cursor: 'pointer',
+              transition: 'background 150ms ease',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(187,203,100,0.12)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
           >
-            <TerminalIcon size={16} className="text-green-500" />
-            <span className="font-mono text-sm text-foreground font-bold">
+            <TerminalIcon size={16} style={{ color: '#BBCB64' }} />
+            <span style={{
+              fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+              fontSize: '13px',
+              color: '#BBCB64',
+              fontWeight: 700,
+            }}>
               Debug
             </span>
-            <Badge variant="secondary" className="text-xs font-mono" title="Toggle debug panel">
+            <span style={{
+              fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+              fontSize: '10px',
+              color: '#6A6A20',
+              background: 'rgba(187,203,100,0.12)',
+              padding: '1px 6px',
+              borderRadius: '9999px',
+            }}>
               D
-            </Badge>
+            </span>
           </button>
 
           {/* Tabs - only visible when open */}
           {isOpen && (
-            <div className="flex items-center gap-1 ml-4">
-              <Button
-                variant={activeTab === 'agent' ? 'secondary' : 'ghost'}
-                size="sm"
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginLeft: '16px' }}>
+              {/* Agent tab */}
+              <button
                 onClick={(e: React.MouseEvent) => {
                   e.stopPropagation()
                   setActiveTab('agent')
                 }}
-                className="h-7 text-xs font-mono gap-1.5"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  height: '28px',
+                  padding: '0 10px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                  transition: 'background 150ms ease',
+                  background: activeTab === 'agent' ? 'rgba(187,203,100,0.2)' : 'transparent',
+                  color: activeTab === 'agent' ? '#BBCB64' : '#6A6A20',
+                }}
               >
                 <Cpu size={12} />
                 Agent
                 {logs.length > 0 && (
-                  <Badge variant="default" className="h-4 px-1.5 text-[10px]">
+                  <span style={{
+                    height: '16px',
+                    padding: '0 6px',
+                    fontSize: '10px',
+                    borderRadius: '9999px',
+                    background: '#BBCB64',
+                    color: '#1A1A00',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    fontWeight: 600,
+                  }}>
                     {logs.length}
-                  </Badge>
+                  </span>
                 )}
-              </Button>
-              <Button
-                variant={activeTab === 'devserver' ? 'secondary' : 'ghost'}
-                size="sm"
+              </button>
+
+              {/* Dev Server tab */}
+              <button
                 onClick={(e: React.MouseEvent) => {
                   e.stopPropagation()
                   setActiveTab('devserver')
                 }}
-                className="h-7 text-xs font-mono gap-1.5"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  height: '28px',
+                  padding: '0 10px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                  transition: 'background 150ms ease',
+                  background: activeTab === 'devserver' ? 'rgba(187,203,100,0.2)' : 'transparent',
+                  color: activeTab === 'devserver' ? '#BBCB64' : '#6A6A20',
+                }}
               >
                 <Server size={12} />
                 Dev Server
                 {devLogs.length > 0 && (
-                  <Badge variant="default" className="h-4 px-1.5 text-[10px]">
+                  <span style={{
+                    height: '16px',
+                    padding: '0 6px',
+                    fontSize: '10px',
+                    borderRadius: '9999px',
+                    background: '#BBCB64',
+                    color: '#1A1A00',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    fontWeight: 600,
+                  }}>
                     {devLogs.length}
-                  </Badge>
+                  </span>
                 )}
-              </Button>
-              <Button
-                variant={activeTab === 'terminal' ? 'secondary' : 'ghost'}
-                size="sm"
+              </button>
+
+              {/* Terminal tab */}
+              <button
                 onClick={(e: React.MouseEvent) => {
                   e.stopPropagation()
                   setActiveTab('terminal')
                 }}
-                className="h-7 text-xs font-mono gap-1.5"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  height: '28px',
+                  padding: '0 10px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                  transition: 'background 150ms ease',
+                  background: activeTab === 'terminal' ? 'rgba(187,203,100,0.2)' : 'transparent',
+                  color: activeTab === 'terminal' ? '#BBCB64' : '#6A6A20',
+                }}
               >
                 <TerminalIcon size={12} />
                 Terminal
-                <Badge variant="outline" className="h-4 px-1.5 text-[10px]" title="Toggle terminal">
+                <span style={{
+                  fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                  fontSize: '10px',
+                  color: '#6A6A20',
+                  border: '1px solid rgba(106,106,32,0.3)',
+                  padding: '0 5px',
+                  borderRadius: '9999px',
+                  lineHeight: '16px',
+                }}>
                   T
-                </Badge>
-              </Button>
+                </span>
+              </button>
             </div>
           )}
 
@@ -402,40 +510,63 @@ export function DebugLogViewer({
           {isOpen && activeTab !== 'terminal' && (
             <>
               {getCurrentLogCount() > 0 && (
-                <Badge variant="secondary" className="ml-2 font-mono">
+                <span style={{
+                  fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                  fontSize: '11px',
+                  color: '#6A6A20',
+                  marginLeft: '8px',
+                }}>
                   {getCurrentLogCount()}
-                </Badge>
+                </span>
               )}
               {isAutoScrollPaused() && (
-                <Badge variant="default" className="bg-yellow-500 text-yellow-950">
+                <span style={{
+                  fontSize: '10px',
+                  fontWeight: 600,
+                  color: '#1A1A00',
+                  background: '#FFE52A',
+                  padding: '1px 8px',
+                  borderRadius: '9999px',
+                }}>
                   Paused
-                </Badge>
+                </span>
               )}
             </>
           )}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           {/* Clear button - only for log tabs */}
           {isOpen && activeTab !== 'terminal' && (
-            <Button
-              variant="ghost"
-              size="icon"
+            <button
               onClick={(e: React.MouseEvent) => {
                 e.stopPropagation()
                 handleClear()
               }}
-              className="h-7 w-7"
               title="Clear logs"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '28px',
+                height: '28px',
+                borderRadius: '8px',
+                border: 'none',
+                background: 'transparent',
+                cursor: 'pointer',
+                transition: 'background 150ms ease',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(187,203,100,0.12)' }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
             >
-              <Trash2 size={14} className="text-muted-foreground" />
-            </Button>
+              <Trash2 size={14} style={{ color: '#6A6A20' }} />
+            </button>
           )}
-          <div className="p-1">
+          <div style={{ padding: '4px' }}>
             {isOpen ? (
-              <ChevronDown size={16} className="text-muted-foreground" />
+              <ChevronDown size={16} style={{ color: '#6A6A20' }} />
             ) : (
-              <ChevronUp size={16} className="text-muted-foreground" />
+              <ChevronUp size={16} style={{ color: '#6A6A20' }} />
             )}
           </div>
         </div>
@@ -443,34 +574,70 @@ export function DebugLogViewer({
 
       {/* Content area */}
       {isOpen && (
-        <div className="h-[calc(100%-2.5rem)] bg-card">
+        <div
+          style={{
+            height: 'calc(100% - 40px)',
+            background: '#1A1A00',
+            borderRadius: '0',
+          }}
+        >
           {/* Agent Logs Tab */}
           {activeTab === 'agent' && (
             <div
               ref={scrollRef}
               onScroll={handleScroll}
-              className="h-full overflow-y-auto p-2 font-mono text-sm"
+              style={{
+                height: '100%',
+                overflowY: 'auto',
+                padding: '8px',
+                fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                fontSize: '13px',
+              }}
             >
               {logs.length === 0 ? (
-                <div className="flex items-center justify-center h-full text-muted-foreground">
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  height: '100%',
+                  color: '#6A6A20',
+                  fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                }}>
                   No logs yet. Start the agent to see output.
                 </div>
               ) : (
-                <div className="space-y-0.5">
+                <div>
                   {logs.map((log, index) => {
                     const level = getLogLevel(log.line)
-                    const colorClass = getLogColor(level)
+                    const logColor = getLogColor(level)
                     const timestamp = formatTimestamp(log.timestamp)
 
                     return (
                       <div
                         key={`${log.timestamp}-${index}`}
-                        className="flex gap-2 hover:bg-muted px-1 py-0.5 rounded"
+                        style={{
+                          display: 'flex',
+                          gap: '8px',
+                          padding: '2px 4px',
+                          borderRadius: '4px',
+                          transition: 'background 100ms ease',
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(187,203,100,0.06)' }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
                       >
-                        <span className="text-muted-foreground select-none shrink-0">
+                        <span style={{
+                          color: '#6A6A20',
+                          userSelect: 'none',
+                          flexShrink: 0,
+                          fontSize: '12px',
+                        }}>
                           {timestamp}
                         </span>
-                        <span className={`${colorClass} whitespace-pre-wrap break-all`}>
+                        <span style={{
+                          color: logColor,
+                          whiteSpace: 'pre-wrap',
+                          wordBreak: 'break-all',
+                        }}>
                           {log.line}
                         </span>
                       </div>
@@ -486,28 +653,58 @@ export function DebugLogViewer({
             <div
               ref={devScrollRef}
               onScroll={handleDevScroll}
-              className="h-full overflow-y-auto p-2 font-mono text-sm"
+              style={{
+                height: '100%',
+                overflowY: 'auto',
+                padding: '8px',
+                fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                fontSize: '13px',
+              }}
             >
               {devLogs.length === 0 ? (
-                <div className="flex items-center justify-center h-full text-muted-foreground">
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  height: '100%',
+                  color: '#6A6A20',
+                  fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                }}>
                   No dev server logs yet.
                 </div>
               ) : (
-                <div className="space-y-0.5">
+                <div>
                   {devLogs.map((log, index) => {
                     const level = getLogLevel(log.line)
-                    const colorClass = getLogColor(level)
+                    const logColor = getLogColor(level)
                     const timestamp = formatTimestamp(log.timestamp)
 
                     return (
                       <div
                         key={`${log.timestamp}-${index}`}
-                        className="flex gap-2 hover:bg-muted px-1 py-0.5 rounded"
+                        style={{
+                          display: 'flex',
+                          gap: '8px',
+                          padding: '2px 4px',
+                          borderRadius: '4px',
+                          transition: 'background 100ms ease',
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(187,203,100,0.06)' }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
                       >
-                        <span className="text-muted-foreground select-none shrink-0">
+                        <span style={{
+                          color: '#6A6A20',
+                          userSelect: 'none',
+                          flexShrink: 0,
+                          fontSize: '12px',
+                        }}>
                           {timestamp}
                         </span>
-                        <span className={`${colorClass} whitespace-pre-wrap break-all`}>
+                        <span style={{
+                          color: logColor,
+                          whiteSpace: 'pre-wrap',
+                          wordBreak: 'break-all',
+                        }}>
                           {log.line}
                         </span>
                       </div>
@@ -520,7 +717,7 @@ export function DebugLogViewer({
 
           {/* Terminal Tab */}
           {activeTab === 'terminal' && (
-            <div className="h-full flex flex-col">
+            <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
               {/* Terminal tabs bar */}
               {terminals.length > 0 && (
                 <TerminalTabs
@@ -534,13 +731,29 @@ export function DebugLogViewer({
               )}
 
               {/* Terminal content - render all terminals and show/hide to preserve buffers */}
-              <div className="flex-1 min-h-0 relative">
+              <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
                 {isLoadingTerminals ? (
-                  <div className="h-full flex items-center justify-center text-muted-foreground font-mono text-sm">
+                  <div style={{
+                    height: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#6A6A20',
+                    fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                    fontSize: '13px',
+                  }}>
                     Loading terminals...
                   </div>
                 ) : terminals.length === 0 ? (
-                  <div className="h-full flex items-center justify-center text-muted-foreground font-mono text-sm">
+                  <div style={{
+                    height: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#6A6A20',
+                    fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                    fontSize: '13px',
+                  }}>
                     No terminal available
                   </div>
                 ) : (
@@ -557,8 +770,9 @@ export function DebugLogViewer({
                     return (
                       <div
                         key={terminal.id}
-                        className="absolute inset-0"
                         style={{
+                          position: 'absolute',
+                          inset: 0,
                           zIndex: isActiveTerminal ? 10 : 1,
                           transform: isActiveTerminal ? 'none' : 'translateX(-200%)',
                           pointerEvents: isActiveTerminal ? 'auto' : 'none',

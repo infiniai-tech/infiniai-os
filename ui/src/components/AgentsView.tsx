@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { DEFAULT_PROMPTS, QUICK_INSERT_ITEMS } from './agentPrompts'
+import { AGENT_AVATAR_IMAGES } from './AgentAvatar'
 
 type RoleBadge = 'LEAD' | 'INT' | 'SPC'
 type AgentStatus = 'working' | 'idle'
@@ -40,99 +42,6 @@ const ROLE_STYLES: Record<RoleBadge, { bg: string; color: string; border: string
   SPC: { bg: '#F5F8D0', color: '#7A8A00', border: '#DDEC90' },
 }
 
-interface OrchNode {
-  emoji: string
-  name: string
-  sub: string
-  running?: boolean
-  lead?: boolean
-}
-
-interface OrchFlow {
-  title: string
-  badge: string
-  badgeStyle: { bg: string; color: string; border: string }
-  nodes: OrchNode[]
-}
-
-const ORCH_FLOWS: OrchFlow[] = [
-  {
-    title: 'Standard Workflow \u2014 Folder Input',
-    badge: 'Auto-configured',
-    badgeStyle: { bg: '#F5F8D0', color: '#7A8A00', border: '#DDEC90' },
-    nodes: [
-      { emoji: '\u26A1', name: 'Zeus', sub: 'Ingest & Route', lead: true },
-      { emoji: '\uD83E\uDDE0', name: 'Athena', sub: 'Architect', running: true },
-      { emoji: '\u2600\uFE0F', name: 'Apollo', sub: 'Code Gen', running: true },
-      { emoji: '\uD83D\uDD28', name: 'Hephaestus', sub: 'Build & QA', running: true },
-      { emoji: '\uD83D\uDEE1\uFE0F', name: 'Ares', sub: 'Security' },
-      { emoji: '\uD83C\uDFAF', name: 'Artemis', sub: 'Validate' },
-    ],
-  },
-  {
-    title: 'Figma Input Workflow',
-    badge: 'Design-first',
-    badgeStyle: { bg: '#EDE4F7', color: '#6B21A8', border: '#D4B8F0' },
-    nodes: [
-      { emoji: '\u26A1', name: 'Zeus', sub: 'Ingest', lead: true },
-      { emoji: '\uD83C\uDF0A', name: 'Poseidon', sub: 'Parse Design', running: true },
-      { emoji: '\uD83E\uDDE0', name: 'Athena', sub: 'Architect', running: true },
-      { emoji: '\u2600\uFE0F', name: 'Apollo', sub: 'Code Gen', running: true },
-      { emoji: '\uD83D\uDD28', name: 'Hephaestus', sub: 'Build & QA' },
-    ],
-  },
-  {
-    title: 'Greenfield Project',
-    badge: 'From scratch',
-    badgeStyle: { bg: '#D1FAE5', color: '#047857', border: '#6EE7B7' },
-    nodes: [
-      { emoji: '\u26A1', name: 'Zeus', sub: 'Plan & Scaffold', lead: true },
-      { emoji: '\uD83E\uDDE0', name: 'Athena', sub: 'Architecture', running: true },
-      { emoji: '\u2600\uFE0F', name: 'Apollo', sub: 'Code Gen', running: true },
-      { emoji: '\uD83D\uDC65', name: 'Hermes', sub: 'Integrate', running: true },
-      { emoji: '\uD83D\uDD28', name: 'Hephaestus', sub: 'CI/CD' },
-      { emoji: '\uD83C\uDFAF', name: 'Artemis', sub: 'E2E Tests' },
-      { emoji: '\uD83D\uDEE1\uFE0F', name: 'Ares', sub: 'Audit' },
-    ],
-  },
-  {
-    title: 'Input Form \u2014 Spec Driven',
-    badge: 'Guided',
-    badgeStyle: { bg: '#DBEAFE', color: '#1D4ED8', border: '#93C5FD' },
-    nodes: [
-      { emoji: '\u26A1', name: 'Zeus', sub: 'Parse Spec', lead: true },
-      { emoji: '\uD83E\uDDE0', name: 'Athena', sub: 'Plan Features', running: true },
-      { emoji: '\u2600\uFE0F', name: 'Apollo', sub: 'Implement', running: true },
-      { emoji: '\uD83C\uDFAF', name: 'Artemis', sub: 'Verify', running: true },
-      { emoji: '\uD83D\uDEE1\uFE0F', name: 'Ares', sub: 'Compliance' },
-    ],
-  },
-  {
-    title: 'API-First Workflow',
-    badge: 'Backend',
-    badgeStyle: { bg: '#FFF0DC', color: '#A05A00', border: '#F0C880' },
-    nodes: [
-      { emoji: '\u26A1', name: 'Zeus', sub: 'Route', lead: true },
-      { emoji: '\uD83E\uDDE0', name: 'Athena', sub: 'Schema Design', running: true },
-      { emoji: '\u2600\uFE0F', name: 'Apollo', sub: 'Endpoints', running: true },
-      { emoji: '\uD83D\uDC65', name: 'Hermes', sub: 'Integration', running: true },
-      { emoji: '\uD83D\uDD25', name: 'Hades', sub: 'Load Test' },
-      { emoji: '\uD83D\uDEE1\uFE0F', name: 'Ares', sub: 'Auth & Security' },
-    ],
-  },
-  {
-    title: 'Bug Fix \u2014 Hotfix Path',
-    badge: 'Fast-track',
-    badgeStyle: { bg: '#FEE2E2', color: '#B91C1C', border: '#FCA5A5' },
-    nodes: [
-      { emoji: '\u26A1', name: 'Zeus', sub: 'Triage', lead: true },
-      { emoji: '\u2600\uFE0F', name: 'Apollo', sub: 'Fix', running: true },
-      { emoji: '\uD83C\uDFAF', name: 'Artemis', sub: 'Regression', running: true },
-      { emoji: '\uD83D\uDD28', name: 'Hephaestus', sub: 'Deploy' },
-    ],
-  },
-]
-
 const ROLE_LABELS: Record<RoleBadge, string> = {
   LEAD: 'Lead Agent',
   INT: 'Integration Agent',
@@ -162,12 +71,13 @@ function AgentDrawer({ agent, onClose }: { agent: AgentData; onClose: () => void
   }, [])
 
   const sectionTitle: React.CSSProperties = {
+    fontFamily: "'Geist', 'Inter', sans-serif",
     fontSize: '11px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase',
     color: '#7A8A00', marginBottom: '10px', paddingBottom: '6px', borderBottom: '1px solid #F5F8D0',
   }
 
   const metricBox: React.CSSProperties = {
-    background: '#FAFAF2', border: '1px solid #DDEC90', borderRadius: '6px', padding: '10px 12px',
+    background: '#FAFAF2', border: '1px solid #DDEC90', borderRadius: '8px', padding: '10px 12px',
   }
 
   return (
@@ -195,23 +105,30 @@ function AgentDrawer({ agent, onClose }: { agent: AgentData; onClose: () => void
       >
         {/* Header */}
         <div style={{
-          padding: '20px 24px', borderBottom: '1px solid #DDEC90', background: '#FAFAF2',
+          padding: '20px 24px', borderBottom: '1px solid #DDEC90',
+          background: 'linear-gradient(to bottom, #FAFAF2, #FFFFFF)',
           display: 'flex', alignItems: 'flex-start', gap: '14px', flexShrink: 0,
         }}>
           <div style={{
-            width: '56px', height: '56px', borderRadius: '12px',
+            width: '56px', height: '56px', borderRadius: '50%',
             border: '2px solid #DDEC90', background: '#FFFFFF',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: '28px', flexShrink: 0,
+            overflow: 'hidden',
           }}>
-            {agent.emoji}
+            {AGENT_AVATAR_IMAGES[agent.name] ? (
+              <img src={AGENT_AVATAR_IMAGES[agent.name]} alt={agent.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : agent.emoji}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-              <span style={{ fontSize: '20px', fontWeight: 700, color: '#1A1A00' }}>{agent.name}</span>
+              <span style={{
+                fontFamily: "'Geist', 'Inter', sans-serif",
+                fontSize: '20px', fontWeight: 700, color: '#1A1A00',
+              }}>{agent.name}</span>
               <span style={{
                 fontSize: '10px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase',
-                borderRadius: '20px', padding: '2px 8px',
+                borderRadius: '9999px', padding: '2px 8px',
                 background: roleStyle.bg, color: roleStyle.color, border: `1px solid ${roleStyle.border}`,
               }}>
                 {agent.role}
@@ -220,7 +137,7 @@ function AgentDrawer({ agent, onClose }: { agent: AgentData; onClose: () => void
             <div style={{ fontSize: '14px', color: '#6A6A20', marginBottom: '6px' }}>{agent.subtitle}</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: isIdle ? '#E0E0E0' : '#BBCB64' }} />
-              <span style={{ fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', color: isIdle ? '#6A6A20' : '#BBCB64' }}>
+              <span style={{ fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', color: isIdle ? '#6A6A20' : '#7A8A00' }}>
                 {isIdle ? 'Idle' : 'Working'}
               </span>
               <span style={{ fontSize: '12px', color: '#6A6A20' }}>&middot; {agent.tasks} active task{agent.tasks !== 1 ? 's' : ''}</span>
@@ -229,7 +146,7 @@ function AgentDrawer({ agent, onClose }: { agent: AgentData; onClose: () => void
           <button
             onClick={handleClose}
             style={{
-              width: '28px', height: '28px', borderRadius: '6px', border: '1px solid #DDEC90',
+              width: '28px', height: '28px', borderRadius: '8px', border: '1px solid #DDEC90',
               background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center',
               justifyContent: 'center', fontSize: '16px', color: '#6A6A20', flexShrink: 0,
               transition: 'background 0.12s',
@@ -284,7 +201,10 @@ function AgentDrawer({ agent, onClose }: { agent: AgentData; onClose: () => void
                     <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: '#7A8A00', marginBottom: '4px' }}>
                       {m.label}
                     </div>
-                    <div style={{ fontSize: '15px', fontWeight: 700, color: '#1A1A00' }}>{m.value}</div>
+                    <div style={{
+                      fontFamily: "'Geist', 'Inter', sans-serif",
+                      fontSize: '15px', fontWeight: 700, color: '#1A1A00',
+                    }}>{m.value}</div>
                   </div>
                 ))}
               </div>
@@ -293,7 +213,7 @@ function AgentDrawer({ agent, onClose }: { agent: AgentData; onClose: () => void
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '24px' }}>
                 {agent.capabilities.map(cap => (
                   <span key={cap} style={{
-                    fontSize: '12px', padding: '4px 10px', borderRadius: '20px',
+                    fontSize: '12px', padding: '4px 10px', borderRadius: '9999px',
                     background: '#F5F8D0', color: '#1A1A00', border: '1px solid #DDEC90', fontWeight: 600,
                   }}>
                     {cap}
@@ -311,7 +231,7 @@ function AgentDrawer({ agent, onClose }: { agent: AgentData; onClose: () => void
                   {agent.assignedProjects.map(p => (
                     <div key={p} style={{
                       display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px',
-                      background: '#FAFAF2', borderRadius: '6px', border: '1px solid #F5F8D0',
+                      background: '#FAFAF2', borderRadius: '8px', border: '1px solid #F5F8D0',
                     }}>
                       <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#BBCB64', flexShrink: 0 }} />
                       <span style={{ fontSize: '13px', fontWeight: 600, color: '#1A1A00' }}>{p}</span>
@@ -350,7 +270,7 @@ function AgentDrawer({ agent, onClose }: { agent: AgentData; onClose: () => void
                 style={{
                   flex: 1, fontSize: '13px', fontWeight: 700, color: '#7A8A00',
                   border: '1px solid #DDEC90', background: 'transparent',
-                  borderRadius: '6px', padding: '10px 16px', cursor: 'pointer', transition: 'background 0.12s',
+                  borderRadius: '8px', padding: '10px 16px', cursor: 'pointer', transition: 'background 0.12s',
                 }}
                 onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#F5F8D0' }}
                 onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
@@ -362,7 +282,7 @@ function AgentDrawer({ agent, onClose }: { agent: AgentData; onClose: () => void
                 style={{
                   flex: 1, fontSize: '13px', fontWeight: 700, color: '#1A1A00',
                   background: '#BBCB64', border: 'none',
-                  borderRadius: '6px', padding: '10px 16px', cursor: 'pointer', transition: 'opacity 0.12s',
+                  borderRadius: '8px', padding: '10px 16px', cursor: 'pointer', transition: 'opacity 0.12s',
                 }}
                 onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.9' }}
                 onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}
@@ -373,7 +293,7 @@ function AgentDrawer({ agent, onClose }: { agent: AgentData; onClose: () => void
           </>
         )}
 
-        {/* Configure view — System Prompt Editor */}
+        {/* Configure view -- System Prompt Editor */}
         {view === 'configure' && (
           <>
             <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -398,7 +318,7 @@ function AgentDrawer({ agent, onClose }: { agent: AgentData; onClose: () => void
               {/* Prompt metadata */}
               <div style={{ display: 'flex', gap: '10px' }}>
                 <div style={{
-                  flex: 1, padding: '8px 12px', borderRadius: '6px',
+                  flex: 1, padding: '8px 12px', borderRadius: '8px',
                   background: '#F5F8D0', border: '1px solid #DDEC90',
                 }}>
                   <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: '#7A8A00', marginBottom: '2px' }}>
@@ -407,22 +327,28 @@ function AgentDrawer({ agent, onClose }: { agent: AgentData; onClose: () => void
                   <div style={{ fontSize: '13px', fontWeight: 600, color: '#1A1A00' }}>{agent.model}</div>
                 </div>
                 <div style={{
-                  flex: 1, padding: '8px 12px', borderRadius: '6px',
+                  flex: 1, padding: '8px 12px', borderRadius: '8px',
                   background: '#F5F8D0', border: '1px solid #DDEC90',
                 }}>
                   <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: '#7A8A00', marginBottom: '2px' }}>
                     Characters
                   </div>
-                  <div style={{ fontSize: '13px', fontWeight: 600, color: '#1A1A00' }}>{promptText.length.toLocaleString()}</div>
+                  <div style={{
+                    fontFamily: "'Geist', 'Inter', sans-serif",
+                    fontSize: '13px', fontWeight: 600, color: '#1A1A00',
+                  }}>{promptText.length.toLocaleString()}</div>
                 </div>
                 <div style={{
-                  flex: 1, padding: '8px 12px', borderRadius: '6px',
+                  flex: 1, padding: '8px 12px', borderRadius: '8px',
                   background: '#F5F8D0', border: '1px solid #DDEC90',
                 }}>
                   <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: '#7A8A00', marginBottom: '2px' }}>
                     Lines
                   </div>
-                  <div style={{ fontSize: '13px', fontWeight: 600, color: '#1A1A00' }}>{promptText.split('\n').length}</div>
+                  <div style={{
+                    fontFamily: "'Geist', 'Inter', sans-serif",
+                    fontSize: '13px', fontWeight: 600, color: '#1A1A00',
+                  }}>{promptText.split('\n').length}</div>
                 </div>
               </div>
 
@@ -438,10 +364,16 @@ function AgentDrawer({ agent, onClose }: { agent: AgentData; onClose: () => void
                   background: '#FFFFFF', border: '1px solid #DDEC90',
                   borderRadius: '8px', padding: '16px',
                   resize: 'none', outline: 'none',
-                  transition: 'border-color 0.15s',
+                  transition: 'border-color 0.15s, box-shadow 0.15s',
                 }}
-                onFocus={e => { e.currentTarget.style.borderColor = '#7A8A00' }}
-                onBlur={e => { e.currentTarget.style.borderColor = '#DDEC90' }}
+                onFocus={e => {
+                  e.currentTarget.style.borderColor = '#7A8A00'
+                  e.currentTarget.style.boxShadow = '0 0 0 3px rgba(187,203,100,0.12)'
+                }}
+                onBlur={e => {
+                  e.currentTarget.style.borderColor = '#DDEC90'
+                  e.currentTarget.style.boxShadow = 'none'
+                }}
               />
 
               {/* Quick-insert buttons */}
@@ -455,7 +387,7 @@ function AgentDrawer({ agent, onClose }: { agent: AgentData; onClose: () => void
                       key={item.label}
                       onClick={() => setPromptText(prev => prev + item.text)}
                       style={{
-                        fontSize: '11px', fontWeight: 600, padding: '4px 10px', borderRadius: '20px',
+                        fontSize: '11px', fontWeight: 600, padding: '4px 10px', borderRadius: '9999px',
                         background: 'transparent', color: '#7A8A00', border: '1px solid #DDEC90',
                         cursor: 'pointer', transition: 'background 0.12s',
                       }}
@@ -481,7 +413,7 @@ function AgentDrawer({ agent, onClose }: { agent: AgentData; onClose: () => void
                 style={{
                   fontSize: '12px', fontWeight: 600, color: '#6A6A20',
                   border: '1px solid #DDEC90', background: 'transparent',
-                  borderRadius: '6px', padding: '8px 14px', cursor: 'pointer', transition: 'background 0.12s',
+                  borderRadius: '8px', padding: '8px 14px', cursor: 'pointer', transition: 'background 0.12s',
                 }}
                 onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#F5F8D0' }}
                 onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
@@ -494,7 +426,7 @@ function AgentDrawer({ agent, onClose }: { agent: AgentData; onClose: () => void
                 style={{
                   fontSize: '13px', fontWeight: 700, color: '#7A8A00',
                   border: '1px solid #DDEC90', background: 'transparent',
-                  borderRadius: '6px', padding: '10px 16px', cursor: 'pointer', transition: 'background 0.12s',
+                  borderRadius: '8px', padding: '10px 16px', cursor: 'pointer', transition: 'background 0.12s',
                 }}
                 onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#F5F8D0' }}
                 onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
@@ -508,7 +440,7 @@ function AgentDrawer({ agent, onClose }: { agent: AgentData; onClose: () => void
                   color: saved ? '#FFFFFF' : '#1A1A00',
                   background: saved ? '#7A8A00' : '#BBCB64',
                   border: 'none',
-                  borderRadius: '6px', padding: '10px 20px', cursor: 'pointer',
+                  borderRadius: '8px', padding: '10px 20px', cursor: 'pointer',
                   transition: 'all 0.2s',
                 }}
                 onMouseEnter={e => { if (!saved) (e.currentTarget as HTMLElement).style.opacity = '0.9' }}
@@ -528,6 +460,9 @@ export function AgentsView() {
   const [hoveredCard, setHoveredCard] = useState<string | null>(null)
   const [selectedAgent, setSelectedAgent] = useState<AgentData | null>(null)
 
+  // Suppress lint warning for hoveredCard used in style computation
+  void hoveredCard
+
   return (
     <div style={{ fontFamily: "'Inter', sans-serif" }}>
       {/* Page Header */}
@@ -536,7 +471,10 @@ export function AgentsView() {
           <div style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: '#7A8A00', marginBottom: '3px' }}>
             Multi-Agent System
           </div>
-          <h1 style={{ fontSize: '31px', fontWeight: 700, color: '#1A1A00', margin: 0, lineHeight: 1.2 }}>
+          <h1 style={{
+            fontFamily: "'Geist', 'Inter', sans-serif",
+            fontSize: '31px', fontWeight: 700, color: '#1A1A00', margin: 0, lineHeight: 1.2,
+          }}>
             Agent <span style={{ color: '#7A8A00' }}>Roster</span>
           </h1>
           <p style={{ fontSize: '14px', color: '#6A6A20', marginTop: '3px' }}>
@@ -548,7 +486,8 @@ export function AgentsView() {
             style={{
               fontSize: '13px', fontWeight: 700, color: '#7A8A00',
               border: '1px solid #DDEC90', background: 'transparent',
-              borderRadius: '4px', padding: '8px 16px', cursor: 'pointer',
+              borderRadius: '8px', padding: '8px 16px', cursor: 'pointer',
+              transition: 'background 0.12s',
             }}
             onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#F5F8D0' }}
             onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
@@ -559,7 +498,8 @@ export function AgentsView() {
             style={{
               fontSize: '13px', fontWeight: 700, color: '#1A1A00',
               background: '#BBCB64', border: 'none',
-              borderRadius: '4px', padding: '8px 16px', cursor: 'pointer',
+              borderRadius: '8px', padding: '8px 16px', cursor: 'pointer',
+              transition: 'opacity 0.12s',
             }}
             onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.9' }}
             onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}
@@ -571,215 +511,74 @@ export function AgentsView() {
 
       {/* Agent Cards Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '14px', marginBottom: '24px' }}>
-        {AGENTS.map((agent) => {
-          const roleStyle = ROLE_STYLES[agent.role]
-          const isIdle = agent.status === 'idle'
-          return (
-            <div
-              key={agent.name}
-              style={{
-                background: '#FFFFFF',
-                border: '1px solid #DDEC90',
-                borderRadius: '8px',
-                padding: '16px',
-                opacity: isIdle ? 0.75 : 1,
-                transform: hoveredCard === agent.name ? 'translateY(-2px)' : 'none',
-                boxShadow: hoveredCard === agent.name ? '0 4px 12px rgba(187,203,100,0.15)' : 'none',
-                borderColor: hoveredCard === agent.name ? '#BBCB64' : '#DDEC90',
-                transition: 'all 0.15s',
-                cursor: 'pointer',
-              }}
-              onClick={() => setSelectedAgent(agent)}
-              onMouseEnter={() => setHoveredCard(agent.name)}
-              onMouseLeave={() => setHoveredCard(null)}
-            >
-              <div style={{ fontSize: '28px', marginBottom: '10px' }}>{agent.emoji}</div>
-              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '6px' }}>
-                <span style={{ fontSize: '19px', fontWeight: 700, color: '#1A1A00' }}>{agent.name}</span>
-                <span style={{
-                  fontSize: '10px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase',
-                  borderRadius: '20px', padding: '2px 7px',
-                  background: roleStyle.bg, color: roleStyle.color, border: `1px solid ${roleStyle.border}`,
-                }}>
-                  {agent.role}
-                </span>
-              </div>
-              <div style={{ fontSize: '14px', color: '#6A6A20', marginBottom: '10px' }}>{agent.subtitle}</div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', color: isIdle ? '#6A6A20' : '#BBCB64' }}>
-                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: isIdle ? '#E0E0E0' : '#BBCB64', display: 'inline-block' }} />
-                  {isIdle ? 'Idle' : 'Working'}
+        <AnimatePresence>
+          {AGENTS.map((agent, idx) => {
+            const roleStyle = ROLE_STYLES[agent.role]
+            const isIdle = agent.status === 'idle'
+            return (
+              <motion.div
+                key={agent.name}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: idx * 0.04 }}
+                whileHover={{ y: -2, boxShadow: '0 4px 16px rgba(26,26,0,0.08)' }}
+                style={{
+                  background: '#FFFFFF',
+                  border: '1px solid #DDEC90',
+                  borderRadius: '12px',
+                  padding: '16px',
+                  opacity: isIdle ? 0.75 : 1,
+                  cursor: 'pointer',
+                  boxShadow: '0 1px 3px rgba(26,26,0,0.06), 0 1px 2px rgba(26,26,0,0.04)',
+                }}
+                onClick={() => setSelectedAgent(agent)}
+                onMouseEnter={() => setHoveredCard(agent.name)}
+                onMouseLeave={() => setHoveredCard(null)}
+              >
+                <div style={{ width: '48px', height: '48px', borderRadius: '50%', overflow: 'hidden', marginBottom: '10px', border: '2px solid #DDEC90', background: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px' }}>
+                  {AGENT_AVATAR_IMAGES[agent.name] ? (
+                    <img src={AGENT_AVATAR_IMAGES[agent.name]} alt={agent.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : agent.emoji}
                 </div>
-                <span style={{ fontSize: '13px', color: '#6A6A20' }}>{agent.tasks} active task{agent.tasks !== 1 ? 's' : ''}</span>
-              </div>
-              <div style={{ height: '1px', background: '#F5F8D0', margin: '10px 0' }} />
-              <div style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: '#7A8A00', marginBottom: '6px' }}>
-                Capabilities
-              </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                {agent.capabilities.map((cap) => (
-                  <span key={cap} style={{
-                    fontSize: '10px', padding: '2px 7px', borderRadius: '10px',
-                    background: '#F5F8D0', color: '#1A1A00', border: '1px solid #DDEC90',
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '6px' }}>
+                  <span style={{
+                    fontFamily: "'Geist', 'Inter', sans-serif",
+                    fontSize: '19px', fontWeight: 700, color: '#1A1A00',
+                  }}>{agent.name}</span>
+                  <span style={{
+                    fontSize: '10px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase',
+                    borderRadius: '9999px', padding: '2px 7px',
+                    background: roleStyle.bg, color: roleStyle.color, border: `1px solid ${roleStyle.border}`,
                   }}>
-                    {cap}
+                    {agent.role}
                   </span>
-                ))}
-              </div>
-            </div>
-          )
-        })}
-      </div>
-
-      {/* Orchestration Pathways */}
-      <div style={{ marginTop: '28px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
-          <div>
-            <div style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: '#7A8A00', marginBottom: '2px' }}>
-              Orchestration Pathways
-            </div>
-            <p style={{ fontSize: '13px', color: '#6A6A20', margin: 0 }}>
-              Agent routing flows for different project types
-            </p>
-          </div>
-          <span style={{
-            fontSize: '11px', fontWeight: 700, padding: '4px 12px', borderRadius: '20px',
-            background: '#F5F8D0', color: '#7A8A00', border: '1px solid #DDEC90',
-          }}>
-            {ORCH_FLOWS.length} flows
-          </span>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '14px' }}>
-          {ORCH_FLOWS.map((flow) => (
-            <div
-              key={flow.title}
-              style={{
-                background: '#FFFFFF',
-                border: '1px solid #DDEC90',
-                borderRadius: '10px',
-                overflow: 'hidden',
-                transition: 'box-shadow 0.15s, border-color 0.15s',
-              }}
-              onMouseEnter={e => {
-                (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 16px rgba(187,203,100,0.18)'
-                ;(e.currentTarget as HTMLElement).style.borderColor = '#BBCB64'
-              }}
-              onMouseLeave={e => {
-                (e.currentTarget as HTMLElement).style.boxShadow = 'none'
-                ;(e.currentTarget as HTMLElement).style.borderColor = '#DDEC90'
-              }}
-            >
-              {/* Flow header */}
-              <div style={{
-                padding: '12px 16px',
-                borderBottom: '1px solid #F5F8D0',
-                background: '#FAFAF2',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}>
-                <span style={{ fontSize: '13px', fontWeight: 700, color: '#1A1A00' }}>
-                  {flow.title}
-                </span>
-                <span style={{
-                  fontSize: '10px', fontWeight: 700, padding: '3px 10px', borderRadius: '20px',
-                  background: flow.badgeStyle.bg, color: flow.badgeStyle.color,
-                  border: `1px solid ${flow.badgeStyle.border}`,
-                }}>
-                  {flow.badge}
-                </span>
-              </div>
-
-              {/* Flow nodes */}
-              <div style={{ padding: '18px 16px 14px', overflowX: 'auto' }}>
-                <div style={{ display: 'flex', alignItems: 'flex-start' }}>
-                  {flow.nodes.map((node, idx) => (
-                    <React.Fragment key={`${flow.title}-${node.name}`}>
-                      <div style={{
-                        display: 'flex', flexDirection: 'column', alignItems: 'center',
-                        minWidth: '64px', position: 'relative',
-                      }}>
-                        {/* Node circle */}
-                        <div style={{
-                          width: '44px', height: '44px', borderRadius: '12px',
-                          background: node.lead ? '#FFF8EE' : node.running ? '#FAFFF0' : '#FAFAF2',
-                          border: `2px solid ${node.lead ? '#F79A19' : node.running ? '#BBCB64' : '#E5E7EB'}`,
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontSize: '20px', position: 'relative',
-                          boxShadow: (node.running || node.lead)
-                            ? `0 0 0 3px ${node.lead ? 'rgba(247,154,25,0.15)' : 'rgba(187,203,100,0.15)'}`
-                            : 'none',
-                          transition: 'transform 0.15s',
-                        }}>
-                          {node.emoji}
-                          {(node.running || node.lead) && (
-                            <span style={{
-                              position: 'absolute', top: '-2px', right: '-2px',
-                              width: '10px', height: '10px', borderRadius: '50%',
-                              background: node.lead ? '#F79A19' : '#BBCB64',
-                              border: '2px solid #FFFFFF',
-                              boxShadow: `0 0 4px ${node.lead ? 'rgba(247,154,25,0.4)' : 'rgba(187,203,100,0.4)'}`,
-                            }} />
-                          )}
-                        </div>
-                        {/* Labels */}
-                        <span style={{
-                          fontSize: '11px', fontWeight: 700, color: '#1A1A00',
-                          textAlign: 'center', marginTop: '6px', lineHeight: 1.2,
-                        }}>
-                          {node.name}
-                        </span>
-                        <span style={{
-                          fontSize: '10px', color: '#6A6A20', textAlign: 'center',
-                          marginTop: '1px', lineHeight: 1.2,
-                        }}>
-                          {node.sub}
-                        </span>
-                      </div>
-                      {/* Connector arrow */}
-                      {idx < flow.nodes.length - 1 && (
-                        <div style={{
-                          display: 'flex', alignItems: 'center',
-                          marginTop: '18px', minWidth: '20px', flex: 1,
-                        }}>
-                          <div style={{
-                            flex: 1, height: '2px', minWidth: '8px',
-                            background: (node.running || node.lead)
-                              ? 'linear-gradient(90deg, #BBCB64, #DDEC90)'
-                              : '#E5E7EB',
-                          }} />
-                          <svg width="8" height="10" viewBox="0 0 8 10" style={{ flexShrink: 0, marginLeft: '-1px' }}>
-                            <path
-                              d="M0 0 L8 5 L0 10 Z"
-                              fill={(node.running || node.lead) ? '#BBCB64' : '#E5E7EB'}
-                            />
-                          </svg>
-                        </div>
-                      )}
-                    </React.Fragment>
+                </div>
+                <div style={{ fontSize: '14px', color: '#6A6A20', marginBottom: '10px' }}>{agent.subtitle}</div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', color: isIdle ? '#6A6A20' : '#7A8A00' }}>
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: isIdle ? '#E0E0E0' : '#BBCB64', display: 'inline-block' }} />
+                    {isIdle ? 'Idle' : 'Working'}
+                  </div>
+                  <span style={{ fontSize: '13px', color: '#6A6A20' }}>{agent.tasks} active task{agent.tasks !== 1 ? 's' : ''}</span>
+                </div>
+                <div style={{ height: '1px', background: '#F5F8D0', margin: '10px 0' }} />
+                <div style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: '#7A8A00', marginBottom: '6px' }}>
+                  Capabilities
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                  {agent.capabilities.map((cap) => (
+                    <span key={cap} style={{
+                      fontSize: '10px', padding: '2px 7px', borderRadius: '9999px',
+                      background: '#F5F8D0', color: '#1A1A00', border: '1px solid #DDEC90',
+                    }}>
+                      {cap}
+                    </span>
                   ))}
                 </div>
-              </div>
-
-              {/* Flow footer */}
-              <div style={{
-                padding: '8px 16px',
-                borderTop: '1px solid #F5F8D0',
-                background: '#FEFFF8',
-                display: 'flex', alignItems: 'center', gap: '12px',
-              }}>
-                <span style={{ fontSize: '10px', color: '#9A9A60' }}>
-                  {flow.nodes.length} agents
-                </span>
-                <span style={{ fontSize: '10px', color: '#DDEC90' }}>&bull;</span>
-                <span style={{ fontSize: '10px', color: '#9A9A60' }}>
-                  {flow.nodes.filter(n => n.running || n.lead).length} active
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
+              </motion.div>
+            )
+          })}
+        </AnimatePresence>
       </div>
 
       {/* Agent Detail Drawer */}

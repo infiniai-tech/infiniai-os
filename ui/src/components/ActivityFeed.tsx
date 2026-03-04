@@ -1,5 +1,7 @@
+import React from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Activity } from 'lucide-react'
-import { AgentEmojiAvatar, resolveAgentName } from './AgentAvatar'
+import { resolveAgentName } from './AgentAvatar'
 
 interface ActivityItem {
   agentName: string
@@ -36,64 +38,107 @@ export function ActivityFeed({ activities, maxItems = 20, showHeader = true }: A
   return (
     <div style={{ fontFamily: "'Inter', sans-serif" }}>
       {showHeader && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-          <Activity size={14} style={{ color: '#6A6A20' }} />
-          <span style={{ fontSize: '11px', fontWeight: 700, color: '#6A6A20', textTransform: 'uppercase', letterSpacing: '1px' }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          marginBottom: '10px',
+          paddingBottom: '8px',
+          borderBottom: '1px solid #F5F8D0',
+        }}>
+          <Activity size={14} style={{ color: '#7A8A00' }} />
+          <span style={{
+            fontFamily: "'Geist', 'Inter', sans-serif",
+            fontSize: '11px',
+            fontWeight: 700,
+            color: '#7A8A00',
+            textTransform: 'uppercase',
+            letterSpacing: '1.5px',
+          }}>
             Live Activity
           </span>
-          <span style={{ fontSize: '11px', color: '#9A9A60' }}>({displayedActivities.length})</span>
+          <span style={{
+            fontSize: '11px',
+            fontWeight: 700,
+            color: '#7A8A00',
+            background: '#F5F8D0',
+            borderRadius: '9999px',
+            padding: '1px 8px',
+            border: '1px solid #DDEC90',
+          }}>
+            {displayedActivities.length}
+          </span>
         </div>
       )}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-        {displayedActivities.map((activity, idx) => {
-          return (
-            <div
-              key={`${idx}-${activity.featureId}-${activity.timestamp}`}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '8px',
-                padding: '5px 8px', borderRadius: '4px',
-              }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#FAFAF2' }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
-            >
-              {/* Agent avatar */}
-              <AgentEmojiAvatar name={activity.agentName} size="xs" />
-
-              {/* Agent name */}
-              <span style={{ fontSize: '12px', fontWeight: 700, color: '#1A1A00', whiteSpace: 'nowrap' }}>
-                {resolveAgentName(activity.agentName)}
-              </span>
-
-              {/* Feature ID */}
-              <span style={{
-                fontSize: '11px', fontWeight: 600, color: '#7A8A00',
-                fontFamily: "'JetBrains Mono', monospace", whiteSpace: 'nowrap',
-              }}>
-                #{activity.featureId}
-              </span>
-
-              {/* Thought (fills remaining space) */}
-              <span
+        <AnimatePresence initial={false}>
+          {displayedActivities.map((activity, idx) => {
+            return (
+              <motion.div
+                key={`${idx}-${activity.featureId}-${activity.timestamp}`}
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 8 }}
+                transition={{ duration: 0.2 }}
                 style={{
-                  flex: 1, minWidth: 0, fontSize: '11px', color: '#6A6A20',
-                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '8px 12px',
+                  borderLeft: '3px solid #BBCB64',
+                  borderRadius: '0 6px 6px 0',
+                  background: 'transparent',
+                  transition: 'background 0.12s',
+                  cursor: 'default',
                 }}
-                title={activity.thought}
+                onMouseEnter={(e: React.MouseEvent<HTMLDivElement>) => { e.currentTarget.style.background = '#F5F8D0' }}
+                onMouseLeave={(e: React.MouseEvent<HTMLDivElement>) => { e.currentTarget.style.background = 'transparent' }}
               >
-                {activity.thought}
-              </span>
+                {/* Small colored dot */}
+                <span style={{
+                  width: '8px', height: '8px', borderRadius: '50%', flexShrink: 0,
+                  background: '#BBCB64',
+                }} />
 
-              {/* Timestamp */}
-              <span style={{
-                fontSize: '10px', color: '#9A9A60', whiteSpace: 'nowrap', flexShrink: 0,
-                fontFamily: "'JetBrains Mono', monospace",
-              }}>
-                {formatTimestamp(activity.timestamp)}
-              </span>
-            </div>
-          )
-        })}
+                {/* Agent name */}
+                <span style={{ fontSize: '12px', fontWeight: 700, color: '#1A1A00', whiteSpace: 'nowrap' }}>
+                  {resolveAgentName(activity.agentName)}
+                </span>
+
+                {/* Feature ID */}
+                <span style={{
+                  fontSize: '11px', fontWeight: 600, color: '#7A8A00',
+                  fontFamily: "'JetBrains Mono', monospace", whiteSpace: 'nowrap',
+                }}>
+                  #{activity.featureId}
+                </span>
+
+                {/* Thought (fills remaining space) */}
+                <span
+                  style={{
+                    flex: 1, minWidth: 0, fontSize: '11px', color: '#6A6A20',
+                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  }}
+                  title={activity.thought}
+                >
+                  {activity.thought}
+                </span>
+
+                {/* Timestamp */}
+                <span style={{
+                  fontSize: '10px', color: '#6A6A20', whiteSpace: 'nowrap', flexShrink: 0,
+                  fontFamily: "'JetBrains Mono', monospace",
+                  background: '#FAFAF2',
+                  borderRadius: '9999px',
+                  padding: '1px 6px',
+                }}>
+                  {formatTimestamp(activity.timestamp)}
+                </span>
+              </motion.div>
+            )
+          })}
+        </AnimatePresence>
       </div>
     </div>
   )

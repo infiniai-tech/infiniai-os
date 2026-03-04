@@ -58,13 +58,29 @@ function SpecReviewCards({
           background: '#FFFFFF',
           border: '1px solid #F79A19',
           borderLeft: '4px solid #F79A19',
-          borderRadius: '6px',
-          padding: '10px',
-          fontFamily: "'Inter', sans-serif",
-          marginBottom: '4px',
+          borderRadius: '10px',
+          padding: '12px',
+          fontFamily: "'Geist', 'Inter', sans-serif",
+          marginBottom: '8px',
+          position: 'relative',
+          overflow: 'hidden',
         }}
       >
-        <div style={{ fontSize: '13px', fontWeight: 700, color: '#A05A00', marginBottom: '4px' }}>
+        {/* Subtle spinner element */}
+        <div
+          style={{
+            position: 'absolute',
+            top: '12px',
+            right: '12px',
+            width: '16px',
+            height: '16px',
+            border: '2px solid #F0C880',
+            borderTop: '2px solid #F79A19',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+          }}
+        />
+        <div style={{ fontSize: '14px', fontWeight: 700, color: '#A05A00', marginBottom: '4px', fontFamily: "'Geist', 'Inter', sans-serif" }}>
           Analyzing codebase...
         </div>
         <div style={{ fontSize: '12px', color: '#6A6A20' }}>
@@ -89,25 +105,25 @@ function SpecReviewCards({
               background: '#FFFFFF',
               border: '1px solid #DDEC90',
               borderLeft: `4px solid ${isApproved ? '#BBCB64' : '#F79A19'}`,
-              borderRadius: '6px',
-              padding: '10px',
-              fontFamily: "'Inter', sans-serif",
-              marginBottom: '4px',
+              borderRadius: '10px',
+              padding: '12px',
+              fontFamily: "'Geist', 'Inter', sans-serif",
+              marginBottom: '8px',
               cursor: 'pointer',
-              transition: 'box-shadow 0.12s',
+              transition: 'box-shadow 150ms',
             }}
             onClick={() => onSpecFileClick?.(file.filename)}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = '0 2px 8px rgba(187,203,100,0.15)' }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 14px rgba(26,26,0,0.07)' }}
             onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = 'none' }}
           >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-              <span style={{ fontSize: '14px', fontWeight: 700, color: '#1A1A00' }}>{meta.label}</span>
+              <span style={{ fontFamily: "'Geist', 'Inter', sans-serif", fontWeight: 700, fontSize: '14px', color: '#1A1A00' }}>{meta.label}</span>
               <span
                 style={{
                   fontSize: '10px',
                   fontWeight: 700,
-                  padding: '2px 7px',
-                  borderRadius: '10px',
+                  padding: '3px 9px',
+                  borderRadius: '9999px',
                   background: isApproved ? '#F5F8D0' : '#FFF0DC',
                   color: isApproved ? '#7A8A00' : '#A05A00',
                   border: `1px solid ${isApproved ? '#DDEC90' : '#F0C880'}`,
@@ -118,7 +134,7 @@ function SpecReviewCards({
             </div>
             <div style={{ fontSize: '12px', color: '#6A6A20', marginBottom: '4px' }}>{meta.description}</div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: '11px', color: '#6A6A20' }}>{(file.size / 1024).toFixed(1)} KB</span>
+              <span style={{ fontSize: '11px', color: '#9A9A60' }}>{(file.size / 1024).toFixed(1)} KB</span>
               <button
                 onClick={(e) => { e.stopPropagation(); onSpecFileClick?.(file.filename) }}
                 style={{
@@ -127,10 +143,10 @@ function SpecReviewCards({
                   color: '#7A8A00',
                   border: '1px solid #DDEC90',
                   background: 'transparent',
-                  borderRadius: '4px',
+                  borderRadius: '8px',
                   padding: '3px 10px',
                   cursor: 'pointer',
-                  transition: 'background 0.12s',
+                  transition: 'background 150ms',
                 }}
                 onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#F5F8D0' }}
                 onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
@@ -146,16 +162,16 @@ function SpecReviewCards({
       {allApproved && specList.files.length > 0 && onBeginCoding && (
         <div
           style={{
-            background: '#FFFFFF',
+            background: 'linear-gradient(135deg, #F5F8D0, #FAFAF2)',
             border: '1px solid #BBCB64',
             borderLeft: '4px solid #BBCB64',
-            borderRadius: '6px',
+            borderRadius: '10px',
             padding: '12px',
-            fontFamily: "'Inter', sans-serif",
+            fontFamily: "'Geist', 'Inter', sans-serif",
             textAlign: 'center',
           }}
         >
-          <div style={{ fontSize: '14px', fontWeight: 700, color: '#7A8A00', marginBottom: '6px' }}>
+          <div style={{ fontFamily: "'Geist', 'Inter', sans-serif", fontSize: '14px', fontWeight: 700, color: '#7A8A00', marginBottom: '6px' }}>
             All Specs Approved
           </div>
           <div style={{ fontSize: '12px', color: '#6A6A20', marginBottom: '8px' }}>
@@ -164,15 +180,16 @@ function SpecReviewCards({
           <button
             onClick={onBeginCoding}
             style={{
-              padding: '6px 16px',
-              borderRadius: '4px',
+              padding: '8px 16px',
+              borderRadius: '8px',
               background: '#BBCB64',
-              color: '#FFFFFF',
+              color: '#1A1A00',
               fontSize: '13px',
               fontWeight: 700,
               border: 'none',
               cursor: 'pointer',
-              transition: 'opacity 0.12s',
+              boxShadow: '0 2px 8px rgba(187,203,100,0.3)',
+              transition: 'opacity 150ms',
             }}
             onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = '0.9' }}
             onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = '1' }}
@@ -211,13 +228,33 @@ export function KanbanBoard({
   // Loading skeleton
   if (!features) {
     return (
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '12px', fontFamily: "'Inter', sans-serif" }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '14px', fontFamily: "'Geist', 'Inter', sans-serif" }}>
         {['Backlog', 'In Progress', 'Review', 'Human-in-Loop', 'Done'].map(title => (
-          <div key={title} style={{ background: '#FAFAF2', border: '1px solid #DDEC90', borderRadius: '6px', padding: '12px' }}>
-            <div style={{ height: '8px', background: '#DDEC90', borderRadius: '4px', marginBottom: '16px', opacity: 0.5 }} />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div key={title} style={{ background: '#F9FAF3', border: '1px solid #DDEC90', borderRadius: '10px', overflow: 'hidden' }}>
+            {/* Skeleton header bar with shimmer */}
+            <div
+              style={{
+                height: '40px',
+                background: 'linear-gradient(90deg, #F5F8D0 25%, #FAFAF2 50%, #F5F8D0 75%)',
+                backgroundSize: '200% 100%',
+                animation: 'shimmer 2s ease-in-out infinite',
+              }}
+            />
+            {/* Skeleton cards */}
+            <div style={{ padding: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {[1, 2, 3].map(i => (
-                <div key={i} style={{ height: '60px', background: '#F5F8D0', borderRadius: '4px', opacity: 0.3 }} />
+                <div
+                  key={i}
+                  style={{
+                    height: '64px',
+                    background: 'linear-gradient(90deg, #F5F8D0 25%, #FAFAF2 50%, #F5F8D0 75%)',
+                    backgroundSize: '200% 100%',
+                    animation: 'shimmer 2s ease-in-out infinite',
+                    animationDelay: `${i * 200}ms`,
+                    borderRadius: '8px',
+                    opacity: 0.4,
+                  }}
+                />
               ))}
             </div>
           </div>
@@ -241,7 +278,7 @@ export function KanbanBoard({
   const hitlTotalCount = needsInputCount + (isBrownfield ? specPendingCount : 0)
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '12px' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '14px' }}>
       <KanbanColumn
         title="Backlog"
         count={features.pending.length}

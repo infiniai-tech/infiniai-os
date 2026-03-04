@@ -1,3 +1,4 @@
+import { motion, type TargetAndTransition } from 'framer-motion'
 import { type AgentMascot, type AgentState } from '../lib/types'
 import {
   AVATAR_COLORS,
@@ -41,47 +42,97 @@ interface AgentAvatarProps {
 }
 
 const SIZES = {
-  xs: { svg: 18, font: 'text-[10px]' },
-  sm: { svg: 32, font: 'text-xs' },
-  md: { svg: 48, font: 'text-sm' },
-  lg: { svg: 64, font: 'text-base' },
+  xs: { svg: 18, font: 'text-[10px]', radius: '6px' },
+  sm: { svg: 32, font: 'text-xs', radius: '8px' },
+  md: { svg: 48, font: 'text-sm', radius: '10px' },
+  lg: { svg: 64, font: 'text-base', radius: '12px' },
 }
 
-// Animation classes based on state
-function getStateAnimation(state: AgentState): string {
+/**
+ * Returns framer-motion animation variants based on agent state.
+ * Replaces CSS-only animation classes with richer motion effects.
+ */
+function getStateMotion(state: AgentState): {
+  animate: TargetAndTransition
+  transition: object
+} {
   switch (state) {
     case 'idle':
-      return 'animate-bounce-gentle'
+      return {
+        animate: { y: [0, -2, 0] },
+        transition: { duration: 3, repeat: Infinity, ease: 'easeInOut' },
+      }
     case 'thinking':
-      return 'animate-thinking'
+      return {
+        animate: { rotate: [-1, 1, -1], scale: [1, 1.02, 1] },
+        transition: { duration: 2, repeat: Infinity, ease: 'easeInOut' },
+      }
     case 'working':
-      return 'animate-working'
+      return {
+        animate: { y: [0, -3, 0], scale: [1, 1.03, 1] },
+        transition: { duration: 1.5, repeat: Infinity, ease: 'easeInOut' },
+      }
     case 'testing':
-      return 'animate-testing'
+      return {
+        animate: { rotate: [0, 2, -2, 0] },
+        transition: { duration: 2, repeat: Infinity, ease: 'easeInOut' },
+      }
     case 'success':
-      return 'animate-celebrate'
+      return {
+        animate: { scale: [1, 1.1, 1], rotate: [0, 5, -5, 0] },
+        transition: { duration: 0.6, ease: 'easeOut' },
+      }
     case 'error':
     case 'struggling':
-      return 'animate-shake-gentle'
+      return {
+        animate: { x: [-2, 2, -2, 2, 0] },
+        transition: { duration: 0.5, repeat: Infinity, repeatDelay: 2, ease: 'easeInOut' },
+      }
     default:
-      return ''
+      return {
+        animate: {},
+        transition: {},
+      }
   }
 }
 
-// Glow effect based on state
+/**
+ * Returns a box-shadow glow string based on agent state.
+ * Uses the design system palette for consistent visual language.
+ */
 function getStateGlow(state: AgentState): string {
   switch (state) {
     case 'working':
-      return 'shadow-[0_0_12px_rgba(0,180,216,0.5)]'
+      return '0 0 12px rgba(122,138,0,0.35)'
     case 'thinking':
-      return 'shadow-[0_0_8px_rgba(255,214,10,0.4)]'
+      return '0 0 8px rgba(247,154,25,0.3)'
     case 'success':
-      return 'shadow-[0_0_16px_rgba(112,224,0,0.6)]'
+      return '0 0 16px rgba(187,203,100,0.5)'
     case 'error':
     case 'struggling':
-      return 'shadow-[0_0_12px_rgba(255,84,0,0.5)]'
+      return '0 0 12px rgba(207,15,15,0.3)'
+    case 'testing':
+      return '0 0 10px rgba(122,138,0,0.25)'
     default:
-      return ''
+      return 'none'
+  }
+}
+
+// State indicator dot color
+function getStateDotColor(state: AgentState): string | null {
+  switch (state) {
+    case 'working':
+    case 'testing':
+      return '#7A8A00'
+    case 'thinking':
+      return '#F79A19'
+    case 'success':
+      return '#BBCB64'
+    case 'error':
+    case 'struggling':
+      return '#CF0F0F'
+    default:
+      return null
   }
 }
 
@@ -130,6 +181,23 @@ export const AGENT_EMOJIS: Record<string, string> = {
   Eos: '\uD83C\uDF05',
 }
 
+export const AGENT_AVATAR_IMAGES: Record<string, string> = {
+  Zeus: '/avatars/zeus.png',
+  Athena: '/avatars/athena.png',
+  Apollo: '/avatars/apollo.png',
+  Hermes: '/avatars/hermes.png',
+  Artemis: '/avatars/artemis.png',
+  Hephaestus: '/avatars/hephaestus.png',
+  Ares: '/avatars/ares.png',
+  Poseidon: '/avatars/poseidon.png',
+  Hades: '/avatars/hades.png',
+}
+
+export function getAgentAvatarSrc(name: string): string | null {
+  const resolved = LEGACY_NAME_MAP[name] || name
+  return AGENT_AVATAR_IMAGES[resolved] || null
+}
+
 function getAgentEmoji(name: string): string {
   const resolved = LEGACY_NAME_MAP[name] || name
   return AGENT_EMOJIS[resolved] || '\uD83E\uDD16'
@@ -149,6 +217,7 @@ interface AgentEmojiAvatarProps {
 }
 
 export function AgentEmojiAvatar({ name, size = 'sm', active = true }: AgentEmojiAvatarProps) {
+  const avatarSrc = getAgentAvatarSrc(name)
   const emoji = getAgentEmoji(name)
   const { box, fontSize } = EMOJI_SIZES[size]
 
@@ -157,18 +226,31 @@ export function AgentEmojiAvatar({ name, size = 'sm', active = true }: AgentEmoj
       style={{
         width: `${box}px`,
         height: `${box}px`,
-        borderRadius: '8px',
-        border: active ? '1.5px solid #BBCB64' : '1.5px solid #DDEC90',
+        borderRadius: '50%',
+        border: active ? '2px solid #BBCB64' : '2px solid #DDEC90',
         background: active ? '#FFFFF0' : '#FAFAF2',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         fontSize,
         flexShrink: 0,
-        animation: active ? 'emoji-breathe 2.5s ease-in-out infinite' : 'none',
+        overflow: 'hidden',
+        animation: active ? 'emoji-breathe 1.2s ease-in-out infinite' : 'none',
       }}
     >
-      {emoji}
+      {avatarSrc ? (
+        <img
+          src={avatarSrc}
+          alt={name}
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+          }}
+        />
+      ) : (
+        emoji
+      )}
     </div>
   )
 }
@@ -178,11 +260,15 @@ export function AgentAvatar({ name, state, size = 'md', showName = false }: Agen
   const resolvedName = resolved as AgentMascot
   const isUnknown = resolved === 'Unknown' || !(resolvedName in AVATAR_COLORS)
   const colors = isUnknown ? UNKNOWN_COLORS : AVATAR_COLORS[resolvedName]
-  const { svg: svgSize, font } = SIZES[size]
+  const { svg: svgSize, font, radius } = SIZES[size]
   const SvgComponent = isUnknown ? UnknownMascotSVG : (MASCOT_SVGS[resolvedName] || UnknownMascotSVG)
   const displayName = isUnknown ? name : resolvedName
   const stateDesc = getStateDescription(state)
   const ariaLabel = `Agent ${displayName} is ${stateDesc}`
+  const dotColor = getStateDotColor(state)
+  const isActive = ['thinking', 'working', 'testing'].includes(state)
+  const stateMotion = getStateMotion(state)
+  const glowShadow = getStateGlow(state)
 
   return (
     <div
@@ -191,21 +277,88 @@ export function AgentAvatar({ name, state, size = 'md', showName = false }: Agen
       aria-label={ariaLabel}
       aria-live="polite"
     >
-      <div
-        className={`
-          rounded-full p-1 transition-all duration-300
-          ${getStateAnimation(state)}
-          ${getStateGlow(state)}
-        `}
-        style={{ backgroundColor: colors.accent }}
-        title={ariaLabel}
-        role="img"
-        aria-hidden="true"
-      >
-        <SvgComponent colors={colors} size={svgSize} />
+      <div style={{ position: 'relative', display: 'inline-block' }}>
+        <motion.div
+          animate={stateMotion.animate}
+          transition={stateMotion.transition}
+          style={{
+            width: `${svgSize + 8}px`,
+            height: `${svgSize + 8}px`,
+            backgroundColor: '#FAFAF2',
+            border: '2px solid #DDEC90',
+            borderRadius: '50%',
+            boxShadow: `${glowShadow !== 'none' ? glowShadow + ', ' : ''}0 2px 8px rgba(26,26,0,0.12)`,
+            transition: 'box-shadow 0.3s ease, border-color 0.3s ease',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            overflow: 'hidden',
+          }}
+          title={ariaLabel}
+          role="img"
+          aria-hidden="true"
+        >
+          {getAgentAvatarSrc(resolved) ? (
+            <img
+              src={getAgentAvatarSrc(resolved)!}
+              alt={displayName}
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            />
+          ) : (
+            <SvgComponent colors={colors} size={svgSize} />
+          )}
+        </motion.div>
+
+        {/* State indicator dot with framer-motion pulse */}
+        {dotColor && (
+          <div
+            style={{
+              position: 'absolute',
+              bottom: '-1px',
+              right: '-1px',
+              width: size === 'xs' ? '6px' : '8px',
+              height: size === 'xs' ? '6px' : '8px',
+            }}
+          >
+            <span
+              style={{
+                position: 'absolute',
+                inset: 0,
+                borderRadius: '9999px',
+                background: dotColor,
+                border: '1.5px solid #FFFFFF',
+              }}
+            />
+            {isActive && (
+              <motion.span
+                animate={{
+                  scale: [1, 2.2, 1],
+                  opacity: [0.5, 0, 0.5],
+                }}
+                transition={{
+                  duration: 1.5,
+                  repeat: Infinity,
+                  ease: 'easeInOut',
+                }}
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  borderRadius: '9999px',
+                  background: dotColor,
+                }}
+              />
+            )}
+          </div>
+        )}
       </div>
       {showName && (
-        <span className={`${font} font-bold text-foreground`} style={{ color: colors.primary }}>
+        <span
+          className={`${font} font-bold text-foreground`}
+          style={{
+            color: colors.primary,
+            fontFamily: "'Geist', 'Inter', sans-serif",
+          }}
+        >
           {displayName}
         </span>
       )}

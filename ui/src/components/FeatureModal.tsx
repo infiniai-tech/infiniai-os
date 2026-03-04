@@ -1,40 +1,29 @@
 import { useState } from 'react'
 import { X, CheckCircle2, Circle, SkipForward, Trash2, Loader2, AlertCircle, Pencil, Link2, AlertTriangle, UserCircle } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useSkipFeature, useDeleteFeature, useFeatures, useResolveHumanInput } from '../hooks/useProjects'
 import { EditFeatureForm } from './EditFeatureForm'
 import { HumanInputForm } from './HumanInputForm'
 import type { Feature } from '../lib/types'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Separator } from '@/components/ui/separator'
 
-// Generate consistent color for category
-function getCategoryColor(category: string): string {
-  const colors = [
-    'bg-pink-500',
-    'bg-cyan-500',
-    'bg-green-500',
-    'bg-yellow-500',
-    'bg-orange-500',
-    'bg-purple-500',
-    'bg-blue-500',
+// Generate consistent color from palette for category
+function getCategoryColor(category: string): { bg: string; color: string; border: string } {
+  const palette = [
+    { bg: '#F5F8D0', color: '#7A8A00', border: '#DDEC90' },
+    { bg: '#FFF0DC', color: '#A05A00', border: '#F0C880' },
+    { bg: '#FAFAF2', color: '#6A6A20', border: '#DDEC90' },
+    { bg: '#F0F4E0', color: '#5A6A00', border: '#C8D870' },
+    { bg: '#FFF8EC', color: '#8A6000', border: '#E8C870' },
+    { bg: '#F5F0E0', color: '#6A5A00', border: '#D0C060' },
+    { bg: '#F0F8D0', color: '#4A7A00', border: '#B0D060' },
   ]
-
   let hash = 0
   for (let i = 0; i < category.length; i++) {
     hash = category.charCodeAt(i) + ((hash << 5) - hash)
   }
-
-  return colors[Math.abs(hash) % colors.length]
+  return palette[Math.abs(hash) % palette.length]
 }
+
 
 interface FeatureModalProps {
   feature: Feature
@@ -50,10 +39,8 @@ export function FeatureModal({ feature, projectName, onClose }: FeatureModalProp
   const skipFeature = useSkipFeature(projectName)
   const deleteFeature = useDeleteFeature(projectName)
   const { data: allFeatures } = useFeatures(projectName)
-
   const resolveHumanInput = useResolveHumanInput(projectName)
 
-  // Build a map of feature ID to feature for looking up dependency names
   const featureMap = new Map<number, Feature>()
   if (allFeatures) {
     ;[...allFeatures.pending, ...allFeatures.in_progress, ...allFeatures.done, ...(allFeatures.needs_human_input || [])].forEach(f => {
@@ -61,12 +48,10 @@ export function FeatureModal({ feature, projectName, onClose }: FeatureModalProp
     })
   }
 
-  // Get dependency features
   const dependencies = (feature.dependencies || [])
     .map(id => featureMap.get(id))
     .filter((f): f is Feature => f !== undefined)
 
-  // Get blocking dependencies (unmet dependencies)
   const blockingDeps = (feature.blocking_dependencies || [])
     .map(id => featureMap.get(id))
     .filter((f): f is Feature => f !== undefined)
@@ -91,7 +76,6 @@ export function FeatureModal({ feature, projectName, onClose }: FeatureModalProp
     }
   }
 
-  // Show edit form when in edit mode
   if (showEdit) {
     return (
       <EditFeatureForm
@@ -103,243 +87,519 @@ export function FeatureModal({ feature, projectName, onClose }: FeatureModalProp
     )
   }
 
+  const catColors = getCategoryColor(feature.category)
+
   return (
-    <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-2xl p-0 gap-0">
-        {/* Header */}
-        <DialogHeader className="p-6 pb-4">
-          <div className="flex items-start gap-3">
-            <Badge className={`${getCategoryColor(feature.category)} text-white`}>
-              {feature.category}
-            </Badge>
-          </div>
-          <DialogTitle className="text-xl mt-2">{feature.name}</DialogTitle>
-        </DialogHeader>
-
-        <Separator />
-
-        {/* Content */}
-        <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto">
-          {/* Error Message */}
-          {error && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription className="flex items-center justify-between">
-                <span>{error}</span>
-                <Button
-                  variant="ghost"
-                  size="icon-xs"
-                  onClick={() => setError(null)}
-                >
-                  <X size={14} />
-                </Button>
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {/* Status */}
-          <div className="flex items-center gap-3 p-4 bg-muted rounded-lg">
-            {feature.passes ? (
-              <>
-                <CheckCircle2 size={24} className="text-primary" />
-                <span className="font-semibold text-primary">COMPLETE</span>
-              </>
-            ) : feature.needs_human_input ? (
-              <>
-                <UserCircle size={24} className="text-amber-500" />
-                <span className="font-semibold text-amber-500">NEEDS YOUR INPUT</span>
-              </>
-            ) : (
-              <>
-                <Circle size={24} className="text-muted-foreground" />
-                <span className="font-semibold text-muted-foreground">PENDING</span>
-              </>
-            )}
-            <span className="ml-auto font-mono text-sm text-muted-foreground">
-              Priority: #{feature.priority}
-            </span>
-          </div>
-
-          {/* Human Input Request */}
-          {feature.needs_human_input && feature.human_input_request && (
-            <HumanInputForm
-              request={feature.human_input_request}
-              onSubmit={async (fields) => {
-                setError(null)
-                try {
-                  await resolveHumanInput.mutateAsync({ featureId: feature.id, fields })
-                  onClose()
-                } catch (err) {
-                  setError(err instanceof Error ? err.message : 'Failed to submit response')
-                }
-              }}
-              isLoading={resolveHumanInput.isPending}
-            />
-          )}
-
-          {/* Previous Human Input Response */}
-          {feature.human_input_response && !feature.needs_human_input && (
-            <Alert className="border-green-500 bg-green-50 dark:bg-green-950/20">
-              <CheckCircle2 className="h-4 w-4 text-green-600" />
-              <AlertDescription>
-                <h4 className="font-semibold mb-1 text-green-700 dark:text-green-400">Human Input Provided</h4>
-                <p className="text-sm text-green-600 dark:text-green-300">
-                  Response submitted{feature.human_input_response.responded_at
-                    ? ` at ${new Date(feature.human_input_response.responded_at).toLocaleString()}`
-                    : ''}.
-                </p>
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {/* Description */}
-          <div>
-            <h3 className="font-semibold mb-2 text-sm uppercase tracking-wide text-muted-foreground">
-              Description
-            </h3>
-            <p className="text-foreground">{feature.description}</p>
-          </div>
-
-          {/* Blocked By Warning */}
-          {blockingDeps.length > 0 && (
-            <Alert variant="destructive" className="border-orange-500 bg-orange-50 dark:bg-orange-950/20">
-              <AlertTriangle className="h-4 w-4 text-orange-600" />
-              <AlertDescription>
-                <h4 className="font-semibold mb-1 text-orange-700 dark:text-orange-400">Blocked By</h4>
-                <p className="text-sm text-orange-600 dark:text-orange-300 mb-2">
-                  This feature cannot start until the following dependencies are complete:
-                </p>
-                <ul className="space-y-1">
-                  {blockingDeps.map(dep => (
-                    <li key={dep.id} className="flex items-center gap-2 text-sm text-orange-600 dark:text-orange-300">
-                      <Circle size={14} />
-                      <span className="font-mono text-xs">#{dep.id}</span>
-                      <span>{dep.name}</span>
-                    </li>
-                  ))}
-                </ul>
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {/* Dependencies */}
-          {dependencies.length > 0 && (
-            <div>
-              <h3 className="font-semibold mb-2 text-sm uppercase tracking-wide text-muted-foreground flex items-center gap-2">
-                <Link2 size={16} />
-                Depends On
-              </h3>
-              <ul className="space-y-1">
-                {dependencies.map(dep => (
-                  <li
-                    key={dep.id}
-                    className="flex items-center gap-2 p-2 bg-muted rounded-md text-sm"
-                  >
-                    {dep.passes ? (
-                      <CheckCircle2 size={16} className="text-primary" />
-                    ) : (
-                      <Circle size={16} className="text-muted-foreground" />
-                    )}
-                    <span className="font-mono text-xs text-muted-foreground">#{dep.id}</span>
-                    <span className={dep.passes ? 'text-primary' : ''}>{dep.name}</span>
-                  </li>
-                ))}
-              </ul>
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(26,26,0,0.45)',
+          backdropFilter: 'blur(4px)',
+          zIndex: 50,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '16px',
+        }}
+        onClick={onClose}
+      >
+        <motion.div
+          initial={{ opacity: 0, scale: 0.97, y: 8 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.97, y: 4 }}
+          transition={{ duration: 0.18, ease: 'easeOut' }}
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            background: '#FFFFFF',
+            borderRadius: '16px',
+            border: '1px solid #DDEC90',
+            boxShadow: '0 20px 60px rgba(26,26,0,0.15), 0 8px 24px rgba(26,26,0,0.08)',
+            width: '640px',
+            maxWidth: '90vw',
+            maxHeight: '85vh',
+            display: 'flex',
+            flexDirection: 'column',
+            fontFamily: "'Inter', sans-serif",
+            overflow: 'hidden',
+          }}
+        >
+          {/* Header */}
+          <div style={{
+            padding: '24px 28px 16px',
+            borderBottom: '1px solid #DDEC90',
+            background: 'linear-gradient(to bottom, #FAFAF2, #FFFFFF)',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <span style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  padding: '3px 10px',
+                  borderRadius: '9999px',
+                  background: catColors.bg,
+                  color: catColors.color,
+                  border: `1px solid ${catColors.border}`,
+                  marginBottom: '10px',
+                  letterSpacing: '0.02em',
+                }}>
+                  {feature.category}
+                </span>
+                <h2 style={{
+                  fontFamily: "'Geist', 'Inter', sans-serif",
+                  fontSize: '20px',
+                  fontWeight: 700,
+                  letterSpacing: '-0.02em',
+                  color: '#1A1A00',
+                  margin: 0,
+                  lineHeight: 1.3,
+                }}>
+                  {feature.name}
+                </h2>
+              </div>
+              <motion.button
+                onClick={onClose}
+                whileHover={{ scale: 1.1, background: '#F5F8D0' }}
+                whileTap={{ scale: 0.9 }}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: '#6A6A20',
+                  padding: '4px',
+                  borderRadius: '8px',
+                  flexShrink: 0,
+                }}
+              >
+                <X size={20} />
+              </motion.button>
             </div>
-          )}
+          </div>
 
-          {/* Steps */}
-          {feature.steps.length > 0 && (
-            <div>
-              <h3 className="font-semibold mb-2 text-sm uppercase tracking-wide text-muted-foreground">
-                Test Steps
-              </h3>
-              <ol className="list-decimal list-inside space-y-2">
-                {feature.steps.map((step, index) => (
-                  <li
-                    key={index}
-                    className="p-3 bg-muted rounded-md text-sm"
+          {/* Scrollable Content */}
+          <div style={{ flex: 1, overflowY: 'auto', padding: '20px 28px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+              {/* Error */}
+              <AnimatePresence>
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    style={{
+                      background: '#FFF0DC',
+                      border: '1px solid #F0C880',
+                      borderRadius: '8px',
+                      padding: '10px 14px',
+                      fontSize: '13px',
+                      color: '#A05A00',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '8px',
+                    }}
                   >
-                    {step}
-                  </li>
-                ))}
-              </ol>
-            </div>
-          )}
-        </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <AlertCircle size={16} style={{ flexShrink: 0 }} />
+                      <span>{error}</span>
+                    </div>
+                    <button
+                      onClick={() => setError(null)}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#A05A00', padding: '2px' }}
+                    >
+                      <X size={14} />
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
-        {/* Actions */}
-        {!feature.passes && (
-          <>
-            <Separator />
-            <DialogFooter className="p-4 bg-muted/50">
-              {showDeleteConfirm ? (
-                <div className="w-full space-y-4">
-                  <p className="font-medium text-center">
-                    Are you sure you want to delete this feature?
-                  </p>
-                  <div className="flex gap-3">
-                    <Button
-                      variant="destructive"
-                      onClick={handleDelete}
-                      disabled={deleteFeature.isPending}
-                      className="flex-1"
-                    >
-                      {deleteFeature.isPending ? (
-                        <Loader2 size={18} className="animate-spin" />
-                      ) : (
-                        'Yes, Delete'
-                      )}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => setShowDeleteConfirm(false)}
-                      disabled={deleteFeature.isPending}
-                      className="flex-1"
-                    >
-                      Cancel
-                    </Button>
+              {/* Status */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                padding: '12px 16px',
+                borderRadius: '10px',
+                background: '#FAFAF2',
+                border: '1px solid #DDEC90',
+              }}>
+                {feature.passes ? (
+                  <>
+                    <CheckCircle2 size={22} style={{ color: '#7A8A00' }} />
+                    <span style={{ fontWeight: 700, color: '#7A8A00', fontSize: '13px' }}>COMPLETE</span>
+                  </>
+                ) : feature.needs_human_input ? (
+                  <>
+                    <UserCircle size={22} style={{ color: '#F79A19' }} />
+                    <span style={{ fontWeight: 700, color: '#F79A19', fontSize: '13px' }}>NEEDS YOUR INPUT</span>
+                  </>
+                ) : (
+                  <>
+                    <Circle size={22} style={{ color: '#6A6A20' }} />
+                    <span style={{ fontWeight: 700, color: '#6A6A20', fontSize: '13px' }}>PENDING</span>
+                  </>
+                )}
+                <span style={{
+                  marginLeft: 'auto',
+                  fontFamily: "'JetBrains Mono', monospace",
+                  fontSize: '12px',
+                  color: '#6A6A20',
+                }}>
+                  Priority: #{feature.priority}
+                </span>
+              </div>
+
+              {/* Human Input Request */}
+              {feature.needs_human_input && feature.human_input_request && (
+                <HumanInputForm
+                  request={feature.human_input_request}
+                  onSubmit={async (fields) => {
+                    setError(null)
+                    try {
+                      await resolveHumanInput.mutateAsync({ featureId: feature.id, fields })
+                      onClose()
+                    } catch (err) {
+                      setError(err instanceof Error ? err.message : 'Failed to submit response')
+                    }
+                  }}
+                  isLoading={resolveHumanInput.isPending}
+                />
+              )}
+
+              {/* Previous Human Input Response */}
+              {feature.human_input_response && !feature.needs_human_input && (
+                <div style={{
+                  background: '#F5F8D0',
+                  border: '1px solid #BBCB64',
+                  borderRadius: '10px',
+                  padding: '12px 16px',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                    <CheckCircle2 size={16} style={{ color: '#7A8A00' }} />
+                    <span style={{ fontWeight: 700, fontSize: '13px', color: '#7A8A00' }}>Human Input Provided</span>
                   </div>
-                </div>
-              ) : (
-                <div className="flex gap-3 w-full">
-                  <Button
-                    onClick={() => setShowEdit(true)}
-                    disabled={skipFeature.isPending}
-                    className="flex-1"
-                  >
-                    <Pencil size={18} />
-                    Edit
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    onClick={handleSkip}
-                    disabled={skipFeature.isPending}
-                    className="flex-1"
-                  >
-                    {skipFeature.isPending ? (
-                      <Loader2 size={18} className="animate-spin" />
-                    ) : (
-                      <>
-                        <SkipForward size={18} />
-                        Skip
-                      </>
-                    )}
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="icon"
-                    onClick={() => setShowDeleteConfirm(true)}
-                    disabled={skipFeature.isPending}
-                  >
-                    <Trash2 size={18} />
-                  </Button>
+                  <p style={{ fontSize: '13px', color: '#6A6A20', margin: 0 }}>
+                    Response submitted{feature.human_input_response.responded_at
+                      ? ` at ${new Date(feature.human_input_response.responded_at).toLocaleString()}`
+                      : ''}.
+                  </p>
                 </div>
               )}
-            </DialogFooter>
-          </>
-        )}
-      </DialogContent>
-    </Dialog>
+
+              {/* Description */}
+              <div>
+                <h3 style={{
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  letterSpacing: '1.5px',
+                  textTransform: 'uppercase',
+                  color: '#7A8A00',
+                  margin: '0 0 8px',
+                }}>
+                  Description
+                </h3>
+                <p style={{ fontSize: '14px', color: '#1A1A00', lineHeight: 1.6, margin: 0 }}>
+                  {feature.description}
+                </p>
+              </div>
+
+              {/* Blocked By Warning */}
+              {blockingDeps.length > 0 && (
+                <div style={{
+                  background: '#FFF0DC',
+                  border: '1px solid #F0C880',
+                  borderLeft: '4px solid #F79A19',
+                  borderRadius: '8px',
+                  padding: '12px 16px',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                    <AlertTriangle size={16} style={{ color: '#F79A19' }} />
+                    <span style={{ fontWeight: 700, fontSize: '13px', color: '#A05A00' }}>Blocked By</span>
+                  </div>
+                  <p style={{ fontSize: '13px', color: '#A05A00', margin: '0 0 8px' }}>
+                    This feature cannot start until the following dependencies are complete:
+                  </p>
+                  <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    {blockingDeps.map(dep => (
+                      <li key={dep.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#A05A00' }}>
+                        <Circle size={12} />
+                        <span style={{ fontFamily: 'monospace', fontSize: '11px' }}>#{dep.id}</span>
+                        <span>{dep.name}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Dependencies */}
+              {dependencies.length > 0 && (
+                <div>
+                  <h3 style={{
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    letterSpacing: '1.5px',
+                    textTransform: 'uppercase',
+                    color: '#7A8A00',
+                    margin: '0 0 8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}>
+                    <Link2 size={14} />
+                    Depends On
+                  </h3>
+                  <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    {dependencies.map(dep => (
+                      <li
+                        key={dep.id}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          padding: '8px 12px',
+                          borderRadius: '8px',
+                          background: '#FAFAF2',
+                          border: '1px solid #DDEC90',
+                          fontSize: '13px',
+                        }}
+                      >
+                        {dep.passes ? (
+                          <CheckCircle2 size={16} style={{ color: '#7A8A00', flexShrink: 0 }} />
+                        ) : (
+                          <Circle size={16} style={{ color: '#6A6A20', flexShrink: 0 }} />
+                        )}
+                        <span style={{ fontFamily: 'monospace', fontSize: '11px', color: '#6A6A20' }}>#{dep.id}</span>
+                        <span style={{ color: dep.passes ? '#7A8A00' : '#1A1A00' }}>{dep.name}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Test Steps */}
+              {feature.steps.length > 0 && (
+                <div>
+                  <h3 style={{
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    letterSpacing: '1.5px',
+                    textTransform: 'uppercase',
+                    color: '#7A8A00',
+                    margin: '0 0 8px',
+                  }}>
+                    Test Steps
+                  </h3>
+                  <ol style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    {feature.steps.map((step, index) => (
+                      <li
+                        key={index}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: '10px',
+                          padding: '10px 14px',
+                          borderRadius: '8px',
+                          background: '#FAFAF2',
+                          border: '1px solid #DDEC90',
+                          fontSize: '13px',
+                          color: '#1A1A00',
+                          lineHeight: 1.5,
+                        }}
+                      >
+                        <span style={{
+                          width: '20px',
+                          height: '20px',
+                          flexShrink: 0,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          borderRadius: '50%',
+                          background: '#DDEC90',
+                          color: '#7A8A00',
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          fontFamily: "'Geist', 'Inter', sans-serif",
+                        }}>
+                          {index + 1}
+                        </span>
+                        {step}
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Footer Actions */}
+          {!feature.passes && (
+            <div style={{
+              padding: '16px 28px',
+              borderTop: '1px solid #DDEC90',
+              background: '#FAFAF2',
+            }}>
+              <AnimatePresence mode="wait">
+                {showDeleteConfirm ? (
+                  <motion.div
+                    key="confirm"
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}
+                  >
+                    <p style={{ fontWeight: 600, textAlign: 'center', fontSize: '14px', color: '#1A1A00', margin: 0 }}>
+                      Are you sure you want to delete this feature?
+                    </p>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <button
+                        onClick={handleDelete}
+                        disabled={deleteFeature.isPending}
+                        style={{
+                          flex: 1,
+                          background: '#FFF0DC',
+                          color: '#A05A00',
+                          border: '1px solid #F0C880',
+                          fontWeight: 700,
+                          fontSize: '14px',
+                          borderRadius: '8px',
+                          padding: '10px 20px',
+                          cursor: deleteFeature.isPending ? 'not-allowed' : 'pointer',
+                          opacity: deleteFeature.isPending ? 0.6 : 1,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px',
+                          fontFamily: "'Inter', sans-serif",
+                        }}
+                      >
+                        {deleteFeature.isPending ? (
+                          <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} />
+                        ) : (
+                          'Yes, Delete'
+                        )}
+                      </button>
+                      <button
+                        onClick={() => setShowDeleteConfirm(false)}
+                        disabled={deleteFeature.isPending}
+                        style={{
+                          flex: 1,
+                          background: 'transparent',
+                          color: '#6A6A20',
+                          border: '1px solid #DDEC90',
+                          fontWeight: 600,
+                          fontSize: '14px',
+                          borderRadius: '8px',
+                          padding: '10px 20px',
+                          cursor: 'pointer',
+                          fontFamily: "'Inter', sans-serif",
+                        }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="actions"
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    style={{ display: 'flex', gap: '10px' }}
+                  >
+                    <motion.button
+                      onClick={() => setShowEdit(true)}
+                      disabled={skipFeature.isPending}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      style={{
+                        flex: 1,
+                        background: '#BBCB64',
+                        color: '#1A1A00',
+                        border: '1px solid #BBCB64',
+                        fontWeight: 700,
+                        fontSize: '14px',
+                        borderRadius: '8px',
+                        padding: '10px 20px',
+                        cursor: skipFeature.isPending ? 'not-allowed' : 'pointer',
+                        opacity: skipFeature.isPending ? 0.5 : 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        fontFamily: "'Inter', sans-serif",
+                      }}
+                    >
+                      <Pencil size={16} />
+                      Edit
+                    </motion.button>
+                    <motion.button
+                      onClick={handleSkip}
+                      disabled={skipFeature.isPending}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      style={{
+                        flex: 1,
+                        background: 'transparent',
+                        color: '#7A8A00',
+                        border: '1px solid #DDEC90',
+                        fontWeight: 600,
+                        fontSize: '14px',
+                        borderRadius: '8px',
+                        padding: '10px 20px',
+                        cursor: skipFeature.isPending ? 'not-allowed' : 'pointer',
+                        opacity: skipFeature.isPending ? 0.6 : 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        fontFamily: "'Inter', sans-serif",
+                      }}
+                    >
+                      {skipFeature.isPending ? (
+                        <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} />
+                      ) : (
+                        <>
+                          <SkipForward size={16} />
+                          Skip
+                        </>
+                      )}
+                    </motion.button>
+                    <motion.button
+                      onClick={() => setShowDeleteConfirm(true)}
+                      disabled={skipFeature.isPending}
+                      whileHover={{ scale: 1.05, background: '#FFF0DC' }}
+                      whileTap={{ scale: 0.95 }}
+                      style={{
+                        background: 'transparent',
+                        color: '#A05A00',
+                        border: '1px solid #F0C880',
+                        fontWeight: 600,
+                        fontSize: '14px',
+                        borderRadius: '8px',
+                        padding: '10px 14px',
+                        cursor: skipFeature.isPending ? 'not-allowed' : 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontFamily: "'Inter', sans-serif",
+                      }}
+                    >
+                      <Trash2 size={16} />
+                    </motion.button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
   )
 }

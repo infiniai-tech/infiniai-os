@@ -1,5 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useCallback } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { DEFAULT_PROMPTS, QUICK_INSERT_ITEMS } from './agentPrompts'
+import { AGENT_AVATAR_IMAGES } from './AgentAvatar'
 
 type RoleBadge = 'LEAD' | 'INT' | 'SPC'
 
@@ -43,21 +45,11 @@ const ROLE_LABELS: Record<RoleBadge, string> = {
 }
 
 function RosterDrawer({ agent, onClose }: { agent: AgentData; onClose: () => void }) {
-  const [visible, setVisible] = useState(false)
   const [view, setView] = useState<'detail' | 'configure'>('detail')
   const [promptText, setPromptText] = useState(() => DEFAULT_PROMPTS[agent.name] || '')
   const [saved, setSaved] = useState(false)
   const roleStyle = ROLE_STYLES[agent.role]
   const isIdle = agent.status === 'idle'
-
-  useEffect(() => {
-    requestAnimationFrame(() => setVisible(true))
-  }, [])
-
-  const handleClose = () => {
-    setVisible(false)
-    setTimeout(onClose, 250)
-  }
 
   const handleSave = useCallback(() => {
     setSaved(true)
@@ -70,49 +62,65 @@ function RosterDrawer({ agent, onClose }: { agent: AgentData; onClose: () => voi
   }
 
   const metricBox: React.CSSProperties = {
-    background: '#FAFAF2', border: '1px solid #DDEC90', borderRadius: '6px', padding: '10px 12px',
+    background: 'linear-gradient(135deg, #FAFAF2, #FFFFFF)',
+    border: '1px solid #DDEC90',
+    borderRadius: '10px',
+    padding: '10px 12px',
   }
 
   return (
     <>
-      <div
-        onClick={handleClose}
+      {/* Overlay */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
+        onClick={onClose}
         style={{
-          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.25)', zIndex: 998,
-          opacity: visible ? 1 : 0, transition: 'opacity 0.25s ease',
+          position: 'fixed', inset: 0, background: 'rgba(26,26,0,0.35)', zIndex: 998,
+          backdropFilter: 'blur(2px)',
         }}
       />
 
-      <div
+      {/* Panel */}
+      <motion.div
+        initial={{ x: '100%' }}
+        animate={{ x: 0 }}
+        exit={{ x: '100%' }}
+        transition={{ type: 'tween', duration: 0.25, ease: [0.4, 0, 0.2, 1] as [number, number, number, number] }}
         style={{
           position: 'fixed', top: 0, right: 0, bottom: 0, width: view === 'configure' ? '560px' : '420px', zIndex: 999,
           background: '#FFFFFF', borderLeft: '1px solid #DDEC90',
           boxShadow: '-8px 0 30px rgba(0,0,0,0.08)',
-          transform: visible ? 'translateX(0)' : 'translateX(100%)',
-          transition: 'transform 0.25s ease, width 0.25s ease',
           display: 'flex', flexDirection: 'column',
           fontFamily: "'Inter', sans-serif",
         }}
       >
         {/* Header */}
         <div style={{
-          padding: '20px 24px', borderBottom: '1px solid #DDEC90', background: '#FAFAF2',
+          padding: '20px 24px', borderBottom: '1px solid #DDEC90',
+          background: 'linear-gradient(135deg, #FAFAF2, #F5F8D0)',
           display: 'flex', alignItems: 'flex-start', gap: '14px', flexShrink: 0,
         }}>
           <div style={{
-            width: '56px', height: '56px', borderRadius: '12px',
+            width: '56px', height: '56px', borderRadius: '50%',
             border: '2px solid #DDEC90', background: '#FFFFFF',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: '28px', flexShrink: 0,
+            boxShadow: '0 2px 8px rgba(26,26,0,0.08)',
+            overflow: 'hidden',
           }}>
-            {agent.emoji}
+            {AGENT_AVATAR_IMAGES[agent.name] ? (
+              <img src={AGENT_AVATAR_IMAGES[agent.name]} alt={agent.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : agent.emoji}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
               <span style={{ fontSize: '20px', fontWeight: 700, color: '#1A1A00' }}>{agent.name}</span>
               <span style={{
                 fontSize: '10px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase',
-                borderRadius: '20px', padding: '2px 8px',
+                borderRadius: '9999px', padding: '2px 8px',
                 background: roleStyle.bg, color: roleStyle.color, border: `1px solid ${roleStyle.border}`,
               }}>
                 {agent.role}
@@ -128,7 +136,7 @@ function RosterDrawer({ agent, onClose }: { agent: AgentData; onClose: () => voi
             </div>
           </div>
           <button
-            onClick={handleClose}
+            onClick={onClose}
             style={{
               width: '28px', height: '28px', borderRadius: '6px', border: '1px solid #DDEC90',
               background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center',
@@ -230,7 +238,10 @@ function RosterDrawer({ agent, onClose }: { agent: AgentData; onClose: () => voi
               </button>
               <button
                 onClick={() => setView('configure')}
-                style={{ flex: 1, fontSize: '13px', fontWeight: 700, color: '#1A1A00', background: '#BBCB64', border: 'none', borderRadius: '6px', padding: '10px 16px', cursor: 'pointer', transition: 'opacity 0.12s' }}
+                style={{
+                  flex: 1, fontSize: '13px', fontWeight: 700, color: '#1A1A00', background: '#BBCB64', border: 'none', borderRadius: '6px', padding: '10px 16px', cursor: 'pointer', transition: 'opacity 0.12s',
+                  boxShadow: '0 2px 8px rgba(187,203,100,0.25)',
+                }}
                 onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.9' }}
                 onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}
               >
@@ -260,7 +271,7 @@ function RosterDrawer({ agent, onClose }: { agent: AgentData; onClose: () => voi
                   { label: 'Characters', value: promptText.length.toLocaleString() },
                   { label: 'Lines', value: String(promptText.split('\n').length) },
                 ].map(m => (
-                  <div key={m.label} style={{ flex: 1, padding: '8px 12px', borderRadius: '6px', background: '#F5F8D0', border: '1px solid #DDEC90' }}>
+                  <div key={m.label} style={{ flex: 1, padding: '8px 12px', borderRadius: '10px', background: 'linear-gradient(135deg, #FAFAF2, #FFFFFF)', border: '1px solid #DDEC90' }}>
                     <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: '#7A8A00', marginBottom: '2px' }}>{m.label}</div>
                     <div style={{ fontSize: '13px', fontWeight: 600, color: '#1A1A00' }}>{m.value}</div>
                   </div>
@@ -321,7 +332,10 @@ function RosterDrawer({ agent, onClose }: { agent: AgentData; onClose: () => voi
               </button>
               <button
                 onClick={handleSave}
-                style={{ fontSize: '13px', fontWeight: 700, color: saved ? '#FFFFFF' : '#1A1A00', background: saved ? '#7A8A00' : '#BBCB64', border: 'none', borderRadius: '6px', padding: '10px 20px', cursor: 'pointer', transition: 'all 0.2s' }}
+                style={{
+                  fontSize: '13px', fontWeight: 700, color: saved ? '#FFFFFF' : '#1A1A00', background: saved ? '#7A8A00' : '#BBCB64', border: 'none', borderRadius: '6px', padding: '10px 20px', cursor: 'pointer', transition: 'all 0.2s',
+                  boxShadow: '0 2px 8px rgba(187,203,100,0.25)',
+                }}
                 onMouseEnter={e => { if (!saved) (e.currentTarget as HTMLElement).style.opacity = '0.9' }}
                 onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}
               >
@@ -330,13 +344,12 @@ function RosterDrawer({ agent, onClose }: { agent: AgentData; onClose: () => voi
             </div>
           </>
         )}
-      </div>
+      </motion.div>
     </>
   )
 }
 
 export function AgentRoster() {
-  const [hoveredAgent, setHoveredAgent] = useState<string | null>(null)
   const [selectedAgent, setSelectedAgent] = useState<AgentData | null>(null)
 
   return (
@@ -344,34 +357,40 @@ export function AgentRoster() {
       style={{
         background: '#FFFFFF',
         border: '1px solid #DDEC90',
-        borderRadius: '8px',
+        borderRadius: '12px',
         overflow: 'hidden',
+        boxShadow: '0 1px 3px rgba(26,26,0,0.06)',
         fontFamily: "'Inter', sans-serif",
       }}
     >
       {/* Card header */}
       <div
         style={{
-          padding: '12px 16px',
+          padding: '14px 16px',
           borderBottom: '1px solid #DDEC90',
-          background: '#FAFAF2',
+          background: 'linear-gradient(to bottom, #FAFAF2, #FFFFFF)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
         }}
       >
-        <span style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: '#7A8A00' }}>
+        <span style={{
+          fontFamily: "'Geist', 'Inter', sans-serif",
+          fontWeight: 700,
+          fontSize: '13px',
+          color: '#1A1A00',
+        }}>
           Agent Roster
         </span>
         <span
           style={{
-            fontSize: '12px',
+            fontSize: '11px',
             fontWeight: 700,
             background: '#F5F8D0',
             color: '#7A8A00',
             border: '1px solid #DDEC90',
-            borderRadius: '10px',
-            padding: '1px 7px',
+            borderRadius: '9999px',
+            padding: '3px 10px',
           }}
         >
           14 Working
@@ -379,54 +398,63 @@ export function AgentRoster() {
       </div>
 
       {/* Agent List */}
-      <div style={{ padding: '14px 16px' }}>
+      <div style={{ padding: '8px 12px' }}>
         {AGENTS.map((agent, idx) => (
-          <div
+          <motion.div
             key={agent.name}
+            whileHover={{ backgroundColor: '#F5F8D0' }}
+            transition={{ duration: 0.12 }}
             style={{
               display: 'flex',
               alignItems: 'center',
               gap: '10px',
-              padding: '9px 0',
-              borderBottom: idx < AGENTS.length - 1 ? '1px solid #DDEC90' : 'none',
+              padding: '10px 8px',
+              borderBottom: idx < AGENTS.length - 1 ? '1px solid rgba(221,236,144,0.5)' : 'none',
               cursor: 'pointer',
-              background: hoveredAgent === agent.name ? '#F5F8D0' : 'transparent',
-              borderRadius: '4px',
-              transition: 'background 0.12s',
+              borderRadius: '8px',
             }}
             onClick={() => setSelectedAgent(agent)}
-            onMouseEnter={() => setHoveredAgent(agent.name)}
-            onMouseLeave={() => setHoveredAgent(null)}
           >
             {/* Icon box */}
             <div
               style={{
-                width: '34px',
-                height: '34px',
-                borderRadius: '8px',
-                border: '1.5px solid #DDEC90',
+                width: '36px',
+                height: '36px',
+                borderRadius: '50%',
+                border: '1px solid #DDEC90',
                 background: '#FAFAF2',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontSize: '16px',
                 flexShrink: 0,
+                boxShadow: '0 1px 3px rgba(26,26,0,0.06)',
+                overflow: 'hidden',
               }}
             >
-              {agent.emoji}
+              {AGENT_AVATAR_IMAGES[agent.name] ? (
+                <img src={AGENT_AVATAR_IMAGES[agent.name]} alt={agent.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : agent.emoji}
             </div>
 
             {/* Agent info */}
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ fontSize: '16px', fontWeight: 700, color: '#1A1A00' }}>{agent.name}</span>
+                <span style={{
+                  fontFamily: "'Geist', 'Inter', sans-serif",
+                  fontWeight: 700,
+                  fontSize: '14px',
+                  color: '#1A1A00',
+                }}>
+                  {agent.name}
+                </span>
                 <span
                   style={{
                     fontSize: '10px',
                     fontWeight: 700,
                     letterSpacing: '1px',
                     textTransform: 'uppercase',
-                    borderRadius: '10px',
+                    borderRadius: '9999px',
                     padding: '2px 7px',
                     background: ROLE_STYLES[agent.role].bg,
                     color: ROLE_STYLES[agent.role].color,
@@ -436,22 +464,38 @@ export function AgentRoster() {
                   {agent.role}
                 </span>
               </div>
-              <div style={{ fontSize: '13px', color: '#6A6A20', marginTop: '1px' }}>{agent.subtitle}</div>
+              <div style={{ fontSize: '12px', color: '#6A6A20', marginTop: '1px' }}>{agent.subtitle}</div>
               {agent.status === 'working' && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
-                  <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#BBCB64', flexShrink: 0 }} />
-                  <span style={{ fontSize: '10px', fontWeight: 700, color: '#BBCB64' }}>WORKING</span>
+                  <span
+                    className="status-dot-active"
+                    style={{
+                      width: '6px',
+                      height: '6px',
+                      borderRadius: '50%',
+                      background: '#BBCB64',
+                      flexShrink: 0,
+                    }}
+                  />
+                  <span style={{
+                    fontSize: '10px',
+                    fontWeight: 700,
+                    color: '#BBCB64',
+                    letterSpacing: '0.5px',
+                  }}>
+                    WORKING
+                  </span>
                 </div>
               )}
             </div>
-          </div>
+          </motion.div>
         ))}
       </div>
 
       {/* Footer */}
       <div
         style={{
-          padding: '10px 16px',
+          padding: '12px 16px',
           borderTop: '1px solid #DDEC90',
           textAlign: 'center',
         }}
@@ -465,20 +509,22 @@ export function AgentRoster() {
             color: '#7A8A00',
             cursor: 'pointer',
             padding: '4px 8px',
-            borderRadius: '4px',
+            borderRadius: '8px',
             transition: 'background 0.12s',
           }}
-          onMouseEnter={(e) => { (e.target as HTMLElement).style.background = '#F5F8D0' }}
-          onMouseLeave={(e) => { (e.target as HTMLElement).style.background = 'transparent' }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#F5F8D0' }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
         >
           View all 16 agents &rarr;
         </button>
       </div>
 
-      {/* Agent Detail Drawer */}
-      {selectedAgent && (
-        <RosterDrawer agent={selectedAgent} onClose={() => setSelectedAgent(null)} />
-      )}
+      {/* Agent Detail Drawer wrapped in AnimatePresence */}
+      <AnimatePresence>
+        {selectedAgent && (
+          <RosterDrawer agent={selectedAgent} onClose={() => setSelectedAgent(null)} />
+        )}
+      </AnimatePresence>
     </div>
   )
 }

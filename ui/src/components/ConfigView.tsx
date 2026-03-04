@@ -1,11 +1,21 @@
 import { useState, useEffect, useCallback } from 'react'
+import { Eye, EyeOff, ShieldCheck, Code2, Server, Database, Palette } from 'lucide-react'
 import {
   getGitHubAuthStatus,
   startGitHubDeviceFlow,
   pollGitHubDeviceFlow,
   disconnectGitHub,
 } from '../lib/api'
-import type { GitHubAuthStatus } from '../lib/types'
+import { useSettings, useUpdateSettings, useAvailableModels, useAvailableProviders } from '../hooks/useProjects'
+import type { GitHubAuthStatus, ProviderInfo } from '../lib/types'
+
+const PROVIDER_INFO_TEXT: Record<string, string> = {
+  claude: 'Default provider. Uses your Claude CLI credentials.',
+  kimi: 'Get an API key at kimi.com',
+  glm: 'Get an API key at open.bigmodel.cn',
+  ollama: 'Run models locally. Install from ollama.com',
+  custom: 'Connect to any OpenAI-compatible API endpoint.',
+}
 
 // ---------------------------------------------------------------------------
 // Toggle component
@@ -478,6 +488,48 @@ const DEFAULT_TOGGLES: ToggleState = {
   headlessBrowser: true,
 }
 
+interface StackCategory {
+  key: 'frontend' | 'backend' | 'database' | 'styling'
+  label: string
+  icon: typeof Code2
+  options: { id: string; label: string }[]
+}
+
+const STACK_CATEGORIES: StackCategory[] = [
+  {
+    key: 'frontend', label: 'Frontend Framework', icon: Code2,
+    options: [
+      { id: 'react', label: 'React' }, { id: 'angular', label: 'Angular' },
+      { id: 'vue', label: 'Vue' }, { id: 'svelte', label: 'Svelte' },
+      { id: 'nextjs', label: 'Next.js' }, { id: 'none', label: 'Keep Current / None' },
+    ],
+  },
+  {
+    key: 'backend', label: 'Backend Framework', icon: Server,
+    options: [
+      { id: 'fastapi', label: 'FastAPI (Python)' }, { id: 'express', label: 'Express (Node.js)' },
+      { id: 'django', label: 'Django (Python)' }, { id: 'springboot', label: 'Spring Boot (Java)' },
+      { id: 'nestjs', label: 'NestJS (Node.js)' }, { id: 'none', label: 'Keep Current / None' },
+    ],
+  },
+  {
+    key: 'database', label: 'Database', icon: Database,
+    options: [
+      { id: 'postgresql', label: 'PostgreSQL' }, { id: 'mongodb', label: 'MongoDB' },
+      { id: 'mysql', label: 'MySQL' }, { id: 'sqlite', label: 'SQLite' },
+      { id: 'none', label: 'Keep Current / None' },
+    ],
+  },
+  {
+    key: 'styling', label: 'Styling', icon: Palette,
+    options: [
+      { id: 'tailwind', label: 'Tailwind CSS' }, { id: 'css-modules', label: 'CSS Modules' },
+      { id: 'styled-components', label: 'Styled Components' }, { id: 'material-ui', label: 'Material UI' },
+      { id: 'none', label: 'Keep Current / None' },
+    ],
+  },
+]
+
 export function ConfigView() {
   const [activeTab, setActiveTab] = useState('models')
   const [toggles, setToggles] = useState<ToggleState>(DEFAULT_TOGGLES)
@@ -495,6 +547,59 @@ export function ConfigView() {
   const [connectorFilter, setConnectorFilter] = useState('all')
   const [regressionAgents, setRegressionAgents] = useState('1')
   const [featuresPerAgent, setFeaturesPerAgent] = useState('3')
+  const [targetStack, setTargetStack] = useState<Record<string, string | null>>({
+    frontend: 'react', backend: 'express', database: 'postgresql', styling: 'tailwind',
+  })
+
+  // Provider / model state (real API)
+  const { data: settings } = useSettings()
+  const updateSettings = useUpdateSettings()
+  const { data: modelsData } = useAvailableModels()
+  const { data: providersData } = useAvailableProviders()
+  const [authTokenInput, setAuthTokenInput] = useState('')
+  const [showAuthToken, setShowAuthToken] = useState(false)
+  const [customBaseUrlInput, setCustomBaseUrlInput] = useState('')
+  const [customModelInput, setCustomModelInput] = useState('')
+  const isSaving = updateSettings.isPending
+
+  const providers = providersData?.providers ?? []
+  const models = modelsData?.models ?? []
+  const currentProvider = settings?.api_provider ?? 'claude'
+  const currentProviderInfo: ProviderInfo | undefined = providers.find(p => p.id === currentProvider)
+  const isAlternativeProvider = currentProvider !== 'claude'
+  const showAuthField = isAlternativeProvider && currentProviderInfo?.requires_auth
+  const showBaseUrlField = currentProvider === 'custom' || currentProvider === 'azure'
+  const showCustomModelInput = currentProvider === 'custom' || currentProvider === 'ollama'
+
+  const handleProviderChange = (providerId: string) => {
+    if (!isSaving) {
+      updateSettings.mutate({ api_provider: providerId })
+      setAuthTokenInput('')
+      setCustomBaseUrlInput('')
+      setCustomModelInput('')
+    }
+  }
+  const handleModelChange = (modelId: string) => {
+    if (!isSaving) updateSettings.mutate({ api_model: modelId })
+  }
+  const handleSaveAuthToken = () => {
+    if (authTokenInput.trim() && !isSaving) {
+      updateSettings.mutate({ api_auth_token: authTokenInput.trim() })
+      setAuthTokenInput('')
+    }
+  }
+  const handleSaveCustomBaseUrl = () => {
+    if (customBaseUrlInput.trim() && !isSaving) {
+      updateSettings.mutate({ api_base_url: customBaseUrlInput.trim() })
+      setCustomBaseUrlInput('')
+    }
+  }
+  const handleSaveCustomModel = () => {
+    if (customModelInput.trim() && !isSaving) {
+      updateSettings.mutate({ api_model: customModelInput.trim() })
+      setCustomModelInput('')
+    }
+  }
 
   // GitHub auth state
   const [ghAuth, setGhAuth] = useState<GitHubAuthStatus | null>(null)
@@ -584,7 +689,7 @@ export function ConfigView() {
   }
 
   return (
-    <div style={{ fontFamily: "'Inter', sans-serif" }}>
+    <div style={{ fontFamily: "'Inter', sans-serif", maxWidth: activeTab === 'connectors' ? '100%' : '50%', transition: 'max-width 0.2s ease' }}>
       {/* Page Header */}
       <div style={{ marginBottom: '20px' }}>
         <div style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: '#7A8A00', marginBottom: '3px' }}>
@@ -624,7 +729,6 @@ export function ConfigView() {
               if (activeTab !== tab.id) (e.currentTarget as HTMLElement).style.color = '#6A6A20'
             }}
           >
-            <span style={{ fontSize: '15px' }}>{tab.icon}</span>
             {tab.label}
             {tab.id === 'connectors' && connectedCount > 0 && (
               <span style={{
@@ -641,78 +745,290 @@ export function ConfigView() {
 
       {/* Tab content */}
       {activeTab === 'models' && (
-        <div style={panelStyle}>
-          <div style={{ fontSize: '13px', color: '#6A6A20', marginBottom: '4px' }}>
-            Configure which AI models power your agents for different task types.
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+          {/* API Provider & Model (live settings) */}
+          <div style={panelStyle}>
+            <div style={{ fontSize: '16px', fontWeight: 700, color: '#1A1A00', marginBottom: '2px' }}>API Provider</div>
+            <div style={{ fontSize: '13px', color: '#6A6A20', marginBottom: '8px' }}>
+              Select the AI provider and model for your coding agents.
+            </div>
+
+            {/* Provider pills */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+              {providers.map((provider) => (
+                <button
+                  key={provider.id}
+                  onClick={() => handleProviderChange(provider.id)}
+                  disabled={isSaving}
+                  style={{
+                    padding: '7px 16px', fontSize: '14px', fontWeight: 600,
+                    borderRadius: '8px',
+                    border: currentProvider === provider.id ? '1px solid #7A8A00' : '1px solid #DDEC90',
+                    background: currentProvider === provider.id ? '#BBCB64' : '#FFFFFF',
+                    color: currentProvider === provider.id ? '#1A1A00' : '#6A6A20',
+                    cursor: isSaving ? 'not-allowed' : 'pointer',
+                    opacity: isSaving ? 0.5 : 1,
+                    transition: 'background 0.15s, border-color 0.15s',
+                  }}
+                >
+                  {provider.name.split(' (')[0]}
+                </button>
+              ))}
+            </div>
+            <p style={{ fontSize: '12px', color: '#6A6A20', margin: '6px 0 0' }}>
+              {PROVIDER_INFO_TEXT[currentProvider] ?? ''}
+            </p>
+
+            {/* Auth Token */}
+            {showAuthField && settings && (
+              <div style={{ marginTop: '8px' }}>
+                <div style={fieldLabelStyle}>API Key</div>
+                {settings.api_has_auth_token && !authTokenInput ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#6A6A20' }}>
+                    <ShieldCheck size={14} style={{ color: '#7A8A00' }} />
+                    <span>Configured</span>
+                    <button
+                      onClick={() => setAuthTokenInput(' ')}
+                      style={{ background: 'transparent', border: 'none', color: '#7A8A00', cursor: 'pointer', textDecoration: 'underline', fontSize: '12px' }}
+                    >
+                      Change
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <div style={{ position: 'relative', flex: 1 }}>
+                      <input
+                        type={showAuthToken ? 'text' : 'password'}
+                        value={authTokenInput.trim()}
+                        onChange={(e) => setAuthTokenInput(e.target.value)}
+                        placeholder="Enter API key..."
+                        style={{
+                          width: '100%', padding: '8px 36px 8px 12px', fontSize: '13px',
+                          border: '1px solid #DDEC90', borderRadius: '8px',
+                          background: '#FFFFFF', color: '#1A1A00', outline: 'none', boxSizing: 'border-box',
+                        }}
+                        onFocus={(e) => { e.currentTarget.style.boxShadow = '0 0 0 3px rgba(187,203,100,0.12)' }}
+                        onBlur={(e) => { e.currentTarget.style.boxShadow = 'none' }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowAuthToken(!showAuthToken)}
+                        style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', background: 'transparent', border: 'none', color: '#6A6A20', cursor: 'pointer', padding: '2px' }}
+                      >
+                        {showAuthToken ? <EyeOff size={14} /> : <Eye size={14} />}
+                      </button>
+                    </div>
+                    <button
+                      onClick={handleSaveAuthToken}
+                      disabled={!authTokenInput.trim() || isSaving}
+                      style={{
+                        background: '#BBCB64', color: '#1A1A00', border: 'none', borderRadius: '8px',
+                        padding: '8px 16px', cursor: (!authTokenInput.trim() || isSaving) ? 'not-allowed' : 'pointer',
+                        fontSize: '13px', fontWeight: 700,
+                        opacity: (!authTokenInput.trim() || isSaving) ? 0.5 : 1,
+                      }}
+                    >
+                      Save
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Custom Base URL */}
+            {showBaseUrlField && settings && (
+              <div style={{ marginTop: '8px' }}>
+                <div style={fieldLabelStyle}>Base URL</div>
+                {settings.api_base_url && !customBaseUrlInput ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#6A6A20' }}>
+                    <ShieldCheck size={14} style={{ color: '#7A8A00' }} />
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{settings.api_base_url}</span>
+                    <button
+                      onClick={() => setCustomBaseUrlInput(settings.api_base_url || '')}
+                      style={{ background: 'transparent', border: 'none', color: '#7A8A00', cursor: 'pointer', textDecoration: 'underline', fontSize: '12px', flexShrink: 0 }}
+                    >
+                      Change
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <input
+                      type="text"
+                      value={customBaseUrlInput}
+                      onChange={(e) => setCustomBaseUrlInput(e.target.value)}
+                      placeholder={currentProvider === 'azure' ? 'https://your-resource.services.ai.azure.com/anthropic' : 'https://api.example.com/v1'}
+                      style={{
+                        flex: 1, padding: '8px 12px', fontSize: '13px',
+                        border: '1px solid #DDEC90', borderRadius: '8px',
+                        background: '#FFFFFF', color: '#1A1A00', outline: 'none',
+                      }}
+                      onFocus={(e) => { e.currentTarget.style.boxShadow = '0 0 0 3px rgba(187,203,100,0.12)' }}
+                      onBlur={(e) => { e.currentTarget.style.boxShadow = 'none' }}
+                    />
+                    <button
+                      onClick={handleSaveCustomBaseUrl}
+                      disabled={!customBaseUrlInput.trim() || isSaving}
+                      style={{
+                        background: '#BBCB64', color: '#1A1A00', border: 'none', borderRadius: '8px',
+                        padding: '8px 16px', cursor: (!customBaseUrlInput.trim() || isSaving) ? 'not-allowed' : 'pointer',
+                        fontSize: '13px', fontWeight: 700,
+                        opacity: (!customBaseUrlInput.trim() || isSaving) ? 0.5 : 1,
+                      }}
+                    >
+                      Save
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Divider */}
+            <div style={{ height: '1px', background: '#DDEC90', margin: '6px 0' }} />
+
+            {/* Model selection */}
+            <div style={{ fontSize: '16px', fontWeight: 700, color: '#1A1A00', marginBottom: '4px' }}>Model</div>
+            {models.length > 0 && (
+              <div style={{ display: 'flex', borderRadius: '8px', overflow: 'hidden', border: '1px solid #DDEC90' }}>
+                {models.map((model) => (
+                  <button
+                    key={model.id}
+                    onClick={() => handleModelChange(model.id)}
+                    disabled={isSaving}
+                    style={{
+                      flex: 1, padding: '12px 14px', fontSize: '14px', fontWeight: 600,
+                      background: settings && (settings.api_model ?? settings.model) === model.id ? '#BBCB64' : '#FFFFFF',
+                      color: settings && (settings.api_model ?? settings.model) === model.id ? '#1A1A00' : '#6A6A20',
+                      border: 'none', borderRight: '1px solid #DDEC90',
+                      cursor: isSaving ? 'not-allowed' : 'pointer',
+                      opacity: isSaving ? 0.5 : 1,
+                      transition: 'background 0.15s',
+                    }}
+                  >
+                    <span style={{ display: 'block' }}>{model.name}</span>
+                    <span style={{ display: 'block', fontSize: '11px', opacity: 0.6, marginTop: '2px' }}>{model.id}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+            {showCustomModelInput && (
+              <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                <input
+                  type="text"
+                  value={customModelInput}
+                  onChange={(e) => setCustomModelInput(e.target.value)}
+                  placeholder="Custom model name..."
+                  style={{
+                    flex: 1, padding: '8px 12px', fontSize: '13px',
+                    border: '1px solid #DDEC90', borderRadius: '8px',
+                    background: '#FFFFFF', color: '#1A1A00', outline: 'none',
+                  }}
+                  onFocus={(e) => { e.currentTarget.style.boxShadow = '0 0 0 3px rgba(187,203,100,0.12)' }}
+                  onBlur={(e) => { e.currentTarget.style.boxShadow = 'none' }}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSaveCustomModel()}
+                />
+                <button
+                  onClick={handleSaveCustomModel}
+                  disabled={!customModelInput.trim() || isSaving}
+                  style={{
+                    background: '#BBCB64', color: '#1A1A00', border: 'none', borderRadius: '8px',
+                    padding: '8px 16px', cursor: (!customModelInput.trim() || isSaving) ? 'not-allowed' : 'pointer',
+                    fontSize: '13px', fontWeight: 700,
+                    opacity: (!customModelInput.trim() || isSaving) ? 0.5 : 1,
+                  }}
+                >
+                  Set
+                </button>
+              </div>
+            )}
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '18px' }}>
-            <SelectField
-              label="Primary Model"
-              sub="Used for complex reasoning, architecture decisions, and code generation"
-              options={['Claude Opus 4.6', 'Claude Sonnet 4.5', 'Claude Sonnet 4.0', 'GPT-4o']}
-              value={primaryModel}
-              onChange={setPrimaryModel}
+
+          {/* Agent configuration */}
+          <div style={panelStyle}>
+            <div style={{ fontSize: '16px', fontWeight: 700, color: '#1A1A00', marginBottom: '2px' }}>Agent Settings</div>
+            <div style={{ fontSize: '13px', color: '#6A6A20', marginBottom: '8px' }}>
+              Configure agent behavior, concurrency, and testing preferences.
+            </div>
+            <ToggleRow
+              name="YOLO Mode"
+              desc="Skip testing for rapid prototyping"
+              on={toggles.yoloMode}
+              onToggle={() => toggle('yoloMode')}
             />
-            <SelectField
-              label="Secondary Model"
-              sub="Used for routine tasks, formatting, and simple queries"
-              options={['Claude Haiku 4.5', 'Claude Haiku 3.5', 'Claude Sonnet 4.5', 'GPT-4o Mini']}
-              value={secondaryModel}
-              onChange={setSecondaryModel}
+            <ToggleRow
+              name="Headless Browser"
+              desc="Run browser without visible window (saves CPU)"
+              on={toggles.headlessBrowser}
+              onToggle={() => toggle('headlessBrowser')}
+              isLast
+            />
+
+            <SegmentedControl
+              label="Regression Agents"
+              sub="Number of regression testing agents (0 = disabled)"
+              options={['0', '1', '2', '3']}
+              value={regressionAgents}
+              onChange={setRegressionAgents}
+            />
+            <SegmentedControl
+              label="Features per Agent"
+              sub="Number of features assigned to each coding agent"
+              options={['1', '2', '3']}
+              value={featuresPerAgent}
+              onChange={setFeaturesPerAgent}
             />
           </div>
-          <SelectField
-            label="Max Tokens per Task"
-            options={['100K', '150K', '200K', '250K']}
-            value={maxTokens}
-            onChange={setMaxTokens}
-          />
-
-          {/* Divider */}
-          <div style={{ height: '1px', background: '#DDEC90' }} />
-
-          <ToggleRow
-            name="YOLO Mode"
-            desc="Skip testing for rapid prototyping"
-            on={toggles.yoloMode}
-            onToggle={() => toggle('yoloMode')}
-          />
-          <ToggleRow
-            name="Headless Browser"
-            desc="Run browser without visible window (saves CPU)"
-            on={toggles.headlessBrowser}
-            onToggle={() => toggle('headlessBrowser')}
-            isLast
-          />
-
-          <SegmentedControl
-            label="Regression Agents"
-            sub="Number of regression testing agents (0 = disabled)"
-            options={['0', '1', '2', '3']}
-            value={regressionAgents}
-            onChange={setRegressionAgents}
-          />
-          <SegmentedControl
-            label="Features per Agent"
-            sub="Number of features assigned to each coding agent"
-            options={['1', '2', '3']}
-            value={featuresPerAgent}
-            onChange={setFeaturesPerAgent}
-          />
         </div>
       )}
 
       {activeTab === 'framework' && (
         <div style={panelStyle}>
-          <div style={{ fontSize: '13px', color: '#6A6A20', marginBottom: '4px' }}>
-            Set default output frameworks and architectural patterns for generated code.
+          <div style={{ fontSize: '16px', fontWeight: 700, color: '#1A1A00', marginBottom: '2px' }}>Target Stack</div>
+          <div style={{ fontSize: '13px', color: '#6A6A20', marginBottom: '16px' }}>
+            Select the default technologies for new projects. Leave unselected to keep current tech for that layer.
           </div>
-          <SelectField
-            label="Default Output Framework"
-            options={['React + TypeScript (Vite)', 'Next.js', 'Vue 3', 'Angular']}
-            value={framework}
-            onChange={setFramework}
-          />
+
+          {STACK_CATEGORIES.map((category) => {
+            const Icon = category.icon
+            return (
+              <div key={category.key} style={{ marginBottom: '20px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                  <Icon size={16} style={{ color: '#6A6A20' }} />
+                  <span style={{ fontSize: '13px', fontWeight: 700, letterSpacing: '0.5px', color: '#1A1A00' }}>
+                    {category.label}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                  {category.options.map((option) => {
+                    const isSelected = targetStack[category.key] === option.id
+                    return (
+                      <button
+                        key={option.id}
+                        onClick={() => setTargetStack(prev => ({
+                          ...prev,
+                          [category.key]: isSelected ? null : option.id,
+                        }))}
+                        style={{
+                          padding: '8px 16px', borderRadius: '8px',
+                          fontSize: '13px', fontWeight: 600,
+                          border: isSelected ? '1px solid #7A8A00' : '1px solid #DDEC90',
+                          background: isSelected ? '#BBCB64' : '#FFFFFF',
+                          color: '#1A1A00',
+                          cursor: 'pointer', transition: 'all 0.15s',
+                        }}
+                        onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = '#F5F8D0' }}
+                        onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = '#FFFFFF' }}
+                      >
+                        {option.label}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )
+          })}
+
+          <div style={{ height: '1px', background: '#DDEC90', margin: '4px 0' }} />
+
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '18px' }}>
             <SelectField
               label="State Management"

@@ -11,6 +11,7 @@ import { AgentRoster } from '../components/AgentRoster'
 import { TokenUsagePanel } from '../components/TokenUsagePanel'
 import { LiveOrchestration } from '../components/LiveOrchestration'
 import { AgentsView } from '../components/AgentsView'
+import { PathwaysView } from '../components/PathwaysView'
 import { AnalyticsView } from '../components/AnalyticsView'
 import { ConfigView } from '../components/ConfigView'
 
@@ -78,58 +79,72 @@ export function HomePage() {
 
         <div className="flex-1 flex flex-col min-w-0">
 
-        <main className="flex-1 p-6 overflow-y-auto" style={{ fontFamily: "'Inter', sans-serif" }}>
+        <main className="flex-1 overflow-y-auto" style={{ padding: '24px', fontFamily: "'Inter', sans-serif" }}>
           {activeTab === 'AGENTS' && <AgentsView />}
+          {activeTab === 'PATHWAYS' && <PathwaysView />}
           {activeTab === 'ANALYTICS' && <AnalyticsView projectCount={projectList.length} />}
           {activeTab === 'CONFIG' && <ConfigView />}
           {activeTab === 'DASHBOARD' && (
             <>
               {/* Command Center Title + Actions */}
-              <div className="flex items-start justify-between mb-5">
+              <div className="flex items-start justify-between" style={{ marginBottom: '20px' }}>
                 <div>
-                  <div style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: '#7A8A00', marginBottom: '4px' }}>
+                  <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '2.5px', textTransform: 'uppercase', color: '#7A8A00', marginBottom: '6px' }}>
                     Command Center
                   </div>
-                  <h1 style={{ fontSize: '31px', fontWeight: 700, color: '#1A1A00', margin: 0, lineHeight: 1.2 }}>
+                  <h1 style={{ fontFamily: "'Geist', 'Inter', sans-serif", fontSize: '28px', fontWeight: 700, color: '#1A1A00', margin: 0, letterSpacing: '-0.02em', lineHeight: 1.2 }}>
                     Project <span style={{ color: '#7A8A00' }}>Overview</span>
                   </h1>
-                  <p style={{ fontSize: '14px', color: '#6A6A20', marginTop: '4px' }}>
+                  <p style={{ fontSize: '13px', color: '#6A6A20', marginTop: '4px' }}>
                     Multi-agent orchestration across {projectList.length} active workstreams &middot; {dateStr}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
                     style={{
+                      borderRadius: '8px',
                       fontSize: '13px',
-                      fontWeight: 700,
+                      fontWeight: 600,
                       color: '#7A8A00',
                       border: '1px solid #DDEC90',
                       background: 'transparent',
-                      borderRadius: '4px',
-                      padding: '6px 12px',
+                      padding: '8px 14px',
                       cursor: 'pointer',
-                      transition: 'background 0.12s',
+                      transition: 'all 0.15s',
                     }}
-                    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#F5F8D0' }}
-                    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLElement).style.background = '#F5F8D0';
+                      (e.currentTarget as HTMLElement).style.borderColor = '#BBCB64';
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLElement).style.background = 'transparent';
+                      (e.currentTarget as HTMLElement).style.borderColor = '#DDEC90';
+                    }}
                   >
                     &darr; Export Report
                   </button>
                   <button
                     onClick={() => setShowNewProject(true)}
                     style={{
+                      borderRadius: '8px',
                       fontSize: '13px',
                       fontWeight: 700,
                       color: '#1A1A00',
                       background: '#BBCB64',
                       border: 'none',
-                      borderRadius: '4px',
-                      padding: '6px 14px',
+                      padding: '8px 16px',
                       cursor: 'pointer',
-                      transition: 'opacity 0.12s',
+                      boxShadow: '0 2px 8px rgba(187,203,100,0.3)',
+                      transition: 'all 0.15s',
                     }}
-                    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = '0.9' }}
-                    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = '1' }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 14px rgba(187,203,100,0.4)';
+                      (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)';
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLElement).style.boxShadow = '0 2px 8px rgba(187,203,100,0.3)';
+                      (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
+                    }}
                   >
                     + New Project
                   </button>
@@ -139,19 +154,20 @@ export function HomePage() {
               {/* Filter Bar */}
               <div
                 style={{
-                  background: '#FFFFFF',
+                  borderRadius: '10px',
                   border: '1px solid #DDEC90',
-                  borderRadius: '8px',
-                  padding: '10px 14px',
-                  marginBottom: '18px',
+                  background: '#FFFFFF',
+                  padding: '10px 16px',
+                  marginBottom: '20px',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '14px',
+                  boxShadow: '0 1px 3px rgba(26,26,0,0.04)',
                 }}
               >
                 {/* Phase group */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: '#7A8A00', marginRight: '4px' }}>
+                  <span style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: '#7A8A00', marginRight: '6px' }}>
                     Phase
                   </span>
                   {phases.map((pill) => (
@@ -159,15 +175,15 @@ export function HomePage() {
                       key={pill}
                       onClick={() => setActivePhase(pill)}
                       style={{
-                        fontSize: '13px',
-                        fontWeight: 700,
-                        borderRadius: '20px',
-                        border: activePhase === pill ? '1px solid #BBCB64' : '1px solid #DDEC90',
+                        borderRadius: '9999px',
                         background: activePhase === pill ? '#BBCB64' : 'transparent',
+                        border: activePhase === pill ? '1px solid #BBCB64' : '1px solid #DDEC90',
                         color: activePhase === pill ? '#1A1A00' : '#6A6A20',
-                        padding: '3px 10px',
+                        fontWeight: activePhase === pill ? 700 : 600,
+                        fontSize: '12px',
+                        padding: '4px 12px',
                         cursor: 'pointer',
-                        transition: 'all 0.12s',
+                        transition: 'all 0.15s',
                       }}
                     >
                       {pill}
@@ -176,11 +192,11 @@ export function HomePage() {
                 </div>
 
                 {/* Vertical divider */}
-                <div style={{ width: '1px', height: '20px', background: '#DDEC90' }} />
+                <div style={{ width: '1px', height: '18px', background: '#DDEC90' }} />
 
                 {/* Input type group */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: '#7A8A00', marginRight: '4px' }}>
+                  <span style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: '#7A8A00', marginRight: '6px' }}>
                     Input
                   </span>
                   {inputTypes.map((pill) => (
@@ -188,15 +204,15 @@ export function HomePage() {
                       key={pill}
                       onClick={() => setActiveInputType(pill)}
                       style={{
-                        fontSize: '13px',
-                        fontWeight: 700,
-                        borderRadius: '20px',
-                        border: activeInputType === pill ? '1px solid #BBCB64' : '1px solid #DDEC90',
+                        borderRadius: '9999px',
                         background: activeInputType === pill ? '#BBCB64' : 'transparent',
+                        border: activeInputType === pill ? '1px solid #BBCB64' : '1px solid #DDEC90',
                         color: activeInputType === pill ? '#1A1A00' : '#6A6A20',
-                        padding: '3px 10px',
+                        fontWeight: activeInputType === pill ? 700 : 600,
+                        fontSize: '12px',
+                        padding: '4px 12px',
                         cursor: 'pointer',
-                        transition: 'all 0.12s',
+                        transition: 'all 0.15s',
                       }}
                     >
                       {pill}
@@ -214,30 +230,36 @@ export function HomePage() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   style={{
-                    fontSize: '14px',
-                    borderRadius: '6px',
+                    borderRadius: '8px',
                     border: '1px solid #DDEC90',
+                    fontSize: '13px',
+                    padding: '7px 12px',
                     background: '#FAFAF2',
-                    padding: '5px 10px',
-                    width: '160px',
-                    outline: 'none',
                     color: '#1A1A00',
-                    transition: 'border-color 0.12s',
+                    outline: 'none',
+                    width: '180px',
+                    transition: 'border-color 0.15s, box-shadow 0.15s',
                   }}
-                  onFocus={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#BBCB64' }}
-                  onBlur={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#DDEC90' }}
+                  onFocus={(e) => {
+                    (e.currentTarget as HTMLElement).style.borderColor = '#BBCB64';
+                    (e.currentTarget as HTMLElement).style.boxShadow = '0 0 0 3px rgba(187,203,100,0.12)';
+                  }}
+                  onBlur={(e) => {
+                    (e.currentTarget as HTMLElement).style.borderColor = '#DDEC90';
+                    (e.currentTarget as HTMLElement).style.boxShadow = 'none';
+                  }}
                 />
               </div>
 
               {/* Stats Row */}
               {isLoading ? (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '12px', marginBottom: '18px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '12px', marginBottom: '20px' }}>
                   {[1, 2, 3, 4, 5].map(i => (
-                    <div key={i} style={{ height: '80px', borderRadius: '8px', background: '#F5F8D0', opacity: 0.4 }} />
+                    <div key={i} style={{ height: '94px', borderRadius: '12px', background: 'linear-gradient(90deg, #F5F8D0 25%, #FAFAF2 50%, #F5F8D0 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s ease-in-out infinite' }} />
                   ))}
                 </div>
               ) : (
-                <div style={{ marginBottom: '18px' }}>
+                <div style={{ marginBottom: '20px' }}>
                   <StatsCardRow
                     projectCount={projectList.length}
                     totalFeatures={totalFeatures}
@@ -247,14 +269,14 @@ export function HomePage() {
               )}
 
               {/* Two-Column: Table + Roster */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '18px', marginBottom: '18px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '18px', marginBottom: '20px' }}>
                 <div>
                   {isLoading ? (
-                    <div style={{ background: '#FFFFFF', border: '1px solid #DDEC90', borderRadius: '8px', padding: '24px' }}>
-                      <div style={{ height: '24px', width: '200px', background: '#F5F8D0', borderRadius: '4px', marginBottom: '16px', opacity: 0.5 }} />
+                    <div style={{ background: '#FFFFFF', border: '1px solid #DDEC90', borderRadius: '12px', padding: '24px' }}>
+                      <div style={{ height: '24px', width: '200px', background: 'linear-gradient(90deg, #F5F8D0 25%, #FAFAF2 50%, #F5F8D0 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s ease-in-out infinite', borderRadius: '6px', marginBottom: '16px' }} />
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         {[1, 2, 3].map(i => (
-                          <div key={i} style={{ height: '48px', background: '#F5F8D0', borderRadius: '4px', opacity: 0.3 }} />
+                          <div key={i} style={{ height: '56px', background: 'linear-gradient(90deg, #F5F8D0 25%, #FAFAF2 50%, #F5F8D0 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s ease-in-out infinite', borderRadius: '6px' }} />
                         ))}
                       </div>
                     </div>
@@ -272,12 +294,12 @@ export function HomePage() {
               </div>
 
               {/* Token Usage */}
-              <div style={{ marginBottom: '18px' }}>
+              <div style={{ marginBottom: '20px' }}>
                 <TokenUsagePanel />
               </div>
 
               {/* Live Orchestration */}
-              <div style={{ marginBottom: '18px' }}>
+              <div style={{ marginBottom: '20px' }}>
                 <LiveOrchestration projectName={firstProject?.name} />
               </div>
             </>

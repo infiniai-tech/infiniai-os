@@ -1,7 +1,9 @@
 import { Link } from 'react-router-dom'
 import type { ProjectSummary } from '../lib/types'
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useCallback } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { DEFAULT_PROMPTS, QUICK_INSERT_ITEMS } from './agentPrompts'
+import { AGENT_AVATAR_IMAGES } from './AgentAvatar'
 
 interface DashboardSidebarProps {
   projects: ProjectSummary[]
@@ -50,21 +52,33 @@ const SIDEBAR_ROLE_LABELS: Record<RoleBadge, string> = {
   SPC: 'Specialist Agent',
 }
 
+/* ---------- Framer Motion transition presets ---------- */
+
+const drawerOverlayVariants = {
+  initial: { opacity: 0 },
+  animate: { opacity: 1 },
+  exit: { opacity: 0 },
+}
+
+const drawerPanelVariants = {
+  initial: { x: '100%' },
+  animate: { x: 0 },
+  exit: { x: '100%' },
+}
+
+const drawerPanelTransition = {
+  type: 'tween' as const,
+  duration: 0.25,
+  ease: [0.4, 0, 0.2, 1] as [number, number, number, number],
+}
+
+/* ---------- SidebarAgentDrawer ---------- */
+
 function SidebarAgentDrawer({ agent, onClose }: { agent: SidebarAgent; onClose: () => void }) {
-  const [visible, setVisible] = useState(false)
   const [view, setView] = useState<'detail' | 'configure'>('detail')
   const [promptText, setPromptText] = useState(() => DEFAULT_PROMPTS[agent.name] || '')
   const [saved, setSaved] = useState(false)
   const roleStyle = SIDEBAR_ROLE_STYLES[agent.role]
-
-  useEffect(() => {
-    requestAnimationFrame(() => setVisible(true))
-  }, [])
-
-  const handleClose = () => {
-    setVisible(false)
-    setTimeout(onClose, 250)
-  }
 
   const handleSave = useCallback(() => {
     setSaved(true)
@@ -77,46 +91,65 @@ function SidebarAgentDrawer({ agent, onClose }: { agent: SidebarAgent; onClose: 
   }
 
   const metricBox: React.CSSProperties = {
-    background: '#FAFAF2', border: '1px solid #DDEC90', borderRadius: '6px', padding: '10px 12px',
+    background: 'linear-gradient(135deg, #FAFAF2, #FFFFFF)',
+    border: '1px solid #DDEC90', borderRadius: '10px', padding: '10px 12px',
   }
 
   return (
     <>
-      <div
-        onClick={handleClose}
+      {/* Overlay */}
+      <motion.div
+        onClick={onClose}
+        variants={drawerOverlayVariants}
+        initial="initial"
+        animate="animate"
+        exit="exit"
+        transition={{ duration: 0.2 }}
         style={{
-          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.25)', zIndex: 998,
-          opacity: visible ? 1 : 0, transition: 'opacity 0.25s ease',
+          position: 'fixed', inset: 0, background: 'rgba(26, 26, 0, 0.35)', zIndex: 998,
+          backdropFilter: 'blur(2px)',
         }}
       />
-      <div
+
+      {/* Panel */}
+      <motion.div
+        variants={drawerPanelVariants}
+        initial="initial"
+        animate="animate"
+        exit="exit"
+        transition={drawerPanelTransition}
         style={{
-          position: 'fixed', top: 0, right: 0, bottom: 0, width: view === 'configure' ? '560px' : '420px', zIndex: 999,
-          background: '#FFFFFF', borderLeft: '1px solid #DDEC90',
+          position: 'fixed', top: 0, right: 0, bottom: 0,
+          width: view === 'configure' ? '560px' : '420px',
+          zIndex: 999, background: '#FFFFFF', borderLeft: '1px solid #DDEC90',
           boxShadow: '-8px 0 30px rgba(0,0,0,0.08)',
-          transform: visible ? 'translateX(0)' : 'translateX(100%)',
-          transition: 'transform 0.25s ease, width 0.25s ease',
           display: 'flex', flexDirection: 'column', fontFamily: "'Inter', sans-serif",
         }}
       >
+        {/* Header */}
         <div style={{
-          padding: '20px 24px', borderBottom: '1px solid #DDEC90', background: '#FAFAF2',
+          padding: '20px 24px', borderBottom: '1px solid #DDEC90',
+          background: 'linear-gradient(135deg, #FAFAF2, #F5F8D0)',
           display: 'flex', alignItems: 'flex-start', gap: '14px', flexShrink: 0,
         }}>
           <div style={{
-            width: '56px', height: '56px', borderRadius: '12px',
+            width: '56px', height: '56px', borderRadius: '50%',
             border: '2px solid #DDEC90', background: '#FFFFFF',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: '28px', flexShrink: 0,
+            boxShadow: '0 2px 8px rgba(26,26,0,0.08)',
+            overflow: 'hidden',
           }}>
-            {agent.emoji}
+            {AGENT_AVATAR_IMAGES[agent.name] ? (
+              <img src={AGENT_AVATAR_IMAGES[agent.name]} alt={agent.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : agent.emoji}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
               <span style={{ fontSize: '20px', fontWeight: 700, color: '#1A1A00' }}>{agent.name}</span>
               <span style={{
                 fontSize: '10px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase',
-                borderRadius: '20px', padding: '2px 8px',
+                borderRadius: '9999px', padding: '2px 8px',
                 background: roleStyle.bg, color: roleStyle.color, border: `1px solid ${roleStyle.border}`,
               }}>
                 {agent.role}
@@ -124,17 +157,24 @@ function SidebarAgentDrawer({ agent, onClose }: { agent: SidebarAgent; onClose: 
             </div>
             <div style={{ fontSize: '14px', color: '#6A6A20', marginBottom: '6px' }}>{agent.subtitle}</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#BBCB64' }} />
+              <span
+                style={{
+                  width: '7px', height: '7px', borderRadius: '50%', background: '#BBCB64',
+                  boxShadow: '0 0 0 0 rgba(187,203,100,0.4)',
+                  animation: 'status-pulse 2s infinite',
+                }}
+              />
               <span style={{ fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', color: '#BBCB64' }}>Working</span>
               <span style={{ fontSize: '12px', color: '#6A6A20' }}>&middot; {agent.tasks} active task{agent.tasks !== 1 ? 's' : ''}</span>
             </div>
           </div>
           <button
-            onClick={handleClose}
+            onClick={onClose}
             style={{
-              width: '28px', height: '28px', borderRadius: '6px', border: '1px solid #DDEC90',
+              width: '28px', height: '28px', borderRadius: '8px', border: '1px solid #DDEC90',
               background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center',
               justifyContent: 'center', fontSize: '16px', color: '#6A6A20', flexShrink: 0,
+              transition: 'background 0.15s ease',
             }}
             onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#F5F8D0' }}
             onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
@@ -154,7 +194,7 @@ function SidebarAgentDrawer({ agent, onClose }: { agent: SidebarAgent; onClose: 
                 letterSpacing: '0.5px', textTransform: 'uppercase',
                 background: 'transparent', border: 'none', cursor: 'pointer',
                 color: view === tab.id ? '#7A8A00' : '#6A6A20',
-                borderBottom: view === tab.id ? '2px solid #7A8A00' : '2px solid transparent',
+                borderBottom: view === tab.id ? '2px solid #BBCB64' : '2px solid transparent',
                 transition: 'all 0.15s',
               }}
             >
@@ -187,14 +227,14 @@ function SidebarAgentDrawer({ agent, onClose }: { agent: SidebarAgent; onClose: 
               <div style={sectionTitle}>Capabilities</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '24px' }}>
                 {agent.capabilities.map(cap => (
-                  <span key={cap} style={{ fontSize: '12px', padding: '4px 10px', borderRadius: '20px', background: '#F5F8D0', color: '#1A1A00', border: '1px solid #DDEC90', fontWeight: 600 }}>{cap}</span>
+                  <span key={cap} style={{ fontSize: '12px', padding: '4px 10px', borderRadius: '9999px', background: '#F5F8D0', color: '#1A1A00', border: '1px solid #DDEC90', fontWeight: 600 }}>{cap}</span>
                 ))}
               </div>
 
               <div style={sectionTitle}>Assigned Projects</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '24px' }}>
                 {agent.assignedProjects.map(p => (
-                  <div key={p} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', background: '#FAFAF2', borderRadius: '6px', border: '1px solid #F5F8D0' }}>
+                  <div key={p} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', background: '#FAFAF2', borderRadius: '8px', border: '1px solid #F5F8D0' }}>
                     <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#BBCB64', flexShrink: 0 }} />
                     <span style={{ fontSize: '13px', fontWeight: 600, color: '#1A1A00' }}>{p}</span>
                   </div>
@@ -217,9 +257,14 @@ function SidebarAgentDrawer({ agent, onClose }: { agent: SidebarAgent; onClose: 
               </div>
             </div>
 
+            {/* Footer buttons */}
             <div style={{ padding: '16px 24px', borderTop: '1px solid #DDEC90', background: '#FAFAF2', display: 'flex', gap: '10px', flexShrink: 0 }}>
               <button
-                style={{ flex: 1, fontSize: '13px', fontWeight: 700, color: '#7A8A00', border: '1px solid #DDEC90', background: 'transparent', borderRadius: '6px', padding: '10px 16px', cursor: 'pointer' }}
+                style={{
+                  flex: 1, fontSize: '13px', fontWeight: 700, color: '#7A8A00',
+                  border: '1px solid #DDEC90', background: 'transparent', borderRadius: '8px',
+                  padding: '10px 16px', cursor: 'pointer', transition: 'background 0.15s ease',
+                }}
                 onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#F5F8D0' }}
                 onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
               >
@@ -227,9 +272,17 @@ function SidebarAgentDrawer({ agent, onClose }: { agent: SidebarAgent; onClose: 
               </button>
               <button
                 onClick={() => setView('configure')}
-                style={{ flex: 1, fontSize: '13px', fontWeight: 700, color: '#1A1A00', background: '#BBCB64', border: 'none', borderRadius: '6px', padding: '10px 16px', cursor: 'pointer' }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.9' }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}
+                style={{
+                  flex: 1, fontSize: '13px', fontWeight: 700, color: '#1A1A00',
+                  background: '#BBCB64', border: 'none', borderRadius: '8px',
+                  padding: '10px 16px', cursor: 'pointer', transition: 'all 0.15s ease',
+                }}
+                onMouseEnter={e => {
+                  (e.currentTarget as HTMLElement).style.boxShadow = '0 2px 8px rgba(187,203,100,0.3)'
+                }}
+                onMouseLeave={e => {
+                  (e.currentTarget as HTMLElement).style.boxShadow = 'none'
+                }}
               >
                 Configure
               </button>
@@ -257,7 +310,7 @@ function SidebarAgentDrawer({ agent, onClose }: { agent: SidebarAgent; onClose: 
                   { label: 'Characters', value: promptText.length.toLocaleString() },
                   { label: 'Lines', value: String(promptText.split('\n').length) },
                 ].map(m => (
-                  <div key={m.label} style={{ flex: 1, padding: '8px 12px', borderRadius: '6px', background: '#F5F8D0', border: '1px solid #DDEC90' }}>
+                  <div key={m.label} style={{ flex: 1, padding: '8px 12px', borderRadius: '10px', background: '#F5F8D0', border: '1px solid #DDEC90' }}>
                     <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: '#7A8A00', marginBottom: '2px' }}>{m.label}</div>
                     <div style={{ fontSize: '13px', fontWeight: 600, color: '#1A1A00' }}>{m.value}</div>
                   </div>
@@ -287,7 +340,7 @@ function SidebarAgentDrawer({ agent, onClose }: { agent: SidebarAgent; onClose: 
                     <button
                       key={item.label}
                       onClick={() => setPromptText(prev => prev + item.text)}
-                      style={{ fontSize: '11px', fontWeight: 600, padding: '4px 10px', borderRadius: '20px', background: 'transparent', color: '#7A8A00', border: '1px solid #DDEC90', cursor: 'pointer', transition: 'background 0.12s' }}
+                      style={{ fontSize: '11px', fontWeight: 600, padding: '4px 10px', borderRadius: '9999px', background: 'transparent', color: '#7A8A00', border: '1px solid #DDEC90', cursor: 'pointer', transition: 'background 0.12s' }}
                       onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#F5F8D0' }}
                       onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
                     >
@@ -301,7 +354,7 @@ function SidebarAgentDrawer({ agent, onClose }: { agent: SidebarAgent; onClose: 
             <div style={{ padding: '16px 24px', borderTop: '1px solid #DDEC90', background: '#FAFAF2', display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
               <button
                 onClick={() => setPromptText(DEFAULT_PROMPTS[agent.name] || '')}
-                style={{ fontSize: '12px', fontWeight: 600, color: '#6A6A20', border: '1px solid #DDEC90', background: 'transparent', borderRadius: '6px', padding: '8px 14px', cursor: 'pointer', transition: 'background 0.12s' }}
+                style={{ fontSize: '12px', fontWeight: 600, color: '#6A6A20', border: '1px solid #DDEC90', background: 'transparent', borderRadius: '8px', padding: '8px 14px', cursor: 'pointer', transition: 'background 0.12s' }}
                 onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#F5F8D0' }}
                 onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
               >
@@ -310,7 +363,7 @@ function SidebarAgentDrawer({ agent, onClose }: { agent: SidebarAgent; onClose: 
               <div style={{ flex: 1 }} />
               <button
                 onClick={() => setView('detail')}
-                style={{ fontSize: '13px', fontWeight: 700, color: '#7A8A00', border: '1px solid #DDEC90', background: 'transparent', borderRadius: '6px', padding: '10px 16px', cursor: 'pointer', transition: 'background 0.12s' }}
+                style={{ fontSize: '13px', fontWeight: 700, color: '#7A8A00', border: '1px solid #DDEC90', background: 'transparent', borderRadius: '8px', padding: '10px 16px', cursor: 'pointer', transition: 'background 0.12s' }}
                 onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#F5F8D0' }}
                 onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
               >
@@ -318,16 +371,16 @@ function SidebarAgentDrawer({ agent, onClose }: { agent: SidebarAgent; onClose: 
               </button>
               <button
                 onClick={handleSave}
-                style={{ fontSize: '13px', fontWeight: 700, color: saved ? '#FFFFFF' : '#1A1A00', background: saved ? '#7A8A00' : '#BBCB64', border: 'none', borderRadius: '6px', padding: '10px 20px', cursor: 'pointer', transition: 'all 0.2s' }}
-                onMouseEnter={e => { if (!saved) (e.currentTarget as HTMLElement).style.opacity = '0.9' }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}
+                style={{ fontSize: '13px', fontWeight: 700, color: saved ? '#FFFFFF' : '#1A1A00', background: saved ? '#7A8A00' : '#BBCB64', border: 'none', borderRadius: '8px', padding: '10px 20px', cursor: 'pointer', transition: 'all 0.2s' }}
+                onMouseEnter={e => { if (!saved) (e.currentTarget as HTMLElement).style.boxShadow = '0 2px 8px rgba(187,203,100,0.3)' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = 'none' }}
               >
                 {saved ? '\u2713 Saved' : 'Save Prompt'}
               </button>
             </div>
           </>
         )}
-      </div>
+      </motion.div>
     </>
   )
 }
@@ -340,16 +393,16 @@ function getProjectDotColor(stats: ProjectSummary['stats']): string {
 }
 
 const sbLabel: React.CSSProperties = {
-  fontSize: '12px', fontWeight: 700, letterSpacing: '2px',
+  fontSize: '10px', fontWeight: 700, letterSpacing: '2px',
   textTransform: 'uppercase', color: '#7A8A00',
-  padding: '10px 18px 5px', display: 'block',
+  padding: '14px 18px 6px', display: 'block',
 }
 
 const sbItem: React.CSSProperties = {
-  display: 'flex', alignItems: 'center', gap: '9px',
-  padding: '8px 18px', fontSize: '16px', fontWeight: 600,
+  display: 'flex', alignItems: 'center', gap: '8px',
+  padding: '7px 16px', fontSize: '13px', fontWeight: 600,
   color: '#6A6A20', cursor: 'pointer',
-  borderLeft: '3px solid transparent', transition: 'all 0.12s',
+  borderLeft: '3px solid transparent', transition: 'all 0.15s ease',
   textDecoration: 'none',
 }
 
@@ -360,7 +413,12 @@ export function DashboardSidebar({ projects, onNewProject, onTabChange }: Dashbo
   return (
     <aside
       className="flex flex-col w-[220px] shrink-0 overflow-y-auto"
-      style={{ background: '#FFFFFF', borderRight: '1px solid #DDEC90', fontFamily: "'Inter', sans-serif", paddingBottom: '24px' }}
+      style={{
+        background: '#FFFFFF',
+        boxShadow: '1px 0 0 #DDEC90',
+        fontFamily: "'Inter', sans-serif",
+        paddingBottom: '24px',
+      }}
     >
       {/* PROJECTS */}
       <div>
@@ -370,9 +428,10 @@ export function DashboardSidebar({ projects, onNewProject, onTabChange }: Dashbo
         <div
           style={{
             ...sbItem,
-            background: '#F5F8D0',
+            background: 'linear-gradient(to right, #F5F8D0, #FAFAF2)',
             borderLeft: '3px solid #BBCB64',
             color: '#1A1A00',
+            fontWeight: 700,
           }}
           onMouseEnter={() => setHoveredItem('__all')}
           onMouseLeave={() => setHoveredItem(null)}
@@ -380,9 +439,9 @@ export function DashboardSidebar({ projects, onNewProject, onTabChange }: Dashbo
           <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#BBCB64', flexShrink: 0 }} />
           All Projects
           <span style={{
-            marginLeft: 'auto', fontSize: '12px', fontWeight: 700,
+            marginLeft: 'auto', fontSize: '11px', fontWeight: 700,
             background: '#F5F8D0', color: '#7A8A00',
-            border: '1px solid #DDEC90', borderRadius: '10px', padding: '1px 7px', flexShrink: 0,
+            border: '1px solid #DDEC90', borderRadius: '9999px', padding: '1px 7px', flexShrink: 0,
           }}>
             {projects.length}
           </span>
@@ -398,7 +457,9 @@ export function DashboardSidebar({ projects, onNewProject, onTabChange }: Dashbo
               style={{
                 ...sbItem,
                 background: hoveredItem === project.name ? '#F5F8D0' : 'transparent',
-                borderLeft: hoveredItem === project.name ? '3px solid #BBCB64' : '3px solid transparent',
+                borderLeft: hoveredItem === project.name
+                  ? '3px solid rgba(187,203,100,0.4)'
+                  : '3px solid transparent',
                 color: hoveredItem === project.name ? '#1A1A00' : '#6A6A20',
               }}
               onMouseEnter={() => setHoveredItem(project.name)}
@@ -411,8 +472,8 @@ export function DashboardSidebar({ projects, onNewProject, onTabChange }: Dashbo
         ))}
       </div>
 
-      {/* Divider */}
-      <div style={{ height: '1px', background: '#DDEC90', margin: '8px 18px' }} />
+      {/* Gradient divider */}
+      <div style={{ height: '1px', background: 'linear-gradient(to right, transparent, #DDEC90, transparent)', margin: '6px 16px' }} />
 
       {/* AGENTS */}
       <div>
@@ -423,31 +484,36 @@ export function DashboardSidebar({ projects, onNewProject, onTabChange }: Dashbo
             style={{
               ...sbItem,
               background: hoveredItem === `agent-${agent.name}` ? '#F5F8D0' : 'transparent',
-              borderLeft: hoveredItem === `agent-${agent.name}` ? '3px solid #BBCB64' : '3px solid transparent',
+              borderLeft: hoveredItem === `agent-${agent.name}`
+                ? '3px solid rgba(187,203,100,0.4)'
+                : '3px solid transparent',
               color: hoveredItem === `agent-${agent.name}` ? '#1A1A00' : '#6A6A20',
             }}
             onClick={() => setSelectedAgent(agent)}
             onMouseEnter={() => setHoveredItem(`agent-${agent.name}`)}
             onMouseLeave={() => setHoveredItem(null)}
           >
-            <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#BBCB64', flexShrink: 0 }} />
+            <span
+              className="status-dot-active"
+              style={{ width: '7px', height: '7px', borderRadius: '50%', flexShrink: 0 }}
+            />
             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{agent.name}</span>
             {agent.lead && (
               <span style={{
-                fontSize: '12px', fontWeight: 700,
+                fontSize: '11px', fontWeight: 700,
                 background: '#FFF0DC', color: '#A05A00',
-                border: '1px solid #F0C880', borderRadius: '10px', padding: '1px 7px', flexShrink: 0,
+                border: '1px solid #F0C880', borderRadius: '9999px', padding: '1px 7px', flexShrink: 0,
               }}>
                 LEAD
               </span>
             )}
           </div>
         ))}
-        <div style={{ color: '#9A9A50', fontSize: '13px', padding: '4px 36px' }}>+ 9 more agents</div>
+        <div style={{ color: '#9A9A50', fontSize: '12px', padding: '4px 36px' }}>+ 9 more agents</div>
       </div>
 
-      {/* Divider */}
-      <div style={{ height: '1px', background: '#DDEC90', margin: '8px 18px' }} />
+      {/* Gradient divider */}
+      <div style={{ height: '1px', background: 'linear-gradient(to right, transparent, #DDEC90, transparent)', margin: '6px 16px' }} />
 
       {/* QUICK ACTIONS */}
       <div>
@@ -455,6 +521,7 @@ export function DashboardSidebar({ projects, onNewProject, onTabChange }: Dashbo
         {[
           { label: 'Upload Project', dot: '#BBCB64', action: () => onNewProject?.() },
           { label: 'HITL Queue', dot: '#F79A19', badge: String(projects.filter(p => p.stats.in_progress > 0).length || 0), warn: true, action: () => onTabChange?.('DASHBOARD') },
+          { label: 'Pathways', dot: '#BBCB64', action: () => onTabChange?.('PATHWAYS') },
           { label: 'Token Report', dot: '#BBCB64', action: () => onTabChange?.('ANALYTICS') },
           { label: 'Configuration', dot: '#BBCB64', action: () => onTabChange?.('CONFIG') },
         ].map(({ label, dot, badge, warn, action }) => (
@@ -464,7 +531,9 @@ export function DashboardSidebar({ projects, onNewProject, onTabChange }: Dashbo
             style={{
               ...sbItem,
               background: hoveredItem === label ? '#F5F8D0' : 'transparent',
-              borderLeft: hoveredItem === label ? '3px solid #BBCB64' : '3px solid transparent',
+              borderLeft: hoveredItem === label
+                ? '3px solid rgba(187,203,100,0.4)'
+                : '3px solid transparent',
               color: hoveredItem === label ? '#1A1A00' : '#6A6A20',
               cursor: 'pointer',
             }}
@@ -475,11 +544,11 @@ export function DashboardSidebar({ projects, onNewProject, onTabChange }: Dashbo
             <span style={{ flex: 1 }}>{label}</span>
             {badge && badge !== '0' && (
               <span style={{
-                fontSize: '12px', fontWeight: 700,
+                fontSize: '11px', fontWeight: 700,
                 background: warn ? '#FFF0DC' : '#F5F8D0',
                 color: warn ? '#A05A00' : '#7A8A00',
                 border: `1px solid ${warn ? '#F0C880' : '#DDEC90'}`,
-                borderRadius: '10px', padding: '1px 7px',
+                borderRadius: '9999px', padding: '1px 7px',
               }}>
                 {badge}
               </span>
@@ -487,10 +556,13 @@ export function DashboardSidebar({ projects, onNewProject, onTabChange }: Dashbo
           </div>
         ))}
       </div>
-      {/* Agent Detail Drawer */}
-      {selectedAgent && (
-        <SidebarAgentDrawer agent={selectedAgent} onClose={() => setSelectedAgent(null)} />
-      )}
+
+      {/* Agent Detail Drawer - wrapped in AnimatePresence for exit animations */}
+      <AnimatePresence>
+        {selectedAgent && (
+          <SidebarAgentDrawer agent={selectedAgent} onClose={() => setSelectedAgent(null)} />
+        )}
+      </AnimatePresence>
     </aside>
   )
 }

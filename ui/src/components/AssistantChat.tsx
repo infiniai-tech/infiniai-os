@@ -8,14 +8,14 @@
 
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { Send, Loader2, Wifi, WifiOff, Plus, History } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useAssistantChat } from '../hooks/useAssistantChat'
 import { ChatMessage as ChatMessageComponent } from './ChatMessage'
 import { ConversationHistory } from './ConversationHistory'
 import { QuestionOptions } from './QuestionOptions'
+import { TypingIndicator } from './TypingIndicator'
 import type { ChatMessage } from '../lib/types'
 import { isSubmitEnter } from '../lib/keyboard'
-import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
 
 interface AssistantChatProps {
   projectName: string
@@ -170,31 +170,38 @@ export function AssistantChat({
     return Array.from(messageMap.values())
   }, [initialMessages, messages, conversationId, isLoadingConversation])
 
+  const isInputDisabled = isLoading || isLoadingConversation || connectionStatus !== 'connected' || !!currentQuestions
+  const isSendDisabled = !inputValue.trim() || isInputDisabled
+
   return (
-    <div className="flex flex-col h-full">
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       {/* Header with actions and connection status */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-background">
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '8px 16px',
+          borderBottom: '1px solid #DDEC90',
+          background: '#FAFAF2',
+        }}
+      >
         {/* Action buttons */}
-        <div className="flex items-center gap-1 relative">
-          <Button
-            variant="ghost"
-            size="icon"
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', position: 'relative' }}>
+          <ActionButton
             onClick={handleNewChat}
-            className="h-8 w-8"
             title="New conversation"
             disabled={isLoading}
           >
-            <Plus size={16} />
-          </Button>
-          <Button
-            variant={showHistory ? 'secondary' : 'ghost'}
-            size="icon"
+            <Plus size={15} />
+          </ActionButton>
+          <ActionButton
             onClick={() => setShowHistory(!showHistory)}
-            className="h-8 w-8"
             title="Conversation history"
+            isActive={showHistory}
           >
-            <History size={16} />
-          </Button>
+            <History size={15} />
+          </ActionButton>
 
           {/* History dropdown */}
           <ConversationHistory
@@ -207,40 +214,66 @@ export function AssistantChat({
         </div>
 
         {/* Connection status */}
-        <div className="flex items-center gap-2">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           {connectionStatus === 'connected' ? (
             <>
-              <Wifi size={14} className="text-green-500" />
-              <span className="text-xs text-muted-foreground">Connected</span>
+              <Wifi size={13} style={{ color: '#7A8A00' }} />
+              <span style={{ fontSize: '12px', color: '#6A6A20', fontFamily: "'Inter', sans-serif" }}>Connected</span>
             </>
           ) : connectionStatus === 'connecting' ? (
             <>
-              <Loader2 size={14} className="text-primary animate-spin" />
-              <span className="text-xs text-muted-foreground">Connecting...</span>
+              <Loader2 size={13} style={{ color: '#F79A19', animation: 'spin 1s linear infinite' }} />
+              <span style={{ fontSize: '12px', color: '#6A6A20', fontFamily: "'Inter', sans-serif" }}>Connecting...</span>
             </>
           ) : (
             <>
-              <WifiOff size={14} className="text-destructive" />
-              <span className="text-xs text-muted-foreground">Disconnected</span>
+              <WifiOff size={13} style={{ color: '#F79A19' }} />
+              <span style={{ fontSize: '12px', color: '#6A6A20', fontFamily: "'Inter', sans-serif" }}>Disconnected</span>
             </>
           )}
         </div>
       </div>
 
       {/* Messages area */}
-      <div className="flex-1 overflow-y-auto bg-background">
+      <div
+        style={{
+          flex: 1,
+          overflowY: 'auto',
+          background: '#FAFAF2',
+        }}
+      >
         {isLoadingConversation ? (
-          <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
-            <div className="flex items-center gap-2">
-              <Loader2 size={16} className="animate-spin" />
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: '100%',
+              color: '#6A6A20',
+              fontSize: '14px',
+              fontFamily: "'Inter', sans-serif",
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Loader2 size={16} style={{ animation: 'spin 1s linear infinite', color: '#BBCB64' }} />
               <span>Loading conversation...</span>
             </div>
           </div>
         ) : displayMessages.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: '100%',
+              color: '#6A6A20',
+              fontSize: '14px',
+              fontFamily: "'Inter', sans-serif",
+            }}
+          >
             {isLoading ? (
-              <div className="flex items-center gap-2">
-                <Loader2 size={16} className="animate-spin" />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Loader2 size={16} style={{ animation: 'spin 1s linear infinite', color: '#BBCB64' }} />
                 <span>Connecting to assistant...</span>
               </div>
             ) : (
@@ -248,7 +281,7 @@ export function AssistantChat({
             )}
           </div>
         ) : (
-          <div className="py-4">
+          <div style={{ padding: '16px 0' }}>
             {displayMessages.map((message) => (
               <ChatMessageComponent key={message.id} message={message} />
             ))}
@@ -258,22 +291,26 @@ export function AssistantChat({
       </div>
 
       {/* Loading indicator */}
-      {isLoading && displayMessages.length > 0 && (
-        <div className="px-4 py-2 border-t border-border bg-background">
-          <div className="flex items-center gap-2 text-muted-foreground text-sm">
-            <div className="flex gap-1">
-              <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-              <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-              <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-            </div>
-            <span>Thinking...</span>
-          </div>
-        </div>
-      )}
+      <AnimatePresence>
+        {isLoading && displayMessages.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+            style={{
+              borderTop: '1px solid #DDEC90',
+              background: '#FAFAF2',
+            }}
+          >
+            <TypingIndicator />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Structured questions from assistant */}
       {currentQuestions && (
-        <div className="border-t border-border bg-background">
+        <div style={{ borderTop: '1px solid #DDEC90', background: '#FFFFFF' }}>
           <QuestionOptions
             questions={currentQuestions}
             onSubmit={sendAnswer}
@@ -282,34 +319,138 @@ export function AssistantChat({
       )}
 
       {/* Input area */}
-      <div className="border-t border-border p-4 bg-card">
-        <div className="flex gap-2">
-          <Textarea
+      <div
+        style={{
+          borderTop: '1px solid #DDEC90',
+          padding: '12px 16px',
+          background: '#FFFFFF',
+        }}
+      >
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
+          <textarea
             ref={inputRef}
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Ask about the codebase..."
-            disabled={isLoading || isLoadingConversation || connectionStatus !== 'connected' || !!currentQuestions}
-            className="flex-1 resize-none min-h-[44px] max-h-[120px]"
+            disabled={isInputDisabled}
             rows={1}
+            style={{
+              flex: 1,
+              resize: 'none',
+              minHeight: '44px',
+              maxHeight: '120px',
+              borderRadius: '24px',
+              border: '1px solid #DDEC90',
+              padding: '10px 16px',
+              fontSize: '14px',
+              fontFamily: "'Inter', sans-serif",
+              color: '#1A1A00',
+              background: isInputDisabled ? '#F5F8D0' : '#FFFFFF',
+              outline: 'none',
+              lineHeight: '1.5',
+              transition: 'border-color 150ms, box-shadow 150ms',
+            }}
+            onFocus={(e) => {
+              e.currentTarget.style.borderColor = '#BBCB64'
+              e.currentTarget.style.boxShadow = '0 0 0 3px rgba(187, 203, 100, 0.2)'
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.borderColor = '#DDEC90'
+              e.currentTarget.style.boxShadow = 'none'
+            }}
           />
-          <Button
+          <motion.button
+            whileHover={isSendDisabled ? {} : { scale: 1.05 }}
+            whileTap={isSendDisabled ? {} : { scale: 0.95 }}
             onClick={handleSend}
-            disabled={!inputValue.trim() || isLoading || isLoadingConversation || connectionStatus !== 'connected' || !!currentQuestions}
+            disabled={isSendDisabled}
             title="Send message"
+            style={{
+              width: '40px',
+              height: '40px',
+              borderRadius: '9999px',
+              border: 'none',
+              background: isSendDisabled ? '#DDEC90' : '#BBCB64',
+              color: '#1A1A00',
+              cursor: isSendDisabled ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+              opacity: isSendDisabled ? 0.5 : 1,
+              transition: 'background 150ms, opacity 150ms',
+            }}
           >
             {isLoading ? (
-              <Loader2 size={18} className="animate-spin" />
+              <Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} />
             ) : (
               <Send size={18} />
             )}
-          </Button>
+          </motion.button>
         </div>
-        <p className="text-xs text-muted-foreground mt-2">
+        <p
+          style={{
+            fontSize: '12px',
+            color: '#6A6A20',
+            marginTop: '8px',
+            fontFamily: "'Inter', sans-serif",
+          }}
+        >
           {currentQuestions ? 'Select an option above to continue' : 'Press Enter to send, Shift+Enter for new line'}
         </p>
       </div>
     </div>
+  )
+}
+
+/**
+ * Small action button used in the chat sub-header (New, History).
+ */
+function ActionButton({
+  onClick,
+  title,
+  disabled,
+  isActive,
+  children,
+}: {
+  onClick: () => void
+  title: string
+  disabled?: boolean
+  isActive?: boolean
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      onClick={onClick}
+      title={title}
+      disabled={disabled}
+      style={{
+        width: '30px',
+        height: '30px',
+        borderRadius: '8px',
+        border: '1px solid ' + (isActive ? '#BBCB64' : 'transparent'),
+        background: isActive ? '#F5F8D0' : 'transparent',
+        color: '#1A1A00',
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        opacity: disabled ? 0.4 : 1,
+        transition: 'background 150ms, border-color 150ms',
+      }}
+      onMouseEnter={(e) => {
+        if (!disabled && !isActive) {
+          (e.currentTarget as HTMLButtonElement).style.background = '#F5F8D0'
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!isActive) {
+          (e.currentTarget as HTMLButtonElement).style.background = 'transparent'
+        }
+      }}
+    >
+      {children}
+    </button>
   )
 }

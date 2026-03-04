@@ -6,12 +6,10 @@
  */
 
 import { useState, useEffect } from 'react'
-import { MessageSquare, Trash2, Loader2, AlertCircle } from 'lucide-react'
+import { MessageSquare, Trash2, Loader2 } from 'lucide-react'
 import { useConversations, useDeleteConversation } from '../hooks/useConversations'
 import { ConfirmDialog } from './ConfirmDialog'
 import type { AssistantConversation } from '../lib/types'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
 
 interface ConversationHistoryProps {
   projectName: string
@@ -21,12 +19,8 @@ interface ConversationHistoryProps {
   onSelectConversation: (conversationId: number) => void
 }
 
-/**
- * Format a relative time string from an ISO date
- */
 function formatRelativeTime(dateString: string | null): string {
   if (!dateString) return ''
-
   const date = new Date(dateString)
   const now = new Date()
   const diffMs = now.getTime() - date.getTime()
@@ -34,13 +28,11 @@ function formatRelativeTime(dateString: string | null): string {
   const diffMinutes = Math.floor(diffSeconds / 60)
   const diffHours = Math.floor(diffMinutes / 60)
   const diffDays = Math.floor(diffHours / 24)
-
   if (diffSeconds < 60) return 'just now'
   if (diffMinutes < 60) return `${diffMinutes}m ago`
   if (diffHours < 24) return `${diffHours}h ago`
   if (diffDays === 1) return 'yesterday'
   if (diffDays < 7) return `${diffDays}d ago`
-
   return date.toLocaleDateString()
 }
 
@@ -57,11 +49,8 @@ export function ConversationHistory({
   const { data: conversations, isLoading } = useConversations(projectName)
   const deleteConversation = useDeleteConversation(projectName)
 
-  // Clear error when dropdown closes
   useEffect(() => {
-    if (!isOpen) {
-      setDeleteError(null)
-    }
+    if (!isOpen) setDeleteError(null)
   }, [isOpen])
 
   const handleDeleteClick = (e: React.MouseEvent, conversation: AssistantConversation) => {
@@ -71,13 +60,11 @@ export function ConversationHistory({
 
   const handleConfirmDelete = async () => {
     if (!conversationToDelete) return
-
     try {
       setDeleteError(null)
       await deleteConversation.mutateAsync(conversationToDelete.id)
       setConversationToDelete(null)
     } catch {
-      // Keep dialog open and show error to user
       setDeleteError('Failed to delete conversation. Please try again.')
     }
   }
@@ -92,17 +79,11 @@ export function ConversationHistory({
     onClose()
   }
 
-  // Handle Escape key to close dropdown
   useEffect(() => {
     if (!isOpen) return
-
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault()
-        onClose()
-      }
+      if (e.key === 'Escape') { e.preventDefault(); onClose() }
     }
-
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [isOpen, onClose])
@@ -112,96 +93,155 @@ export function ConversationHistory({
   return (
     <>
       {/* Backdrop */}
-      <div
-        className="fixed inset-0 z-40"
-        onClick={onClose}
-      />
+      <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={onClose} />
 
-      {/* Dropdown */}
-      <Card className="absolute top-full left-0 mt-2 z-50 w-[320px] max-w-[calc(100vw-2rem)] shadow-lg">
+      {/* Dropdown panel */}
+      <div style={{
+        position: 'absolute',
+        top: 'calc(100% + 8px)',
+        left: 0,
+        zIndex: 50,
+        width: '320px',
+        maxWidth: 'calc(100vw - 2rem)',
+        background: '#FFFFFF',
+        border: '1px solid #DDEC90',
+        borderRadius: '12px',
+        boxShadow: '0 8px 24px rgba(26,26,0,0.10), 0 2px 6px rgba(26,26,0,0.06)',
+        overflow: 'hidden',
+        fontFamily: "'Inter', sans-serif",
+      }}>
         {/* Header */}
-        <CardHeader className="p-3 border-b border-border">
-          <h3 className="font-bold text-sm">Conversation History</h3>
-        </CardHeader>
+        <div style={{
+          padding: '12px 14px',
+          borderBottom: '1px solid #DDEC90',
+          background: 'linear-gradient(to bottom, #FAFAF2, #FFFFFF)',
+        }}>
+          <h3 style={{ fontWeight: 700, fontSize: '13px', color: '#1A1A00', margin: 0 }}>
+            Conversation History
+          </h3>
+        </div>
 
         {/* Content */}
-        <CardContent className="p-0">
+        <div>
           {isLoading ? (
-            <div className="p-4 flex items-center justify-center">
-              <Loader2 size={20} className="animate-spin text-muted-foreground" />
+            <div style={{ padding: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Loader2 size={20} style={{ color: '#7A8A00', animation: 'spin 1s linear infinite' }} />
             </div>
           ) : !conversations || conversations.length === 0 ? (
-            <div className="p-4 text-center text-muted-foreground text-sm">
+            <div style={{ padding: '20px', textAlign: 'center', fontSize: '13px', color: '#6A6A20' }}>
               No conversations yet
             </div>
           ) : (
-            <div className="max-h-[300px] overflow-y-auto">
+            <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
               {conversations.map((conversation) => {
                 const isCurrent = conversation.id === currentConversationId
-
                 return (
                   <div
                     key={conversation.id}
-                    className={`flex items-center group ${
-                      isCurrent ? 'bg-primary/10' : 'hover:bg-muted'
-                    }`}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      background: isCurrent ? '#F5F8D0' : 'transparent',
+                      borderBottom: '1px solid #F5F8D0',
+                    }}
+                    onMouseEnter={e => {
+                      if (!isCurrent) (e.currentTarget as HTMLElement).style.background = '#FAFAF2'
+                    }}
+                    onMouseLeave={e => {
+                      if (!isCurrent) (e.currentTarget as HTMLElement).style.background = 'transparent'
+                    }}
                   >
                     <button
                       onClick={() => handleSelectConversation(conversation.id)}
-                      className="flex-1 px-3 py-2 text-left"
                       disabled={isCurrent}
+                      style={{
+                        flex: 1,
+                        padding: '10px 14px',
+                        textAlign: 'left',
+                        background: 'transparent',
+                        border: 'none',
+                        cursor: isCurrent ? 'default' : 'pointer',
+                      }}
                     >
-                      <div className="flex items-start gap-2">
-                        <MessageSquare size={16} className="mt-0.5 flex-shrink-0 text-muted-foreground" />
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium truncate text-foreground">
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                        <MessageSquare size={15} style={{ color: '#7A8A00', flexShrink: 0, marginTop: '1px' }} />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{
+                            fontWeight: 600,
+                            fontSize: '13px',
+                            color: '#1A1A00',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}>
                             {conversation.title || 'Untitled conversation'}
                           </div>
-                          <div className="text-xs flex items-center gap-2 text-muted-foreground">
+                          <div style={{
+                            fontSize: '11px',
+                            color: '#6A6A20',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            marginTop: '2px',
+                            fontFamily: 'monospace',
+                          }}>
                             <span>{conversation.message_count} messages</span>
-                            <span>|</span>
+                            <span>·</span>
                             <span>{formatRelativeTime(conversation.updated_at)}</span>
                           </div>
                         </div>
                       </div>
                     </button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={(e: React.MouseEvent) => handleDeleteClick(e, conversation)}
-                      className={`h-8 w-8 mr-2 ${
-                        isCurrent
-                          ? 'opacity-60 hover:opacity-100'
-                          : 'opacity-0 group-hover:opacity-100'
-                      } hover:text-destructive hover:bg-destructive/10`}
+                    <button
+                      onClick={(e) => handleDeleteClick(e, conversation)}
                       title="Delete conversation"
+                      style={{
+                        width: '32px',
+                        height: '32px',
+                        marginRight: '8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        background: 'transparent',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        color: '#9A9A60',
+                        opacity: isCurrent ? 0.6 : 0,
+                        transition: 'opacity 0.15s, color 0.15s, background 0.15s',
+                        flexShrink: 0,
+                      }}
+                      onMouseEnter={e => {
+                        const btn = e.currentTarget as HTMLElement
+                        btn.style.color = '#A05A00'
+                        btn.style.background = '#FFF0DC'
+                        btn.style.opacity = '1'
+                      }}
+                      onMouseLeave={e => {
+                        const btn = e.currentTarget as HTMLElement
+                        btn.style.color = '#9A9A60'
+                        btn.style.background = 'transparent'
+                        btn.style.opacity = isCurrent ? '0.6' : '0'
+                      }}
                     >
                       <Trash2 size={14} />
-                    </Button>
+                    </button>
                   </div>
                 )
               })}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Delete Confirmation Dialog */}
       <ConfirmDialog
         isOpen={conversationToDelete !== null}
         title="Delete Conversation"
         message={
-          deleteError ? (
-            <div className="space-y-3">
-              <p>{`Are you sure you want to delete "${conversationToDelete?.title || 'this conversation'}"? This action cannot be undone.`}</p>
-              <div className="flex items-center gap-2 p-2 bg-destructive/10 border border-destructive rounded text-sm text-destructive">
-                <AlertCircle size={16} className="flex-shrink-0" />
-                <span>{deleteError}</span>
-              </div>
-            </div>
-          ) : (
-            `Are you sure you want to delete "${conversationToDelete?.title || 'this conversation'}"? This action cannot be undone.`
-          )
+          deleteError
+            ? `Are you sure you want to delete "${conversationToDelete?.title || 'this conversation'}"? This action cannot be undone.\n\n${deleteError}`
+            : `Are you sure you want to delete "${conversationToDelete?.title || 'this conversation'}"? This action cannot be undone.`
         }
         confirmLabel="Delete"
         cancelLabel="Cancel"

@@ -9,8 +9,6 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { Plus, X } from 'lucide-react'
 import type { TerminalInfo } from '@/lib/types'
 import { isSubmitEnter } from '@/lib/keyboard'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 
 interface TerminalTabsProps {
   terminals: TerminalInfo[]
@@ -28,218 +26,239 @@ interface ContextMenuState {
   terminalId: string | null
 }
 
-export function TerminalTabs({
-  terminals,
-  activeTerminalId,
-  onSelect,
-  onCreate,
-  onRename,
-  onClose,
-}: TerminalTabsProps) {
+export function TerminalTabs({ terminals, activeTerminalId, onSelect, onCreate, onRename, onClose }: TerminalTabsProps) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editValue, setEditValue] = useState('')
-  const [contextMenu, setContextMenu] = useState<ContextMenuState>({
-    visible: false,
-    x: 0,
-    y: 0,
-    terminalId: null,
-  })
+  const [contextMenu, setContextMenu] = useState<ContextMenuState>({ visible: false, x: 0, y: 0, terminalId: null })
   const inputRef = useRef<HTMLInputElement>(null)
   const contextMenuRef = useRef<HTMLDivElement>(null)
 
-  // Focus input when editing starts
   useEffect(() => {
-    if (editingId && inputRef.current) {
-      inputRef.current.focus()
-      inputRef.current.select()
-    }
+    if (editingId && inputRef.current) { inputRef.current.focus(); inputRef.current.select() }
   }, [editingId])
 
-  // Close context menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (
-        contextMenuRef.current &&
-        !contextMenuRef.current.contains(e.target as Node)
-      ) {
+      if (contextMenuRef.current && !contextMenuRef.current.contains(e.target as Node)) {
         setContextMenu((prev) => ({ ...prev, visible: false }))
       }
     }
-
     if (contextMenu.visible) {
       document.addEventListener('mousedown', handleClickOutside)
       return () => document.removeEventListener('mousedown', handleClickOutside)
     }
   }, [contextMenu.visible])
 
-  // Start editing a terminal name
   const startEditing = useCallback((terminal: TerminalInfo) => {
     setEditingId(terminal.id)
     setEditValue(terminal.name)
     setContextMenu((prev) => ({ ...prev, visible: false }))
   }, [])
 
-  // Handle edit submission
   const submitEdit = useCallback(() => {
-    if (editingId && editValue.trim()) {
-      onRename(editingId, editValue.trim())
-    }
+    if (editingId && editValue.trim()) onRename(editingId, editValue.trim())
     setEditingId(null)
     setEditValue('')
   }, [editingId, editValue, onRename])
 
-  // Cancel editing
-  const cancelEdit = useCallback(() => {
-    setEditingId(null)
-    setEditValue('')
+  const cancelEdit = useCallback(() => { setEditingId(null); setEditValue('') }, [])
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (isSubmitEnter(e, false)) { e.preventDefault(); submitEdit() }
+    else if (e.key === 'Escape') { e.preventDefault(); cancelEdit() }
+  }, [submitEdit, cancelEdit])
+
+  const handleDoubleClick = useCallback((terminal: TerminalInfo) => { startEditing(terminal) }, [startEditing])
+
+  const handleContextMenu = useCallback((e: React.MouseEvent, terminalId: string) => {
+    e.preventDefault()
+    setContextMenu({ visible: true, x: e.clientX, y: e.clientY, terminalId })
   }, [])
 
-  // Handle key events during editing
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (isSubmitEnter(e, false)) {
-        e.preventDefault()
-        submitEdit()
-      } else if (e.key === 'Escape') {
-        e.preventDefault()
-        cancelEdit()
-      }
-    },
-    [submitEdit, cancelEdit]
-  )
-
-  // Handle double-click to start editing
-  const handleDoubleClick = useCallback(
-    (terminal: TerminalInfo) => {
-      startEditing(terminal)
-    },
-    [startEditing]
-  )
-
-  // Handle context menu
-  const handleContextMenu = useCallback(
-    (e: React.MouseEvent, terminalId: string) => {
-      e.preventDefault()
-      setContextMenu({
-        visible: true,
-        x: e.clientX,
-        y: e.clientY,
-        terminalId,
-      })
-    },
-    []
-  )
-
-  // Handle context menu actions
   const handleContextMenuRename = useCallback(() => {
     if (contextMenu.terminalId) {
       const terminal = terminals.find((t) => t.id === contextMenu.terminalId)
-      if (terminal) {
-        startEditing(terminal)
-      }
+      if (terminal) startEditing(terminal)
     }
   }, [contextMenu.terminalId, terminals, startEditing])
 
   const handleContextMenuClose = useCallback(() => {
-    if (contextMenu.terminalId) {
-      onClose(contextMenu.terminalId)
-    }
+    if (contextMenu.terminalId) onClose(contextMenu.terminalId)
     setContextMenu((prev) => ({ ...prev, visible: false }))
   }, [contextMenu.terminalId, onClose])
 
-  // Handle tab close with confirmation if needed
-  const handleClose = useCallback(
-    (e: React.MouseEvent, terminalId: string) => {
-      e.stopPropagation()
-      onClose(terminalId)
-    },
-    [onClose]
-  )
+  const handleClose = useCallback((e: React.MouseEvent, terminalId: string) => {
+    e.stopPropagation()
+    onClose(terminalId)
+  }, [onClose])
 
   return (
-    <div className="flex items-center gap-1 px-2 py-1 bg-zinc-900 border-b border-border overflow-x-auto">
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: '4px',
+      padding: '4px 8px',
+      background: '#18181A',
+      borderBottom: '1px solid #2E2E30',
+      overflowX: 'auto',
+      flexShrink: 0,
+    }}>
       {/* Terminal tabs */}
-      {terminals.map((terminal) => (
-        <div
-          key={terminal.id}
-          className={`
-            group flex items-center gap-1 px-3 py-1 rounded cursor-pointer
-            transition-colors duration-100 select-none min-w-0
-            ${
-              activeTerminalId === terminal.id
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
-            }
-          `}
-          onClick={() => onSelect(terminal.id)}
-          onDoubleClick={() => handleDoubleClick(terminal)}
-          onContextMenu={(e) => handleContextMenu(e, terminal.id)}
-        >
-          {editingId === terminal.id ? (
-            <Input
-              ref={inputRef}
-              type="text"
-              value={editValue}
-              onChange={(e) => setEditValue(e.target.value)}
-              onBlur={submitEdit}
-              onKeyDown={handleKeyDown}
-              className="h-6 px-1 py-0 text-sm font-mono w-24"
-              onClick={(e) => e.stopPropagation()}
-            />
-          ) : (
-            <span className="text-sm font-mono truncate max-w-[120px]">
-              {terminal.name}
-            </span>
-          )}
+      {terminals.map((terminal) => {
+        const isActive = activeTerminalId === terminal.id
+        return (
+          <div
+            key={terminal.id}
+            onClick={() => onSelect(terminal.id)}
+            onDoubleClick={() => handleDoubleClick(terminal)}
+            onContextMenu={(e) => handleContextMenu(e, terminal.id)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '4px',
+              padding: '4px 10px',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              userSelect: 'none',
+              minWidth: 0,
+              flexShrink: 0,
+              background: isActive ? '#BBCB64' : '#2A2A2C',
+              color: isActive ? '#1A1A00' : '#A0A0A8',
+              transition: 'background 0.12s, color 0.12s',
+            }}
+            onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = '#323234' }}
+            onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = '#2A2A2C' }}
+          >
+            {editingId === terminal.id ? (
+              <input
+                ref={inputRef}
+                type="text"
+                value={editValue}
+                onChange={(e) => setEditValue(e.target.value)}
+                onBlur={submitEdit}
+                onKeyDown={handleKeyDown}
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  height: '22px',
+                  padding: '0 4px',
+                  fontSize: '12px',
+                  fontFamily: 'monospace',
+                  width: '96px',
+                  background: '#1A1A1C',
+                  border: '1px solid #BBCB64',
+                  borderRadius: '4px',
+                  color: '#E0E0E0',
+                  outline: 'none',
+                }}
+              />
+            ) : (
+              <span style={{
+                fontSize: '12px',
+                fontFamily: 'monospace',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                maxWidth: '120px',
+              }}>
+                {terminal.name}
+              </span>
+            )}
 
-          {/* Close button */}
-          {terminals.length > 1 && (
-            <button
-              onClick={(e) => handleClose(e, terminal.id)}
-              className={`
-                p-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity
-                ${
-                  activeTerminalId === terminal.id
-                    ? 'hover:bg-black/20'
-                    : 'hover:bg-white/20'
-                }
-              `}
-              title="Close terminal"
-            >
-              <X className="w-3 h-3" />
-            </button>
-          )}
-        </div>
-      ))}
+            {/* Close button */}
+            {terminals.length > 1 && (
+              <button
+                onClick={(e) => handleClose(e, terminal.id)}
+                title="Close terminal"
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  width: '16px', height: '16px',
+                  background: 'transparent', border: 'none',
+                  borderRadius: '3px',
+                  cursor: 'pointer',
+                  color: isActive ? '#1A1A00' : '#606068',
+                  opacity: 0,
+                  transition: 'opacity 0.1s, background 0.1s',
+                  padding: 0,
+                }}
+                onMouseEnter={e => {
+                  const el = e.currentTarget as HTMLElement
+                  el.style.opacity = '1'
+                  el.style.background = isActive ? 'rgba(26,26,0,0.2)' : 'rgba(255,255,255,0.15)'
+                }}
+                onMouseLeave={e => {
+                  const el = e.currentTarget as HTMLElement
+                  el.style.opacity = '0'
+                  el.style.background = 'transparent'
+                }}
+              >
+                <X size={10} />
+              </button>
+            )}
+          </div>
+        )
+      })}
 
-      {/* Add new terminal button */}
-      <Button
-        variant="ghost"
-        size="icon"
+      {/* Add new terminal */}
+      <button
         onClick={onCreate}
-        className="h-8 w-8 bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
         title="New terminal"
+        style={{
+          width: '28px', height: '28px',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: '#2A2A2C', border: 'none',
+          borderRadius: '6px', cursor: 'pointer',
+          color: '#A0A0A8', transition: 'background 0.12s',
+          flexShrink: 0,
+        }}
+        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#323234' }}
+        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#2A2A2C' }}
       >
-        <Plus className="w-4 h-4" />
-      </Button>
+        <Plus size={14} />
+      </button>
 
       {/* Context menu */}
       {contextMenu.visible && (
         <div
           ref={contextMenuRef}
-          className="fixed z-50 bg-popover border border-border rounded-md py-1 min-w-[120px] shadow-md"
-          style={{ left: contextMenu.x, top: contextMenu.y }}
+          style={{
+            position: 'fixed',
+            zIndex: 100,
+            left: contextMenu.x,
+            top: contextMenu.y,
+            background: '#1E1E20',
+            border: '1px solid #3A3A3C',
+            borderRadius: '8px',
+            padding: '4px',
+            minWidth: '120px',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+          }}
         >
           <button
             onClick={handleContextMenuRename}
-            className="w-full px-3 py-1.5 text-left text-sm font-mono hover:bg-accent transition-colors"
+            style={{
+              width: '100%', textAlign: 'left',
+              padding: '6px 12px',
+              background: 'transparent', border: 'none',
+              borderRadius: '4px',
+              fontSize: '12px', fontFamily: 'monospace',
+              color: '#E0E0E0', cursor: 'pointer',
+              transition: 'background 0.1s',
+            }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#2A2A2C' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
           >
             Rename
           </button>
           {terminals.length > 1 && (
             <button
               onClick={handleContextMenuClose}
-              className="w-full px-3 py-1.5 text-left text-sm font-mono text-destructive hover:bg-destructive hover:text-destructive-foreground transition-colors"
+              style={{
+                width: '100%', textAlign: 'left',
+                padding: '6px 12px',
+                background: 'transparent', border: 'none',
+                borderRadius: '4px',
+                fontSize: '12px', fontFamily: 'monospace',
+                color: '#F0A060', cursor: 'pointer',
+                transition: 'background 0.1s',
+              }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(240,96,60,0.15)' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
             >
               Close
             </button>

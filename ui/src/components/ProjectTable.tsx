@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { FolderOpen } from 'lucide-react'
+import { motion } from 'framer-motion'
 import type { ProjectSummary } from '../lib/types'
 
 interface ProjectTableProps {
@@ -38,7 +39,6 @@ const AGENT_CIRCLES = [
 ]
 
 export function ProjectTable({ projects, onOpenProject }: ProjectTableProps) {
-  const [hoveredRow, setHoveredRow] = useState<string | null>(null)
   const [hoveredBtn, setHoveredBtn] = useState<string | null>(null)
 
   const totalCount = projects.length
@@ -51,30 +51,36 @@ export function ProjectTable({ projects, onOpenProject }: ProjectTableProps) {
       style={{
         background: '#FFFFFF',
         border: '1px solid #DDEC90',
-        borderRadius: '8px',
+        borderRadius: '12px',
         overflow: 'hidden',
+        boxShadow: '0 1px 3px rgba(26,26,0,0.06)',
         fontFamily: "'Inter', sans-serif",
       }}
     >
       {/* Card header */}
       <div
         style={{
-          padding: '12px 16px',
+          padding: '14px 16px',
           borderBottom: '1px solid #DDEC90',
-          background: '#FAFAF2',
+          background: 'linear-gradient(to bottom, #FAFAF2, #FFFFFF)',
           display: 'flex',
           alignItems: 'center',
           gap: '8px',
         }}
       >
-        <span style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: '#7A8A00' }}>
+        <span style={{
+          fontFamily: "'Geist', 'Inter', sans-serif",
+          fontWeight: 700,
+          fontSize: '13px',
+          color: '#1A1A00',
+        }}>
           All Projects
         </span>
         <span
           style={{
-            fontSize: '12px', fontWeight: 700,
+            fontSize: '11px', fontWeight: 700,
             background: '#F5F8D0', color: '#7A8A00',
-            border: '1px solid #DDEC90', borderRadius: '10px', padding: '1px 7px',
+            border: '1px solid #DDEC90', borderRadius: '9999px', padding: '3px 10px',
           }}
         >
           {totalCount} Total
@@ -82,9 +88,9 @@ export function ProjectTable({ projects, onOpenProject }: ProjectTableProps) {
         {pendingCount > 0 && (
           <span
             style={{
-              fontSize: '12px', fontWeight: 700,
+              fontSize: '11px', fontWeight: 700,
               background: '#FFF0DC', color: '#A05A00',
-              border: '1px solid #F0C880', borderRadius: '10px', padding: '1px 7px',
+              border: '1px solid #F0C880', borderRadius: '9999px', padding: '3px 10px',
             }}
           >
             {pendingCount} HITL Pending
@@ -107,13 +113,13 @@ export function ProjectTable({ projects, onOpenProject }: ProjectTableProps) {
                 <th
                   key={th}
                   style={{
-                    fontSize: '12px',
+                    fontSize: '11px',
                     fontWeight: 700,
                     letterSpacing: '1.5px',
                     textTransform: 'uppercase',
-                    color: '#6A6A20',
-                    padding: '8px 12px',
-                    borderBottom: '2px solid #DDEC90',
+                    color: '#7A8A00',
+                    padding: '12px 16px',
+                    borderBottom: '1px solid #DDEC90',
                     background: '#FAFAF2',
                     textAlign: idx === 5 ? 'right' : 'left',
                     minWidth: idx === 2 ? '200px' : undefined,
@@ -131,39 +137,43 @@ export function ProjectTable({ projects, onOpenProject }: ProjectTableProps) {
               const stackLabel = getStackLabel(project)
               const hasPending = project.stats.in_progress > 0
               const pill = getInputTypePill(stackLabel)
-              const progressFill = pct >= 50 ? '#BBCB64' : '#FFE52A'
 
               return (
-                <tr
+                <motion.tr
                   key={project.name}
+                  whileHover={{ backgroundColor: '#F5F8D0' }}
+                  transition={{ duration: 0.12 }}
                   style={{
-                    borderBottom: '1px solid #F5F8D0',
-                    background: hoveredRow === project.name ? '#F5F8D0' : 'transparent',
+                    borderBottom: '1px solid #DDEC90',
                     cursor: 'pointer',
-                    transition: 'background 0.12s',
                   }}
-                  onMouseEnter={() => setHoveredRow(project.name)}
-                  onMouseLeave={() => setHoveredRow(null)}
                   onClick={() => onOpenProject(project.name)}
                 >
                   {/* PROJECT */}
-                  <td style={{ padding: '10px 12px' }}>
-                    <div style={{ fontSize: '17px', fontWeight: 700, color: '#1A1A00' }}>{project.name}</div>
+                  <td style={{ padding: '12px 16px' }}>
+                    <div style={{
+                      fontFamily: "'Geist', 'Inter', sans-serif",
+                      fontWeight: 700,
+                      fontSize: '15px',
+                      color: '#1A1A00',
+                    }}>
+                      {project.name}
+                    </div>
                     <div style={{ fontSize: '13px', color: '#6A6A20', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '220px' }}>
                       {project.path}
                     </div>
                   </td>
 
                   {/* INPUT TYPE */}
-                  <td style={{ padding: '10px 12px' }}>
+                  <td style={{ padding: '12px 16px' }}>
                     <span
                       style={{
-                        fontSize: '10px',
+                        fontSize: '11px',
                         fontWeight: 700,
                         letterSpacing: '0.5px',
                         textTransform: 'uppercase',
-                        borderRadius: '10px',
-                        padding: '3px 8px',
+                        borderRadius: '9999px',
+                        padding: '3px 10px',
                         background: pill.bg,
                         color: pill.color,
                         border: `1px solid ${pill.border}`,
@@ -174,14 +184,14 @@ export function ProjectTable({ projects, onOpenProject }: ProjectTableProps) {
                   </td>
 
                   {/* PHASE & PROGRESS */}
-                  <td style={{ padding: '10px 12px' }}>
+                  <td style={{ padding: '12px 16px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px' }}>
-                      <div style={{ flex: 1, height: '5px', background: '#F5F8D0', borderRadius: '3px', overflow: 'hidden' }}>
+                      <div style={{ flex: 1, height: '4px', background: '#F5F8D0', borderRadius: '9999px', overflow: 'hidden' }}>
                         <div
                           style={{
                             height: '100%',
-                            borderRadius: '3px',
-                            background: progressFill,
+                            borderRadius: '9999px',
+                            background: 'linear-gradient(to right, #BBCB64, #FFE52A)',
                             width: `${Math.min(pct, 100)}%`,
                             transition: 'width 0.5s',
                           }}
@@ -195,7 +205,7 @@ export function ProjectTable({ projects, onOpenProject }: ProjectTableProps) {
                   </td>
 
                   {/* AGENTS */}
-                  <td style={{ padding: '10px 12px' }}>
+                  <td style={{ padding: '12px 16px' }}>
                     <div style={{ display: 'flex' }}>
                       {AGENT_CIRCLES.map((agent, idx) => (
                         <div
@@ -224,16 +234,16 @@ export function ProjectTable({ projects, onOpenProject }: ProjectTableProps) {
                   </td>
 
                   {/* HITL STATUS */}
-                  <td style={{ padding: '10px 12px' }}>
+                  <td style={{ padding: '12px 16px' }}>
                     {hasPending ? (
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                         <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#F79A19' }} />
                         <span
                           style={{
-                            fontSize: '12px',
+                            fontSize: '11px',
                             fontWeight: 700,
-                            padding: '2px 8px',
-                            borderRadius: '10px',
+                            padding: '3px 10px',
+                            borderRadius: '9999px',
                             background: '#FFF0DC',
                             color: '#A05A00',
                             border: '1px solid #F0C880',
@@ -247,10 +257,10 @@ export function ProjectTable({ projects, onOpenProject }: ProjectTableProps) {
                         <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#22C55E' }} />
                         <span
                           style={{
-                            fontSize: '12px',
+                            fontSize: '11px',
                             fontWeight: 700,
-                            padding: '2px 8px',
-                            borderRadius: '10px',
+                            padding: '3px 10px',
+                            borderRadius: '9999px',
                             background: '#F5F8D0',
                             color: '#7A8A00',
                             border: '1px solid #DDEC90',
@@ -263,7 +273,7 @@ export function ProjectTable({ projects, onOpenProject }: ProjectTableProps) {
                   </td>
 
                   {/* ACTION */}
-                  <td style={{ padding: '10px 12px', textAlign: 'right' }}>
+                  <td style={{ padding: '12px 16px', textAlign: 'right' }}>
                     <button
                       onClick={(e) => { e.stopPropagation(); onOpenProject(project.name) }}
                       style={{
@@ -272,7 +282,7 @@ export function ProjectTable({ projects, onOpenProject }: ProjectTableProps) {
                         color: '#7A8A00',
                         border: '1px solid #DDEC90',
                         background: hoveredBtn === project.name ? '#F5F8D0' : 'transparent',
-                        borderRadius: '4px',
+                        borderRadius: '8px',
                         padding: '4px 9px',
                         cursor: 'pointer',
                         transition: 'background 0.12s',
@@ -283,7 +293,7 @@ export function ProjectTable({ projects, onOpenProject }: ProjectTableProps) {
                       Open
                     </button>
                   </td>
-                </tr>
+                </motion.tr>
               )
             })}
           </tbody>
@@ -308,7 +318,7 @@ export function ProjectTable({ projects, onOpenProject }: ProjectTableProps) {
               border: 'none',
               cursor: 'pointer',
               padding: '4px 8px',
-              borderRadius: '4px',
+              borderRadius: '8px',
               transition: 'background 0.12s',
             }}
             onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#F5F8D0' }}
